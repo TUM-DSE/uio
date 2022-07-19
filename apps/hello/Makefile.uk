@@ -1,0 +1,3 @@
+$(eval $(call addlib,apphello))
+
+APPHELLO_SRCS-y += $(APPHELLO_BASE)/main.c
