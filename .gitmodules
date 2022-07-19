@@ -1,3 +1,6 @@
 [submodule "unikraft"]
 	path = unikraft
 	url = git@github.com:mmisono/unikraft.git
+[submodule "libs/newlib"]
+	path = libs/newlib
+	url = https://github.com/unikraft/lib-newlib

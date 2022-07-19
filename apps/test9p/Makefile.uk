@@ -1,0 +1,3 @@
+$(eval $(call addlib,apptest9p))
+
+APPTEST9P_SRCS-y += $(APPTEST9P_BASE)/main.c
