@@ -4,3 +4,9 @@
 [submodule "libs/newlib"]
 	path = libs/newlib
 	url = https://github.com/unikraft/lib-newlib
+[submodule "libs/sqlite"]
+	path = libs/sqlite
+	url = https://github.com/unikraft/lib-sqlite
+[submodule "libs/pthread-embedded"]
+	path = libs/pthread-embedded
+	url = https://github.com/unikraft/lib-pthread-embedded
