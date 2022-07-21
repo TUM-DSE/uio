@@ -1,0 +1,3 @@
+$(eval $(call addlib,appargtest))
+
+APPARGTEST_SRCS-y += $(APPARGTEST_BASE)/main.c
