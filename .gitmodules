@@ -10,3 +10,9 @@
 [submodule "libs/pthread-embedded"]
 	path = libs/pthread-embedded
 	url = https://github.com/unikraft/lib-pthread-embedded
+[submodule "libs/redis"]
+	path = libs/redis
+	url = https://github.com/unikraft/lib-redis
+[submodule "libs/lwip"]
+	path = libs/lwip
+	url = https://github.com/unikraft/libs-lwip
