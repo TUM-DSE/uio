@@ -1,0 +1,3 @@
+$(eval $(call addlib,appthreads))
+
+APPTHREADS_SRCS-y += $(APPTHREADS_BASE)/main.c
