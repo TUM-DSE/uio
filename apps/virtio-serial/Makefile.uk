@@ -1,0 +1,3 @@
+$(eval $(call addlib,appvirtioserial))
+
+APPVIRTIOSERIAL_SRCS-y += $(APPVIRTIOSERIAL_BASE)/main.c
