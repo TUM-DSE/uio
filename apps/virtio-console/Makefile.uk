@@ -1,0 +1,3 @@
+$(eval $(call addlib,appvirtioconsole))
+
+APPVIRTIOCONSOLE_SRCS-y += $(APPVIRTIOCONSOLE_BASE)/main.c
