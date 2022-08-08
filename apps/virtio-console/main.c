@@ -5,14 +5,13 @@
 
 int main()
 {
-	char ch = uk_console_getc();
-	printf("ch=%c\n", ch);
-	uk_console_putc('a');
-
-	printf("busy loop...\n");
+	char ch;
 
 	while (1) {
-		sleep(1);
+		ch = uk_console_getc();
+		printf("%c", ch);
+		fflush(stdout);
+		// uk_console_putc('a');
 	}
 	return 0;
 }
