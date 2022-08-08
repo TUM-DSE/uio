@@ -31,6 +31,7 @@
             pkgs.bison
             pkgs.flex
             pkgs.just
+            pkgs.socat
             pkgs.curl
             pkgs.wget
             pkgs.bridge-utils
