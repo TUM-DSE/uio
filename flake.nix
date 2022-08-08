@@ -8,10 +8,17 @@
     (flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        pythonEnv = pkgs.python39.withPackages (ps: with ps; [
+          pyflakes
+          fire
+          jedi
+        ]);
       in
       {
         devShell = pkgs.mkShell {
           buildInputs = [
+            pythonEnv
+            pkgs.mypy
             pkgs.ncurses
             pkgs.pkg-config
             pkgs.qemu
