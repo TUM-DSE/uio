@@ -30,6 +30,7 @@
             pkgs.redis
             pkgs.bison
             pkgs.flex
+            pkgs.just
             pkgs.curl
             pkgs.wget
             pkgs.bridge-utils
