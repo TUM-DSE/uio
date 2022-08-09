@@ -18,6 +18,7 @@
         devShell = pkgs.mkShell {
           buildInputs = [
             pythonEnv
+            pkgs.yapf
             pkgs.mypy
             pkgs.ncurses
             pkgs.pkg-config
