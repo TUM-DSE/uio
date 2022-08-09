@@ -1,0 +1,3 @@
+$(eval $(call addlib,appushell))
+
+APPUSHELL_SRCS-y += $(APPUSHELL_BASE)/main.c
