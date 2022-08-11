@@ -1,36 +1,72 @@
 # vim: set ft=make et :
 
+# qemu := qemu-system-x86_64
+qemu := "${HOME}/work/qemu/bin/debug/native/qemu-system-x86_64"
+
 default:
     @just --choose
 
 run:
-    sudo qemu-system-x86_64 \
+    sudo {{qemu}} \
         -enable-kvm \
+        -cpu host \
         -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
         -device virtio-serial \
         -device virtconsole,chardev=char0,id=ushell,nr=0 \
         -kernel build/virtioconsole_kvm-x86_64 -nographic
 
 run_mmio:
-    sudo qemu-system-x86_64 \
-        -M microvm \
+    sudo {{qemu}} \
+        -M microvm,x-option-roms=off,pit=on,pic=on,isa-serial=on,rtc=on,auto-kernel-cmdline=on,acpi=off,graphics=off \
+        -cpu host \
         -enable-kvm \
+        -append "arg1 arg2 arg3" \
+        -global virtio-mmio.force-legacy=on \
         -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
-        -device virtio-serial-device \
+        -device virtio-serial-device,bus=virtio-mmio-bus.0 \
         -device virtconsole,chardev=char0,id=ushell,nr=0 \
+        -kernel build/virtioconsole_kvm-x86_64 -nographic
+
+run_mmio_fs:
+    sudo {{qemu}} \
+        -M microvm,x-option-roms=on,pit=on,pic=on,isa-serial=on,rtc=on,auto-kernel-cmdline=on \
+        -cpu host \
+        -enable-kvm \
+        -append "" \
+        -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
+        -device virtio-serial-device,bus=virtio-mmio-bus.0 \
+        -device virtconsole,chardev=char0,id=ushell,nr=0 \
+        -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
+        -device virtio-9p-device,fsdev=myid,mount_tag=fs0,bus=virtio-mmio-bus.1 \
         -kernel build/virtioconsole_kvm-x86_64 -nographic
 
 run_pipe:
     -rm /tmp/port0
     mkfifo /tmp/port0
-    sudo qemu-system-x86_64 \
+    sudo {{qemu}} \
         -enable-kvm \
+        -cpu host \
         -chardev pipe,path=/tmp/port0,id=char0 \
         -device virtio-serial \
         -device virtconsole,chardev=char0,name=ushell \
         -kernel build/virtioconsole_kvm-x86_64 -nographic
 
 run_noconsole:
-    sudo qemu-system-x86_64 \
+    sudo {{qemu}} \
         -enable-kvm \
+        -cpu host \
+        -kernel build/virtioconsole_kvm-x86_64 -nographic
+
+run_console_only:
+    sudo {{qemu}} \
+        -enable-kvm \
+        -cpu host \
+        -device virtio-serial \
+        -kernel build/virtioconsole_kvm-x86_64 -nographic
+
+run_console_modern:
+    sudo {{qemu}} \
+        -enable-kvm \
+        -cpu host \
+        -device virtio-serial,disable-legacy=on,disable-modern=off \
         -kernel build/virtioconsole_kvm-x86_64 -nographic
