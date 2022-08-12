@@ -1,12 +1,12 @@
+#include <stdio.h>
 #include <unistd.h>
+
+#include <ushell/ushell.h>
 
 int main()
 {
 
-	// do nothing
-	while (1) {
-		sleep(1);
-	}
+	ushell_spawn_shell();
 
 	return 0;
 }
