@@ -25,3 +25,14 @@ run_mmio:
         -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
         -device virtio-9p-device,fsdev=myid,mount_tag=fs0 \
         -kernel build/ushell_kvm-x86_64 -nographic
+
+compile_add:
+    gcc -c -fPIC -o add.o add.c
+    objcopy add.o /dev/null --dump-section .text=fs0/add
+
+compile_test:
+    gcc -c -fPIC -o test.o test.c
+    objcopy test.o /dev/null --dump-section .text=fs0/test
+
+compile_mmap_test:
+    gcc -o mmap_test mmap_test.c
