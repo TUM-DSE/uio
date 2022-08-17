@@ -4,7 +4,7 @@
 
 int main()
 {
-	FILE *fp = fopen("fs0/f", "rt");
+	FILE *fp = fopen("fs0/test", "rt");
 	assert(fp != NULL);
 	fseek(fp, 0, SEEK_END);
 	long size = ftell(fp);
