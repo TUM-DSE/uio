@@ -36,3 +36,6 @@ compile_test:
 
 compile_mmap_test:
     gcc -o mmap_test mmap_test.c
+
+attach:
+    sudo socat /tmp/port0 -
