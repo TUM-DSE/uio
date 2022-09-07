@@ -1,0 +1,3 @@
+$(eval $(call addlib,appukstore))
+
+APPUKSTORE_SRCS-y += $(APPUKSTORE_BASE)/main.c

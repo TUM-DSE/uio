@@ -1,0 +1,10 @@
+# vim: set ft=make et :
+
+default:
+    @just --choose
+
+run:
+    sudo qemu-system-x86_64 \
+        -cpu host \
+        -enable-kvm \
+        -kernel build/ukstore_kvm-x86_64 -nographic
