@@ -1,0 +1,3 @@
+$(eval $(call addlib,appapp1))
+
+APPAPP1_SRCS-y += $(APPAPP1_BASE)/main.c
