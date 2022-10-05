@@ -16,3 +16,6 @@
 [submodule "libs/lwip"]
 	path = libs/lwip
 	url = https://github.com/unikraft/libs-lwip
+[submodule "libs/nginx"]
+	path = libs/nginx
+	url = https://github.com/unikraft/lib-nginx
