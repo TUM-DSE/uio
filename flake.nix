@@ -38,6 +38,7 @@
             pkgs.bridge-utils
             pkgs.nettools
             pkgs.nixpkgs-fmt
+            pkgs.glibc
             pkgs.glibc.static
           ];
         };
