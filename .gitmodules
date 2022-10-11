@@ -19,3 +19,12 @@
 [submodule "libs/nginx"]
 	path = libs/nginx
 	url = https://github.com/unikraft/lib-nginx
+[submodule "libs/python3"]
+	path = libs/python3
+	url = https://github.com/unikraft/lib-python3
+[submodule "libs/libuuid"]
+	path = libs/libuuid
+	url = https://github.com/unikraft/lib-libuuid
+[submodule "libs/zlib"]
+	path = libs/zlib
+	url = https://github.com/unikraft/lib-zlib
