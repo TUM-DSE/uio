@@ -4,7 +4,7 @@ default:
     @just --choose
 
 run:
-    sudo qemu-system-x86_64 \
+    sudo taskset -c 0 qemu-system-x86_64 \
         -cpu host \
         -enable-kvm \
         -m 500M \
