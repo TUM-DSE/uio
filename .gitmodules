@@ -28,3 +28,6 @@
 [submodule "libs/zlib"]
 	path = libs/zlib
 	url = https://github.com/unikraft/lib-zlib
+[submodule "libs/lua"]
+	path = libs/lua
+	url = https://github.com/unikraft/lib-lua
