@@ -47,6 +47,7 @@ int main()
 
 	while (1) {
 		char buf[128];
+		char *errmsg;
 		printf("> ");
 		fflush(stdout);
 		fgets(buf, 128, stdin);
@@ -54,6 +55,11 @@ int main()
 			break;
 		}
 		printf("%s", buf);
+		rc = sqlite3_exec(db, buf, NULL, NULL, &errmsg);
+		if (rc) {
+			printf("Error: %s\n", errmsg);
+			sqlite3_free(errmsg);
+		}
 	}
 
 	sqlite3_save();
