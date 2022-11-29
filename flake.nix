@@ -41,6 +41,7 @@
             pkgs.glibc
             pkgs.sqlite
             # pkgs.glibc.static
+            pkgs.unzip # needed to make apps/nginx
           ];
         };
       }));
