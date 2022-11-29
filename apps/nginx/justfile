@@ -50,18 +50,36 @@ setup_bridge:
     fi
 
 benchmark host_port NGINX_BENCH_LENGTH="1m" NGINX_CONNS="30" NGINX_WRK_THRDS="14":
+  # - With just native-nginx:
+  #   ~77000 req/s
+  # - Serving index.html from nix store we get ~110000 req/s (this is the same as the equivalent unikraft eurosys eval achieves on our machines). (-38% perf compared to uk eurosys eval)
+  # - With just run:
+  #   ushell: 1670 req/s
+  #   vanilla: 2170 req/s
+  # - With just qemu-nixos-nginx:
+  #   57700 req/s
+  # - Nginx kernel from unikraft eurosys eval:
+  #   235000 req/s (-21% from unikraft eurosys eval, but our cpu is -18% single core perf)
   taskset -c 6,7 wrk -t {{NGINX_WRK_THRDS}} \
     -d{{NGINX_BENCH_LENGTH}} -c {{NGINX_CONNS}} \
     http://{{host_port}}/index.html
-  # With just native-nginx:
-  # ~77000 req/s
-  # with index.html from nix store ~110000 req/s (this is what unikraft eurosys eval does)
-  # With just run:
-  # 1670 req/s
 
 native-nginx:
   mkdir -p nginx-native/logs
   taskset -c 5 nginx -c ../nginx.conf -e $(pwd)/nginx-native/nginx.error -p $(pwd)/nginx-native
+
+qemu-nixos-nginx:
+  nix build -o nginx-native/image-ro .#nginx-image
+  install -D -m 644 nginx-native/image-ro/nixos.qcow2 nginx-image/nginx.qcow2
+  sudo qemu-system-x86_64 \
+      -cpu host \
+      -enable-kvm \
+      -m 500M \
+      -device virtio-serial \
+      -drive file=./nginx-image/nginx.qcow2 \
+      -netdev bridge,id=en0,br=virbr0 \
+      -device virtio-net-pci,netdev=en0 \
+      -nographic
 
 attach:
     sudo socat /tmp/port0 -
