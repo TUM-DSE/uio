@@ -1,0 +1,3 @@
+$(eval $(call addlib,appperf))
+
+APPPERF_SRCS-y += $(APPPERF_BASE)/main.c
