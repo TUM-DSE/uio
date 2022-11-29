@@ -42,6 +42,11 @@
             pkgs.sqlite
             # pkgs.glibc.static
             pkgs.unzip # needed to make apps/nginx
+
+            # needed for app/nginx benchmark
+            pkgs.wrk 
+            pkgs.nginx
+
           ];
         };
       }));
