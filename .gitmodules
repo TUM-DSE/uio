@@ -32,3 +32,6 @@
 [submodule "libs/lua"]
 	path = libs/lua
 	url = https://github.com/unikraft/lib-lua
+[submodule "libs/mimalloc"]
+	path = libs/mimalloc
+	url = https://github.com/unikraft/lib-mimalloc
