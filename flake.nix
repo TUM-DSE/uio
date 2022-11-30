@@ -47,6 +47,7 @@
             pkgs.sqlite
             # pkgs.glibc.static
             pkgs.unzip # needed to make apps/nginx
+            pkgs.cpio
 
             # needed for app/nginx benchmark
             pkgs.wrk 

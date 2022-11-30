@@ -9,7 +9,7 @@ run:
     sudo qemu-system-x86_64 \
         -cpu host \
         -enable-kvm \
-        -m 500M \
+        -m 1024 \
         -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
         -device virtio-serial \
         -device virtconsole,chardev=char0,id=ushell,nr=0 \
@@ -18,7 +18,10 @@ run:
         -netdev bridge,id=en0,br=virbr0 \
         -device virtio-net-pci,netdev=en0 \
         -append "netdev.ipv4_addr=172.44.0.2 netdev.ipv4_gw_addr=172.44.0.1 netdev.ipv4_subnet_mask=255.255.255.0 -- -c /nginx/conf/nginx.conf" \
-        -kernel {{APP}} -nographic
+        -initrd build/fs0.cpio \
+        -kernel {{APP}} \
+        -nographic
+#-initrd /scratch/okelmann/eurosys21-artifacts/support/data-unikraft-eurosys21/nginx.cpio \
 
 debug:
     sudo qemu-system-x86_64 \
@@ -53,12 +56,19 @@ benchmark host_port NGINX_BENCH_LENGTH="1m" NGINX_CONNS="30" NGINX_WRK_THRDS="14
   # - With just native-nginx:
   #   ~77000 req/s
   # - Serving index.html from nix store we get ~110000 req/s (this is the same as the equivalent unikraft eurosys eval achieves on our machines). (-38% perf compared to uk eurosys eval)
-  # - With just run:
+  # - With just run (no open_file_cache):
   #   ushell: 1670 req/s
   #   vanilla: 2170 req/s
+  # - With just run (open_file_cache):
+  #   18700 req/s
+  #   with lib-nginx 0.5.0 19000 req/s
+  #   with region allocator: 7700 req/s
+  #   with new converged .config: 19000 req/s
+  #   with initrd/root-initramfs: 163k-180k req/s
   # - With just qemu-nixos-nginx:
   #   57700 req/s
   # - Nginx kernel from unikraft eurosys eval:
+  #   (https://github.com/pogobanane/eurosys21-artifacts/blob/master/experiments/fig_13_nginx-perf/nginxkraftvm.sh)
   #   235000 req/s (-21% from unikraft eurosys eval, but our cpu is -18% single core perf)
   taskset -c 6,7 wrk -t {{NGINX_WRK_THRDS}} \
     -d{{NGINX_BENCH_LENGTH}} -c {{NGINX_CONNS}} \
@@ -70,13 +80,13 @@ native-nginx:
 
 qemu-nixos-nginx:
   nix build -o nginx-native/image-ro .#nginx-image
-  install -D -m 644 nginx-native/image-ro/nixos.qcow2 nginx-image/nginx.qcow2
+  install -D -m 644 nginx-native/image-ro/nixos.qcow2 nginx-native/nginx.qcow2
   sudo qemu-system-x86_64 \
       -cpu host \
       -enable-kvm \
-      -m 500M \
+      -m 1024 \
       -device virtio-serial \
-      -drive file=./nginx-image/nginx.qcow2 \
+      -drive file=./nginx-native/nginx.qcow2 \
       -netdev bridge,id=en0,br=virbr0 \
       -device virtio-net-pci,netdev=en0 \
       -nographic
