@@ -65,6 +65,7 @@ benchmark host_port NGINX_BENCH_LENGTH="1m" NGINX_CONNS="30" NGINX_WRK_THRDS="14
   #   with region allocator: 7700 req/s
   #   with new converged .config: 19000 req/s
   #   with initrd/root-initramfs: 163k-180k req/s
+  #   with CONFIG_LWIP_UKNETDEV_POLLONLY: 210k req/s
   # - With just qemu-nixos-nginx:
   #   57700 req/s
   # - Nginx kernel from unikraft eurosys eval:
