@@ -6,3 +6,7 @@ compile_commands.json
 .cache
 .config.old
 *.o
+apps/nginx/nginx-native/
+
+.ccls-cache/
+.envrc

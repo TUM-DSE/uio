@@ -15,7 +15,8 @@
 	url = https://github.com/unikraft/lib-redis
 [submodule "libs/lwip"]
 	path = libs/lwip
-	url = https://github.com/unikraft/libs-lwip
+  url = git@github.com:pogobanane/lib-lwip.git
+  branch = v0.9.0
 [submodule "libs/nginx"]
 	path = libs/nginx
 	url = https://github.com/unikraft/lib-nginx
