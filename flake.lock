@@ -71,7 +71,27 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixos-generators": "nixos-generators",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "self-stable": "self-stable"
+      }
+    },
+    "self-stable": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1669840845,
+        "narHash": "sha256-a4ouKDOYiJnerW/7Uq4ShqRtMlFzTAXbICZXxB0wALc=",
+        "ref": "main",
+        "rev": "70d12c76c55dab7c7c2e8b7baad34b8e02dddf83",
+        "revCount": 68,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/mmisono/unikraft-development"
+      },
+      "original": {
+        "ref": "main",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/mmisono/unikraft-development"
       }
     }
   },

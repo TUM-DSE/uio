@@ -7,9 +7,16 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    self-stable = {
+      #url = ":mmisono/unikraft-development?submodules=1";
+      url = "git+https://github.com/mmisono/unikraft-development?ref=main&submodules=1";
+      #url = "path:/scratch/okelmann/unikraft-development"; # for local development
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, nixos-generators }:
+  outputs = { self, nixpkgs, flake-utils, nixos-generators, self-stable }:
     (flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -18,44 +25,125 @@
           fire
           jedi
         ]);
+        buildDeps = [
+          pkgs.yapf
+          pkgs.mypy
+          pkgs.ncurses
+          pkgs.pkg-config
+          pkgs.qemu
+          pkgs.qemu_kvm
+          pkgs.bear
+          pkgs.gcc
+          pkgs.libclang.python
+          pkgs.clang-tools
+          pkgs.redis
+          pkgs.bison
+          pkgs.flex
+          pkgs.just
+          pkgs.socat
+          pkgs.curl
+          pkgs.wget
+          pkgs.bridge-utils
+          pkgs.nettools
+          pkgs.nixpkgs-fmt
+          pkgs.glibc
+          pkgs.sqlite
+          pkgs.time # i dont think this is actually used, but `time` is checked for
+          # pkgs.glibc.static
+          pkgs.unzip # needed to make apps/nginx
+          pkgs.cpio
+        ];
       in
       {
         devShell = pkgs.mkShell {
-          buildInputs = [
+          buildInputs = buildDeps ++ [
             pythonEnv
-            pkgs.yapf
-            pkgs.mypy
-            pkgs.ncurses
-            pkgs.pkg-config
-            pkgs.qemu
-            pkgs.qemu_kvm
-            pkgs.bear
-            pkgs.gcc
-            pkgs.libclang.python
-            pkgs.clang-tools
-            pkgs.redis
-            pkgs.bison
-            pkgs.flex
-            pkgs.just
-            pkgs.socat
-            pkgs.curl
-            pkgs.wget
-            pkgs.bridge-utils
-            pkgs.nettools
-            pkgs.nixpkgs-fmt
-            pkgs.glibc
-            pkgs.sqlite
-            # pkgs.glibc.static
-            pkgs.unzip # needed to make apps/nginx
-            pkgs.cpio
 
             # needed for app/nginx benchmark
             pkgs.wrk 
             pkgs.nginx
-
           ];
         };
         packages = {
+          uk-nginx = pkgs.stdenv.mkDerivation {
+            pname = "uk-nginx";
+            version = "0.9.0-ushell";
+            nativeBuildInputs = with pkgs; buildDeps ++ [
+              which
+            ];
+            src = self-stable;
+            postUnpack = let 
+              #wgets = {
+                libpthread-embedded = {
+                  version = "44b41d760a433915d70a7be9809651b0a65e001d";
+                  src = builtins.fetchurl {
+                    url = "https://github.com/RWTH-OS/pthread-embedded/archive/${libpthread-embedded.version}.zip";
+                    sha256 = "1a6rbdndxik9wgcbv6lb5gw692pkvl5gf8vdhsa4b5q0kn2z26mp";
+                  };
+                  dst = "apps/nginx/build/libpthread-embedded/${libpthread-embedded.version}.zip";
+                };
+
+                libnewlibc = {
+                  version = "newlib-2.5.0.20170922";
+                  src = builtins.fetchurl {
+                    url = "http://sourceware.org/pub/newlib/${libnewlibc.version}.tar.gz";
+                    sha256 = "0xbj5vhkmn54yv7gzprqb9wk9lsj57ypn1fs6f1rmf2mj6xsrk0n";
+                  };
+                  dst = "apps/nginx/build/libnewlibc/${libnewlibc.version}.tar.gz";
+                };
+
+                libnginx = {
+                  version = "nginx-1.15.6";
+                  src = builtins.fetchurl {
+                    url = "http://nginx.org/download/${libnginx.version}.tar.gz";
+                    sha256 = "1ikchbnq1dv8wjnsf6jj24xkb36vcgigyps71my8r01m41ycdn53";
+                  };
+                  dst = "apps/nginx/build/libnginx/${libnginx.version}.tar.gz";
+                };
+
+                liblwip = {
+                  version = "UNIKRAFT-2_1_x";
+                  src = builtins.fetchurl {
+                    url = "https://github.com/unikraft/fork-lwip/archive/refs/heads/${liblwip.version}.zip";
+                    sha256 = "1bq38ikhnlqfyb24s7mixr68qnsm4dlvr96g4y9z8ih9lz45mw8w";
+                  };
+                  dst = "apps/nginx/build/liblwip/${liblwip.version}.zip";
+                };
+              #};
+            in ''
+              # srcsUnpack src_absolute destination_relative
+              function srcsUnpack () {
+                mkdir -p $(dirname $sourceRoot/$2)
+                cp $1 $sourceRoot/$2
+              }
+
+              srcsUnpack ${libpthread-embedded.src} ${libpthread-embedded.dst}
+              srcsUnpack ${libnewlibc.src} ${libnewlibc.dst}
+              srcsUnpack ${libnginx.src} ${libnginx.dst}
+              srcsUnpack ${liblwip.src} ${liblwip.dst}
+            ''; #++ lib.lists.forEach 
+              #(lib.attrsets.attrValues wgets)
+              #(resource: "srcsUpack ${resource.src} ${resource.dst}");
+            postPatch = ''
+              patchShebangs /build/source/unikraft/support/scripts/uk_build_configure.sh
+              patchShebangs /build/source/unikraft/support/scripts/configupdate
+              patchShebangs /build/source/unikraft/support/scripts/sect-strip.py
+            '';
+            configurePhase = ''
+              cd apps/nginx
+              make oldconfig # ensure consistency and update absolute paths
+            '';
+            buildPhase = ''
+              make -j
+            '';
+            installPhase = ''
+              mkdir -p $out
+              cp -r build/* $out
+            '';
+
+            # doesnt seem to break anything, but i'm pretty sure we cant profit from it
+            dontFixup = true; 
+          };
           nginx-image = nixos-generators.nixosGenerate {
             inherit pkgs;
             modules = [ 
