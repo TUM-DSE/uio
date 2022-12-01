@@ -1,6 +1,6 @@
-{pkgs, self-stable, buildDeps, ...}:
+{pkgs, self-stable, buildDeps, app, config ? ".config", ...}:
 pkgs.stdenv.mkDerivation {
-  pname = "uk-nginx";
+  pname = "uk-${app}";
   version = "0.9.0-ushell";
   nativeBuildInputs = with pkgs; buildDeps ++ [
     which
@@ -14,7 +14,7 @@ pkgs.stdenv.mkDerivation {
           url = "https://github.com/RWTH-OS/pthread-embedded/archive/${version}.zip";
           sha256 = "1a6rbdndxik9wgcbv6lb5gw692pkvl5gf8vdhsa4b5q0kn2z26mp";
         };
-        dst = "apps/nginx/build/libpthread-embedded/${version}.zip";
+        dst = "apps/${app}/build/libpthread-embedded/${version}.zip";
       };
 
       libnewlibc = with libnewlibc; {
@@ -23,16 +23,7 @@ pkgs.stdenv.mkDerivation {
           url = "http://sourceware.org/pub/newlib/${version}.tar.gz";
           sha256 = "0xbj5vhkmn54yv7gzprqb9wk9lsj57ypn1fs6f1rmf2mj6xsrk0n";
         };
-        dst = "apps/nginx/build/libnewlibc/${version}.tar.gz";
-      };
-
-      libnginx = with libnginx; {
-        version = "nginx-1.15.6";
-        src = builtins.fetchurl {
-          url = "http://nginx.org/download/${version}.tar.gz";
-          sha256 = "1ikchbnq1dv8wjnsf6jj24xkb36vcgigyps71my8r01m41ycdn53";
-        };
-        dst = "apps/nginx/build/libnginx/${version}.tar.gz";
+        dst = "apps/${app}/build/libnewlibc/${version}.tar.gz";
       };
 
       liblwip = with liblwip; {
@@ -41,10 +32,34 @@ pkgs.stdenv.mkDerivation {
           url = "https://github.com/unikraft/fork-lwip/archive/refs/heads/${version}.zip";
           sha256 = "1bq38ikhnlqfyb24s7mixr68qnsm4dlvr96g4y9z8ih9lz45mw8w";
         };
-        dst = "apps/nginx/build/liblwip/${version}.zip";
+        dst = "apps/${app}/build/liblwip/${version}.zip";
+      };
+
+      libnginx = with libnginx; {
+        version = "nginx-1.15.6";
+        src = builtins.fetchurl {
+          url = "http://nginx.org/download/${version}.tar.gz";
+          sha256 = "1ikchbnq1dv8wjnsf6jj24xkb36vcgigyps71my8r01m41ycdn53";
+        };
+        dst = "apps/${app}/build/libnginx/${version}.tar.gz";
+      };
+
+      libredis = with libredis; {
+        version = "5.0.6";
+        src = builtins.fetchurl {
+          url = "https://github.com/antirez/redis/archive/${version}.zip";
+          sha256 = "1njdkpzzhg28cavq5n7rv4p6my0x7g3d3lg9cnc66s42rk8xd9z5";
+        };
+        dst = "apps/${app}/build/libredis/${version}.zip";
       };
     };
   in ''
+    # clean sourcetree, in case of impure development tree
+    pushd $sourceRoot/apps/${app}
+    make clean
+    rm -r build
+    popd
+
     # srcsUnpack src_absolute destination_relative
     function srcsUnpack () {
       mkdir -p $(dirname $sourceRoot/$2)
@@ -61,7 +76,8 @@ pkgs.stdenv.mkDerivation {
     patchShebangs /build/source/unikraft/support/scripts/sect-strip.py
   '';
   configurePhase = ''
-    cd apps/nginx
+    cd apps/${app}
+    cp ${config} .config
     make oldconfig # ensure consistency and update absolute paths
   '';
   buildPhase = ''

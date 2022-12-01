@@ -9,10 +9,10 @@
     };
 
     self-stable = {
-      #url = ":mmisono/unikraft-development?submodules=1";
       url = "git+https://github.com/mmisono/unikraft-development?ref=main&submodules=1";
-      #url = "path:/scratch/okelmann/unikraft-development"; # for local development
-      flake = false;
+      #url = "path:/scratch/okelmann/unikraft-development"; # use this for local development
+      #url = "path:./"; # this wont include submodules. Nix bug?
+      flake = false; # we dont want the flake but just the sources
     };
   };
 
@@ -65,8 +65,23 @@
           ];
         };
         packages = {
-          uk-nginx = pkgs.callPackage ./misc/nix/uk-nginx.nix { 
+          uk-nginx = pkgs.callPackage ./misc/nix/uk-app.nix { 
             inherit pkgs self-stable buildDeps;
+            app = "nginx";
+            config = "config.eval.noshell";
+          };
+          uk-nginx-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "nginx";
+            config = "config.eval.ushell";
+          };
+          uk-count = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+          };
+          uk-redis = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "redis";
           };
           nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix { 
             inherit pkgs nixos-generators; 
