@@ -12,7 +12,7 @@ from pathlib import Path
 from queue import Queue
 from shlex import quote
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterator, List, Text
+from typing import Any, Dict, Iterator, List, Text, Optional
 
 from root import TEST_ROOT, PROJECT_ROOT
 from procs import run, pprint_cmd, ChildFd
@@ -26,6 +26,16 @@ class VmImage:
     squashfs: Path
     initial_ramdisk: Path
     kernel_params: List[str]
+
+
+@dataclass
+class VmSpec:
+    kernel: Path
+    app_cmdline: str
+    netbridge: bool
+    ushell_devices: bool
+    initrd: Optional[Path]
+    rootfs_9p: Optional[Path]
 
 
 class QmpSession:
@@ -142,11 +152,12 @@ def ssh_cmd(port: int) -> List[str]:
 
 
 class QemuVm:
-    def __init__(self, qmp_session: QmpSession, tmux_session: str, pid: int) -> None:
+    def __init__(self, qmp_session: QmpSession, tmux_session: str, pid: int, ushell_socket: Optional[Path]) -> None:
         self.qmp_session = qmp_session
         self.tmux_session = tmux_session
         self.pid = pid
-        self.ssh_port = get_ssh_port(qmp_session)
+        self.ssh_port = 0 # get_ssh_port(qmp_session) # TODO
+        self.ushell_socket = ushell_socket
 
     def events(self) -> Iterator[Dict[str, Any]]:
         return self.qmp_session.events()
@@ -168,6 +179,19 @@ class QemuVm:
             ):
                 break
             time.sleep(0.1)
+
+    def wait_for_ping(self, host: str) -> None:
+        """
+        Block until icmp is responding
+        @host: example: 172.44.0.2
+        """
+        timeout = 0.3
+        max_ = int(1/timeout * 60)
+        for i in range(0, max_):
+            response = os.system(f"ping -c 1 -W {timeout} {host}") # hide output TODO 
+            if response == 0:
+                return # its up
+        raise Exception(f"VM is still not responding after {max_}sec")
 
     def ssh_Popen(
         self,
@@ -240,7 +264,9 @@ class QemuVm:
         return self.qmp_session.send(cmd, args)
 
 
-def qemu_command(image: VmImage, qmp_socket: Path, ssh_port: int = 0) -> List:
+def qemu_command_unreachable(
+    image: VmImage, qmp_socket: Path, ssh_port: int = 0
+) -> List:
     """
     @image VM image to boot
     @qmp_socket unixsocket path of the QEMU qmp control socket
@@ -289,15 +315,96 @@ def qemu_command(image: VmImage, qmp_socket: Path, ssh_port: int = 0) -> List:
     ]
 
 
+def qemu_command(
+    spec: VmSpec,
+    qmp_socket: Path,
+    ushell_socket = Optional[Path],
+    cpu_pinning: Optional[str] = None,
+) -> List[str]:
+    cmd = [ ]
+
+    # general args
+
+    if cpu_pinning is not None:
+        cmd += [
+            "taskset",
+            "-c",
+            cpu_pinning,
+        ]
+
+    cmd += [
+        "qemu-system-x86_64",
+        "-enable-kvm",
+        "-cpu",
+        "host",
+        "-m",
+        "1024",
+        "-kernel",
+        f"{spec.kernel}",
+        "-nographic",
+        "-qmp",
+        f"unix:{str(qmp_socket)},server,nowait",
+    ]
+
+    # kernel cmdline
+
+    uk_cmdline = ""
+    if spec.netbridge:
+        uk_cmdline += "netdev.ipv4_addr=172.44.0.2 netdev.ipv4_gw_addr=172.44.0.1 netdev.ipv4_subnet_mask=255.255.255.0"
+    cmdline = f"{uk_cmdline} -- {spec.app_cmdline}"
+    cmd += ["-append", cmdline]
+
+    # other devices
+
+    if spec.netbridge:
+        cmd += [
+            "-netdev",
+            "bridge,id=en0,br=virbr0",
+            "-device",
+            "virtio-net-pci,netdev=en0",
+        ]
+
+    if spec.ushell_devices:
+        if ushell_socket is None:
+            raise Exception("ushell devices are activated but ushell socket is not defined")
+        cmd += [
+            "-chardev",
+            f"socket,path={ushell_socket},server=on,wait=off,id=char0",
+            "-device",
+            "virtio-serial",
+            "-device",
+            "virtconsole,chardev=char0,id=ushell,nr=0",
+        ]
+
+    if spec.initrd is not None:
+        cmd += ["-initrd", f"{spec.initrd}"]
+
+    if spec.rootfs_9p is not None:
+        cmd += [
+            "-fsdev",
+            f"local,id=myid,path={spec.rootfs_9p},security_model=none",
+            "-device",
+            "virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off",
+        ]
+
+    return cmd
+
+
 @contextmanager
 def spawn_qemu(
-    image: VmImage, extra_args: List[str] = [], extra_args_pre: List[str] = []
+    image: VmSpec,
+    extra_args: List[str] = [],
+    extra_args_pre: List[str] = [],
+    cpu_pinning: Optional[str] = None,
 ) -> Iterator[QemuVm]:
     with TemporaryDirectory() as tempdir:
         qmp_socket = Path(tempdir).joinpath("qmp.sock")
+        ushell_socket: Optional[Path] = Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
         cmd = extra_args_pre.copy()
-        cmd += qemu_command(image, qmp_socket)
+        cmd += qemu_command(image, qmp_socket, ushell_socket)
         cmd += extra_args
+        # cmd += [ "&&", "sleep", "99999" ]
+        # cmd = [ "bash", "-c", "echo foobar && sleep 99999" ]
 
         tmux_session = f"pytest-{os.getpid()}"
         tmux = [
@@ -305,10 +412,14 @@ def spawn_qemu(
             "-L",
             tmux_session,
             "new-session",
-            "-d",
+            "-s",
+            "qemu",
+            "-d",  # QEMU_DEBUG: for debugging early qemu crashes, comment this and switch the following two lines:
             " ".join(map(quote, cmd)),
+            # " ".join(map(quote, cmd)) + " |& tee /tmp/foo; sleep 999999",
         ]
         print("$ " + " ".join(map(quote, tmux)))
+        # breakpoint()
         subprocess.run(tmux, check=True)
         try:
             proc = subprocess.run(
@@ -330,9 +441,9 @@ def spawn_qemu(
                     os.kill(qemu_pid, 0)
                     time.sleep(0.1)
                 except ProcessLookupError:
-                    raise Exception("qemu vm was terminated")
+                    raise Exception("Qemu vm was terminated quickly. Check QEMU_DEBUG above.")
             with connect_qmp(qmp_socket) as session:
-                yield QemuVm(session, tmux_session, qemu_pid)
+                yield QemuVm(session, tmux_session, qemu_pid, ushell_socket)
         finally:
             subprocess.run(["tmux", "-L", tmux_session, "kill-server"])
             while True:

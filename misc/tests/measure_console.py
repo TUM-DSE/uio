@@ -9,6 +9,8 @@ import os
 import sys
 import termios
 import signal
+import socket as s
+import select
 
 
 # overwrite the number of samples to take to a minimum
@@ -40,13 +42,14 @@ def sample(
 STATS_PATH = MEASURE_RESULTS.joinpath("console-stats.json")
 
 
-def expect(fd: int, timeout: int, until: Optional[str] = None) -> bool:
+def expect(ushell: s.socket, timeout: int, until: Optional[str] = None) -> bool:
     """
     @return true if terminated because of until
     """
     if QUICK:
         print("begin readall until", until)
-    import select
+
+    fd = ushell.fileno()
 
     buf = ""
     ret = False
@@ -54,7 +57,7 @@ def expect(fd: int, timeout: int, until: Optional[str] = None) -> bool:
     if QUICK:
         print("[readall] ", end="")
     while fd in r:
-        out = os.read(fd, 1).decode()
+        out = ushell.recv(1).decode()
         buf += out
         if until is not None and until in buf:
             ret = True
@@ -68,28 +71,30 @@ def expect(fd: int, timeout: int, until: Optional[str] = None) -> bool:
     return ret
 
 
-def assertline(ptmfd: int, value: str) -> None:
-    assert expect(ptmfd, 2, f"{value}")  # not sure why and when how many \r's occur.
+def assertline(ushell: s.socket, value: str) -> None:
+    assert expect(ushell, 2, f"{value}")  # not sure why and when how many \r's occur.
 
 
-def writeall(fd: int, content: str) -> None:
+def sendall(ushell: s.socket, content: str) -> None:
     if QUICK:
         print("[writeall]", content.strip())
-    c = os.write(fd, str.encode(content))
+    c = ushell.send(str.encode(content))
     if c != len(content):
         raise Exception("TODO implement writeall")
 
 
-def echo(ptmfd: int, prompt: str) -> float:
+def echo_newline(ushell: s.socket, prompt: str) -> float:
+    """
+    send newline and expect prompt back. Time to reply is returned.
+    """
     if QUICK:
         print("measuring echo")
     sw = time.monotonic()
-    writeall(ptmfd, "echo hello world\n")
+    sendall(ushell, "\n")
 
-    assertline(ptmfd, "hello world")
+    assertline(ushell, prompt)
     sw = time.monotonic() - sw
 
-    assert expect(ptmfd, 2, prompt)
     time.sleep(0.5)
     return sw
 
@@ -100,20 +105,23 @@ def vmsh_console(helpers: confmeasure.Helpers, stats: Any) -> None:
         print(f"skip {name}")
         return
 
-    (ptmfd, ptsfd) = pty.openpty()
-    pts = os.readlink(f"/proc/self/fd/{ptsfd}")
-    os.close(ptsfd)
-    # pts = "/proc/self/fd/1"
-    print("pts: ", pts)
-    cmd = ["/bin/sh"]
-    with util.testbench_console(helpers, pts, guest_cmd=cmd) as _:
-        # breakpoint()
-        assert expect(ptmfd, 2, "~ #")
-        samples = sample(lambda: echo(ptmfd, "~ #"))
-        print("samples:", samples)
-        # print(f"echo: {echo(ptmfd, ptm)}s")
+    ushell = s.socket(s.AF_UNIX)
 
-    os.close(ptmfd)
+    with util.testbench_console(helpers) as vm:
+        # vm.wait_for_ping("172.44.0.2")
+        ushell.connect(bytes(vm.ushell_socket))
+
+        # ensure readiness of system
+        # time.sleep(1) # guest network stack is up, but also wait for application to start
+        time.sleep(2) # for the count app we dont really have a way to check if it is online
+        
+        sendall(ushell, "\n")
+        while not expect(ushell, 10, "> "): pass
+
+        samples = sample(lambda: echo_newline(ushell, "> "))
+        print("samples:", samples)
+
+    ushell.close()
 
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
@@ -191,14 +199,14 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
-    print("measure performance for native")
-    native(helpers, stats)
-    print("measure performance for ssh")
-    ssh(helpers, stats)
+    # print("measure performance for native")
+    # native(helpers, stats)
+    # print("measure performance for ssh")
+    # ssh(helpers, stats)
     print("measure performance for vmsh console")
     vmsh_console(helpers, stats)
 
-    util.export_fio("console", stats)  # TODO rename
+    # util.export_fio("console", stats)  # TODO rename
 
 
 if __name__ == "__main__":

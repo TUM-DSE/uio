@@ -22,6 +22,10 @@
         pkgs = nixpkgs.legacyPackages.${system};
         pythonEnv = pkgs.python39.withPackages (ps: with ps; [
           pyflakes
+          black # autoformat python code with `black misc/tests`
+          pytest
+          pandas
+          psutil
           fire
           jedi
         ]);

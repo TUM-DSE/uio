@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Iterator
 
-from qemu import VmImage
+from qemu import VmImage, VmSpec
 from root import PROJECT_ROOT
 
 
@@ -27,6 +27,39 @@ def nix_build(what: str) -> Any:
         cwd=PROJECT_ROOT,
     )
     return json.loads(result.stdout)
+
+
+def uk_build(name: str) -> Path:
+    build = nix_build(name)
+    out = build[0]["outputs"]["out"]
+    return Path(out)
+
+
+def uk_nginx() -> VmSpec:
+    build = uk_build(".#uk-nginx-ushell")
+    kernel = build / "nginx_kvm-x86_64"
+    initrd = build / "fs0.cpio"
+    return VmSpec(
+        kernel=kernel,
+        app_cmdline="-c /nginx/conf/nginx.conf",
+        netbridge=True,
+        ushell_devices=True,
+        initrd=None,
+        rootfs_9p=PROJECT_ROOT / "apps/nginx/fs0",
+    )
+
+def uk_count() -> VmSpec:
+    build = uk_build(".#uk-count-ushell")
+    kernel = build / "count_kvm-x86_64"
+    initrd = build / "fs0.cpio"
+    return VmSpec(
+        kernel=kernel,
+        app_cmdline="",
+        netbridge=True,
+        ushell_devices=True,
+        initrd=None,
+        rootfs_9p=PROJECT_ROOT / "apps/count/fs0",
+    )
 
 
 def writable_image(name: str) -> Iterator[Path]:
@@ -79,5 +112,3 @@ def notos_image_custom_kernel(nix: str = NOTOS_IMAGE) -> VmImage:
     image.kerneldir = PROJECT_ROOT.joinpath("..", "linux")
     image.kernel = image.kerneldir.joinpath("arch", "x86", "boot")
     return image
-
-breakpoint()
