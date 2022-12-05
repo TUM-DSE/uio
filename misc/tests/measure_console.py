@@ -11,6 +11,7 @@ import termios
 import signal
 import socket as s
 import select
+from tqdm import tqdm
 
 
 # overwrite the number of samples to take to a minimum
@@ -29,9 +30,9 @@ def sample(
     f: Callable[[], Optional[float]], size: int = SIZE, warmup: int = WARMUP
 ) -> List[float]:
     ret = []
-    for i in range(0, warmup):
+    for i in tqdm(range(0, warmup)):
         f()
-    for i in range(0, size):
+    for i in tqdm(range(0, size)):
         r = f()
         if r is None:
             return []
@@ -99,8 +100,8 @@ def echo_newline(ushell: s.socket, prompt: str) -> float:
     return sw
 
 
-def vmsh_console(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "vmsh-console"
+def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
+    name = "ushell-console"
     if name in stats.keys():
         print(f"skip {name}")
         return
@@ -122,6 +123,33 @@ def vmsh_console(helpers: confmeasure.Helpers, stats: Any) -> None:
         print("samples:", samples)
 
     ushell.close()
+
+    stats[name] = samples
+    util.write_stats(STATS_PATH, stats)
+
+
+def ushell_init(helpers: confmeasure.Helpers, stats: Any) -> None:
+    name = "ushell-init"
+    if name in stats.keys():
+        print(f"skip {name}")
+        return
+
+    def experiment() -> float:
+        ushell = s.socket(s.AF_UNIX)
+
+        with util.testbench_console(helpers) as vm:
+            # vm.wait_for_ping("172.44.0.2")
+            ushell.connect(bytes(vm.ushell_socket))
+
+            # ensure readiness of system
+            # time.sleep(1) # guest network stack is up, but also wait for application to start
+            time.sleep(2) # for the count app we dont really have a way to check if it is online
+
+            return echo_newline(ushell, "> ")
+
+        ushell.close()
+
+    samples = sample(lambda: experiment())
 
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
@@ -203,10 +231,12 @@ def main() -> None:
     # native(helpers, stats)
     # print("measure performance for ssh")
     # ssh(helpers, stats)
-    print("measure performance for vmsh console")
-    vmsh_console(helpers, stats)
+    print("measure performance for ushell console")
+    ushell_console(helpers, stats)
+    print("measure performance of ushell init")
+    ushell_init(helpers, stats)
 
-    # util.export_fio("console", stats)  # TODO rename
+    util.export_fio("console", stats)  # TODO rename
 
 
 if __name__ == "__main__":

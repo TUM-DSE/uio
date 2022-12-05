@@ -28,6 +28,7 @@
           psutil
           fire
           jedi
+          tqdm # progress bars
         ]);
         buildDeps = [
           pkgs.yapf
