@@ -78,20 +78,20 @@
     "self-stable": {
       "flake": false,
       "locked": {
-        "lastModified": 1669840845,
-        "narHash": "sha256-a4ouKDOYiJnerW/7Uq4ShqRtMlFzTAXbICZXxB0wALc=",
-        "ref": "main",
-        "rev": "70d12c76c55dab7c7c2e8b7baad34b8e02dddf83",
-        "revCount": 68,
+        "lastModified": 1670251685,
+        "narHash": "sha256-38eoLsOylkyRpU65RpBB43rJMJkDZMT/5XRL0sGYVN4=",
+        "ref": "dev/peter",
+        "rev": "9d54be4b67bb5039eaaa5180ea73ea7bcdd84b47",
+        "revCount": 76,
         "submodules": true,
         "type": "git",
-        "url": "https://github.com/mmisono/unikraft-development"
+        "url": "ssh://git@github.com/mmisono/unikraft-development"
       },
       "original": {
-        "ref": "main",
+        "ref": "dev/peter",
         "submodules": true,
         "type": "git",
-        "url": "https://github.com/mmisono/unikraft-development"
+        "url": "ssh://git@github.com/mmisono/unikraft-development"
       }
     }
   },
