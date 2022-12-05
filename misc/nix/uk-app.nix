@@ -77,7 +77,7 @@ pkgs.stdenv.mkDerivation {
   '';
   configurePhase = ''
     cd apps/${app}
-    cp ${config} .config
+    [[ "${config}" == ".config" ]] || cp ${config} .config
     make oldconfig # ensure consistency and update absolute paths
   '';
   buildPhase = ''
