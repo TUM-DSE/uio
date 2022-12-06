@@ -19,6 +19,7 @@ NOW = datetime.now().strftime("%Y%m%d-%H%M%S")
 # passed to numactl, starts with 0
 CORES_VMSH = "1-3"
 CORES_QEMU = "4"
+CORES_BENCHMARK = "6,7"
 
 
 class Helpers:
@@ -65,6 +66,7 @@ class Helpers:
         extra_args_pre: List[str] = [],
     ) -> "contextlib._GeneratorContextManager[QemuVm]":
         return spawn_qemu(image, extra_args, extra_args_pre, cpu_pinning=CORES_QEMU)
+
 
 
 @pytest.fixture

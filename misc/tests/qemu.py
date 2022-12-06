@@ -185,11 +185,11 @@ class QemuVm:
         Block until icmp is responding
         @host: example: 172.44.0.2
         """
-        timeout = 0.3
+        timeout = 0.5
         max_ = int(1/timeout * 60)
         for i in range(0, max_):
-            response = os.system(f"ping -c 1 -W {timeout} {host}") # hide output TODO 
-            if response == 0:
+            response = run(["ping", "-c", "1", "-W", f"{timeout}", f"{host}"], check=False)
+            if response.returncode == 0:
                 return # its up
         raise Exception(f"VM is still not responding after {max_}sec")
 
