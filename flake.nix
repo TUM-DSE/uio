@@ -7,78 +7,91 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    self-stable = {
+      url = "git+ssh://git@github.com/mmisono/unikraft-development?ref=dev/peter&submodules=1";
+      #url = "path:/scratch/okelmann/unikraft-development"; # use this for local development
+      #url = "path:./"; # this wont include submodules. Nix bug?
+      flake = false; # we dont want the flake but just the sources
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, nixos-generators }:
+  outputs = { self, nixpkgs, flake-utils, nixos-generators, self-stable }:
     (flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         pythonEnv = pkgs.python39.withPackages (ps: with ps; [
           pyflakes
+          black # autoformat python code with `black misc/tests`
+          pytest
+          pandas
+          psutil
           fire
           jedi
+          tqdm # progress bars
         ]);
+        buildDeps = [
+          pkgs.yapf
+          pkgs.mypy
+          pkgs.ncurses
+          pkgs.pkg-config
+          pkgs.qemu
+          pkgs.qemu_kvm
+          pkgs.bear
+          pkgs.gcc
+          pkgs.libclang.python
+          pkgs.clang-tools
+          pkgs.redis
+          pkgs.bison
+          pkgs.flex
+          pkgs.just
+          pkgs.socat
+          pkgs.curl
+          pkgs.wget
+          pkgs.bridge-utils
+          pkgs.nettools
+          pkgs.nixpkgs-fmt
+          pkgs.glibc
+          pkgs.sqlite
+          pkgs.time # i dont think this is actually used, but `time` is checked for
+          # pkgs.glibc.static
+          pkgs.unzip # needed to make apps/nginx
+          pkgs.cpio
+        ];
       in
       {
         devShell = pkgs.mkShell {
-          buildInputs = [
+          buildInputs = buildDeps ++ [
             pythonEnv
-            pkgs.yapf
-            pkgs.mypy
-            pkgs.ncurses
-            pkgs.pkg-config
-            pkgs.qemu
-            pkgs.qemu_kvm
-            pkgs.bear
-            pkgs.gcc
-            pkgs.libclang.python
-            pkgs.clang-tools
-            pkgs.redis
-            pkgs.bison
-            pkgs.flex
-            pkgs.just
-            pkgs.socat
-            pkgs.curl
-            pkgs.wget
-            pkgs.bridge-utils
-            pkgs.nettools
-            pkgs.nixpkgs-fmt
-            pkgs.glibc
-            pkgs.sqlite
-            # pkgs.glibc.static
-            pkgs.unzip # needed to make apps/nginx
-            pkgs.cpio
 
             # needed for app/nginx benchmark
             pkgs.wrk 
             pkgs.nginx
-
           ];
         };
         packages = {
-          nginx-image = nixos-generators.nixosGenerate {
-            inherit pkgs;
-            modules = [ 
-              ({
-                system.stateVersion = "22.11";
-                networking.firewall.enable = false;
-                users.users.root.password = "password";
-                services.getty.autologinUser = pkgs.lib.mkDefault "root";
-
-                services.nginx = {
-                  enable = true;
-                };
-
-                networking.useDHCP = false;
-                networking.interfaces.ens4.useDHCP = false;
-                networking.interfaces.ens4.ipv4.addresses = [ {
-                  address = "172.44.0.2";
-                  prefixLength = 24;
-                } ];
-                networking.defaultGateway = "172.44.0.1";
-              })
-            ];
-            format = "qcow";
+          uk-nginx = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "nginx";
+            config = "config.eval.noshell.initrd";
+          };
+          uk-nginx-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "nginx";
+            config = "config.eval.ushell.9p";
+          };
+          uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = ".config";
+          };
+          uk-redis = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "redis";
+            config = ".config";
+          };
+          nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix { 
+            inherit pkgs nixos-generators; 
           };
         };
       }));

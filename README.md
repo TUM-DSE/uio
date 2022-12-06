@@ -26,3 +26,13 @@ cd apps/count
 just attach
 ```
 
+## measurements
+
+```bash
+nix develop 
+# delete results from previous runs
+rm -r ./misc/tests/measurements 
+# or to redo specific ones
+rm -r ./misc/tests/measurements/*.json
+sudo python3.9 ./misc/tests/measure_console.py
+```
