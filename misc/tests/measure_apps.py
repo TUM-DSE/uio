@@ -110,7 +110,7 @@ def echo_newline(ushell: s.socket, prompt: str) -> float:
     return sw
 
 
-def nginx_bench(host_port, length: str = DURATION, connections: int = 30, threads: int = 14) -> Any:
+def nginx_bench(host_port, length: str = DURATION, connections: int = 30, threads: int = 14) -> float:
 
     cmd = [ "taskset", "-c", confmeasure.CORES_BENCHMARK, 
            "wrk", "-t", str(threads),
@@ -123,12 +123,22 @@ def nginx_bench(host_port, length: str = DURATION, connections: int = 30, thread
     return value
     
 
+import threading
 
-def nginx_ushell(helpers: confmeasure.Helpers, stats: Any) -> None:
+def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = False) -> None:
     name = "nginx_ushell"
     if name in stats.keys():
         print(f"skip {name}")
         return
+
+    def human_using_ushell(ushell: s.socket, alive) -> None:
+        sendall(ushell, "\n")
+        expect(ushell, 10, "> ")
+        while alive.acquire(False):
+            alive.release()
+            time.sleep(1)
+            sendall(ushell, "ls\n")
+            expect(ushell, 10, "> ")
 
     def experiment() -> float:
         ushell = s.socket(s.AF_UNIX)
@@ -141,7 +151,20 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any) -> None:
             # ensure readiness of system
             # time.sleep(1) # guest network stack is up, but also wait for application to start
             time.sleep(2) # for the count app we dont really have a way to check if it is online
+
+            if with_human:
+                # start human ushell usage
+                alive = threading.Semaphore()
+                human = threading.Thread(target=lambda: human_using_ushell(ushell, alive), name="Human ushell user")
+                human.start()
+
             value = nginx_bench("172.44.0.2")
+            
+            if with_human:
+                # terminate human
+                alive.acquire(True)
+                human.join(timeout=5)
+                if human.is_alive(): raise Exception("human is still alive")
 
             return value
 
@@ -177,33 +200,8 @@ def run_nginx_native() -> Iterator[Any]:
 
         yield nginx
 
-        # breakpoint()
         nginx.kill()
-        # try:
-            # os.killpg(os.getpgid(nginx.pid), signal.SIGTERM)
-        # except ProcessLookupError:
-            # pass
-
         nginx.wait(timeout=10)
-
-        # import psutil
-        # print("foobar", flush=True)
-        # breakpoint()
-        # parent = psutil.Process(nginx.pid)
-        # for child in parent.children(recursive=True):  # or parent.children() for recursive=False
-            # print(child.pid)
-            # breakpoint()
-            # child.terminate()
-        # parent.terminate()
-
-        while True:
-            try:
-                os.kill(nginx.pid, 0)
-            except ProcessLookupError:
-                break
-            else:
-                print(f"waiting for {cmd[0]} to stop")
-                time.sleep(1)
 
 
 def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
@@ -214,7 +212,7 @@ def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
 
     def experiment() -> float:
         with run_nginx_native():
-            time.sleep(2)
+            time.sleep(2) # await nginx readiness
             value = nginx_bench("localhost:1337")
 
             return value
@@ -302,7 +300,7 @@ def main() -> None:
     # print("measure performance for ssh")
     # ssh(helpers, stats)
     print("measure performance for nginx ushell")
-    nginx_ushell(helpers, stats)
+    nginx_ushell(helpers, stats, with_human=False)
     print("measure performance for nginx native")
     nginx_native(helpers, stats)
 
