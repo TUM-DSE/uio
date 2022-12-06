@@ -57,6 +57,7 @@
           # pkgs.glibc.static
           pkgs.unzip # needed to make apps/nginx
           pkgs.cpio
+          pkgs.libelf
         ];
       in
       {
