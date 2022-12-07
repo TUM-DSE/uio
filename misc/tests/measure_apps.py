@@ -4,7 +4,7 @@ import measure_helpers as util
 from procs import run
 import root
 
-from typing import List, Any, Optional, Callable, Generator, Iterator
+from typing import List, Any, Optional, Callable, Generator, Iterator, Tuple
 import time
 import pty
 import os
@@ -20,7 +20,7 @@ from pathlib import Path
 
 
 # overwrite the number of samples to take to a minimum
-QUICK = True
+QUICK = False
 
 
 DURATION = "1m"
@@ -32,13 +32,18 @@ SIZE = 5
 WARMUP = 0
 if QUICK:
     WARMUP = 0
-    SIZE = 5
+    SIZE = 2
+
+
+REDIS_REPS = 100000
+if QUICK:
+    REDIS_REPS = 10000
 
 
 # QUICK: 20s else: 5min
 def sample(
-    f: Callable[[], Optional[float]], size: int = SIZE, warmup: int = WARMUP
-) -> List[float]:
+    f: Callable[[], Any], size: int = SIZE, warmup: int = WARMUP
+) -> List[Any]:
     ret = []
     for i in tqdm(range(0, warmup)):
         f()
@@ -121,7 +126,71 @@ def nginx_bench(host_port, length: str = DURATION, connections: int = 30, thread
     line = re.findall("^Requests/sec:.*$", result.stdout, flags=re.MULTILINE)[0]
     value = float(line.split(" ")[-1]) # requests / second
     return value
-    
+
+def redis_bench(host: str, port: int, reps: int = REDIS_REPS, concurrent_connections: int = 30, payload_size: int = 3, keepalive: int = 1, pipelining: int = 16) -> Tuple[float, float]:
+    queries: str = "get,set" # changing this probably changes output parsing
+    cmd = [ "taskset", "-c", confmeasure.CORES_BENCHMARK, 
+           "redis-benchmark", "--csv", "-q",
+           "-n", f"{reps}", 
+           "-c", f"{concurrent_connections}",
+           "-h", f"{host}",
+           "-p", f"{port}",
+           "-d", f"{payload_size}",
+           "-k", f"{keepalive}",
+           "-t", f"{queries}",
+           "-P", f"{pipelining}"
+        ]
+    result = run(cmd)
+    print(result.stdout)
+    from io import StringIO
+    csvdata = StringIO(result.stdout)
+    import csv
+    data = list(csv.reader(csvdata))
+    set_ = float(data[1][1])
+    get = float(data[2][1])
+    # line = re.findall("^Requests/sec:.*$", result.stdout, flags=re.MULTILINE)[0]
+    # value = float(line.split(" ")[-1]) # requests / second
+    return (set_, get)
+
+
+def redis_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = False) -> None:
+    name = "redis"
+    name_set = f"{name}-set"
+    name_get = f"{name}-get"
+    if name_set in stats.keys() and name_get in stats.keys():
+        print(f"skip {name}")
+        return
+
+    def experiment() -> Tuple[float, float]:
+        ushell = s.socket(s.AF_UNIX)
+
+        # with util.testbench_console(helpers) as vm:
+        with helpers.spawn_qemu(helpers.uk_redis()) as vm:
+            vm.wait_for_ping("172.44.0.2")
+            ushell.connect(bytes(vm.ushell_socket))
+
+            # ensure readiness of system
+            # time.sleep(1) # guest network stack is up, but also wait for application to start
+            time.sleep(2) # for the count app we dont really have a way to check if it is online
+
+            values = redis_bench("172.44.0.2", 6379)
+            
+            return values
+
+        ushell.close()
+
+    samples = sample(lambda: experiment())
+    sets = []
+    gets = []
+
+    for (a, b) in samples:
+        sets += [a]
+        gets += [b]
+
+    stats[name_set] = sets
+    stats[name_get] = gets
+    util.write_stats(STATS_PATH, stats)
+
 
 import threading
 
@@ -299,6 +368,8 @@ def main() -> None:
     # native(helpers, stats)
     # print("measure performance for ssh")
     # ssh(helpers, stats)
+    print("measure performance for redis ushell")
+    redis_ushell(helpers, stats)
     print("measure performance for nginx ushell")
     nginx_ushell(helpers, stats, with_human=False)
     print("measure performance for nginx native")

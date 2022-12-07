@@ -36,6 +36,10 @@ class Helpers:
         return nix.busybox_image()
 
     @staticmethod
+    def uk_redis() -> VmSpec:
+        return nix.uk_redis()
+
+    @staticmethod
     def uk_nginx() -> VmSpec:
         return nix.uk_nginx()
 
