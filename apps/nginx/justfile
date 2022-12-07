@@ -77,6 +77,7 @@ benchmark host_port NGINX_BENCH_LENGTH="1m" NGINX_CONNS="30" NGINX_WRK_THRDS="14
 
 native-nginx:
   mkdir -p nginx-native/logs
+  ln -s fs0/nginx/html nginx-native/html
   taskset -c 5 nginx -c ../nginx.conf -e $(pwd)/nginx-native/nginx.error -p $(pwd)/nginx-native
 
 qemu-nixos-nginx:

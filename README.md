@@ -35,4 +35,8 @@ rm -r ./misc/tests/measurements
 # or to redo specific ones
 rm -r ./misc/tests/measurements/*.json
 sudo python3.9 ./misc/tests/measure_console.py
+sudo python3.9 ./misc/tests/measure_apps.py
 ```
+
+Measure other code other from what is locked by flake.lock:
+Make `self-stable.url` in `flake.nix` point i.e. to your local git checkout and run `nix flake lock --update-input self-stable` every time the sources change.
