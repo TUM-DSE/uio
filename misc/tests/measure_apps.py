@@ -202,12 +202,13 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell"
 
     def human_using_ushell(ushell: s.socket, alive) -> None:
         sendall(ushell, "\n")
-        expect(ushell, 10, "> ")
+        assert expect(ushell, 2, "> ")
+        time.sleep(1)
         while alive.acquire(False):
+            sendall(ushell, "ls\n")
+            assert expect(ushell, 2, "> ")
             alive.release()
             time.sleep(1)
-            sendall(ushell, "ls\n")
-            expect(ushell, 10, "> ")
 
     def experiment(human) -> float:
         ushell = s.socket(s.AF_UNIX)
@@ -224,16 +225,16 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell"
             if human == "lshuman":
                 # start human ushell usage
                 alive = threading.Semaphore()
-                human = threading.Thread(target=lambda: human_using_ushell(ushell, alive), name="Human ushell user")
-                human.start()
+                human_ = threading.Thread(target=lambda: human_using_ushell(ushell, alive), name="Human ushell user")
+                human_.start()
 
             value = nginx_bench("172.44.0.2")
             
             if human == "lshuman":
                 # terminate human
                 alive.acquire(True)
-                human.join(timeout=5)
-                if human.is_alive(): raise Exception("human is still alive")
+                human_.join(timeout=5)
+                if human_.is_alive(): raise Exception("human is still alive")
 
             return value
 
@@ -377,12 +378,13 @@ def main() -> None:
 
     with_all_configs(redis_ushell)
     with_all_configs(nginx_ushell)
-    # nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd")
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman")
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="9p", human="lshuman")
 
     print("measure performance for nginx native")
     nginx_native(helpers, stats)
 
-    util.export_fio("console", stats)  # TODO rename
+    util.export_fio("app", stats)  # TODO rename
 
 
 if __name__ == "__main__":
