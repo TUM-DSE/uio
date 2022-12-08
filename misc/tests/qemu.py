@@ -405,7 +405,6 @@ def nixos_qemu_command(
     cmd = [ ]
 
     # general args
-
     if cpu_pinning is not None:
         cmd += [
             "taskset",
@@ -458,7 +457,7 @@ def spawn_qemu(
         cmd = extra_args_pre.copy()
         if isinstance(image, UkVmSpec):
             ushell_socket: Optional[Path] = Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
-            cmd += uk_qemu_command(image, qmp_socket, ushell_socket)
+            cmd += uk_qemu_command(image, qmp_socket, ushell_socket, cpu_pinning=cpu_pinning)
         elif isinstance(image, NixosVmSpec):
             cmd += nixos_qemu_command(image, qmp_socket)
         else:

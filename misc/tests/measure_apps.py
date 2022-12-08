@@ -266,7 +266,7 @@ def run_nginx_native() -> Iterator[Any]:
         ]
         import subprocess
         nginx = subprocess.Popen(cmd) #, preexec_fn=os.setsid)
-        run(["taskset", "-p", confmeasure.CORES_BENCHMARK, str(nginx.pid)])
+        run(["taskset", "-p", confmeasure.CORES_QEMU, str(nginx.pid)])
 
         yield nginx
 
