@@ -1,7 +1,7 @@
 {pkgs, self-stable, buildDeps, app, config ? ".config", ...}:
 pkgs.stdenv.mkDerivation {
   pname = "uk-${app}";
-  version = "0.9.0-ushell";
+  version = "0.9.0-${config}";
   nativeBuildInputs = with pkgs; buildDeps ++ [
     which
   ];

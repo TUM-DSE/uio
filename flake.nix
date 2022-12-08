@@ -70,27 +70,41 @@
             pkgs.nginx
           ];
         };
-        packages = {
-          uk-nginx = pkgs.callPackage ./misc/nix/uk-app.nix { 
-            inherit pkgs self-stable buildDeps;
-            app = "nginx";
-            config = "config.eval.noshell.initrd";
-          };
-          uk-nginx-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
-            inherit pkgs self-stable buildDeps;
-            app = "nginx";
-            config = "config.eval.ushell.9p";
-          };
+        packages = builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "nginx" "redis" ] (app:
+          pkgs.lib.forEach [ "noshell" "ushell" ] (shell:
+          pkgs.lib.forEach [ "initrd" "9p" ] (bootfs:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}" (
+              pkgs.callPackage ./misc/nix/uk-app.nix { 
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.${bootfs}";
+              }
+            )
+          )))
+        )) //
+        {
+        #packages_ = {
+          #uk-nginx-noshell-initrd = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            #inherit pkgs self-stable buildDeps;
+            #app = "nginx";
+            #config = "config.eval.noshell.initrd";
+          #};
+          #uk-nginx-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            #inherit pkgs self-stable buildDeps;
+            #app = "nginx";
+            #config = "config.eval.ushell.9p";
+          #};
           uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = ".config";
           };
-          uk-redis = pkgs.callPackage ./misc/nix/uk-app.nix { 
-            inherit pkgs self-stable buildDeps;
-            app = "redis";
-            config = ".config";
-          };
+          #uk-redis = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            #inherit pkgs self-stable buildDeps;
+            #app = "redis";
+            #config = ".config";
+          #};
           nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix { 
             inherit pkgs nixos-generators; 
           };
