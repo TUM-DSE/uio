@@ -9,7 +9,7 @@
 #endif
 
 #ifndef DB_QUERY
-#define DB_QUERY    "INSERT INTO tab VALUES (null, 'value')"
+#define DB_QUERY     "INSERT INTO tab VALUES (null, 'value')"
 #endif
 
 #ifndef OP_NUM
@@ -19,6 +19,39 @@
 #ifndef VERIFY_Q
 #define VERIFY_Q    0
 #endif
+
+sqlite3 *db;
+
+// this is the same workaround as in ../sqlite3_backup
+void sqlite3_save()
+{
+	int rc;
+	sqlite3 *pFile;
+	sqlite3_backup *pBackup;
+
+	if (!db) {
+		printf("db is not initialized\n");
+		return;
+	}
+
+	rc = sqlite3_open("dump", &pFile);
+	if (rc) {
+		printf("Failed to open db\n");
+		return;
+	}
+
+	pBackup = sqlite3_backup_init(pFile, "main", db, "main");
+	if (pBackup) {
+		(void)sqlite3_backup_step(pBackup, -1);
+		(void)sqlite3_backup_finish(pBackup);
+	}
+	rc = sqlite3_errcode(pFile);
+	if (rc) {
+		printf("SQLite3 save error: %d\n", rc);
+	}
+
+	(void)sqlite3_close(pFile);
+}
 
 static int callback(
         void *unused __attribute__((unused)),
@@ -33,10 +66,9 @@ static int callback(
     return 0;
 }
 
-int main(int argc, char **argv) {
-    sqlite3 *db;
-    char *zErrMsg = 0;
-    int rc;
+int main(int argc, char **argv){
+  char *zErrMsg = 0;
+  int rc;
 
     rc = sqlite3_open(DB_NAME, &db);
     if( rc ){
