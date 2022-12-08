@@ -68,6 +68,10 @@ benchmark host_port NGINX_BENCH_LENGTH="1m" NGINX_CONNS="30" NGINX_WRK_THRDS="14
   #   with CONFIG_LWIP_UKNETDEV_POLLONLY: 210k req/s
   # - With just qemu-nixos-nginx:
   #   57700 req/s
+  #   With index.html served via 9p (but without open_file_cache)
+  #   1800 req/s
+  #   With html served via 9p with open_file_cache:
+  #   18500 req/s
   # - Nginx kernel from unikraft eurosys eval:
   #   (https://github.com/pogobanane/eurosys21-artifacts/blob/master/experiments/fig_13_nginx-perf/nginxkraftvm.sh)
   #   235000 req/s (-21% from unikraft eurosys eval, but our cpu is -18% single core perf)
@@ -91,6 +95,8 @@ qemu-nixos-nginx:
       -drive file=./nginx-native/nginx.qcow2 \
       -netdev bridge,id=en0,br=virbr0 \
       -device virtio-net-pci,netdev=en0 \
+      -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
+      -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
       -nographic
 
 attach:

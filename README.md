@@ -28,6 +28,8 @@ just attach
 
 ## measurements
 
+TODO: describe how to set up networking
+
 ```bash
 nix develop 
 # delete results from previous runs
