@@ -71,7 +71,7 @@
           ];
         };
         packages = builtins.listToAttrs ( pkgs.lib.flatten (
-          pkgs.lib.forEach [ "nginx" "redis" ] (app:
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" ] (app:
           pkgs.lib.forEach [ "noshell" "ushell" ] (shell:
           pkgs.lib.forEach [ "initrd" "9p" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}" (

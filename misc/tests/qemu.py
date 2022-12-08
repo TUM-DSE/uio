@@ -200,6 +200,17 @@ class QemuVm:
                 return # its up
         raise Exception(f"VM is still not responding after {max_}sec")
 
+    def wait_for_death(self) -> None:
+        print("waiting for qemu to stop...")
+        while True:
+            try:
+                os.kill(self.pid, 0)
+            except ProcessLookupError:
+                print("...done")
+                break
+            else:
+                time.sleep(1)
+
     def ssh_Popen(
         self,
         stdout: ChildFd = subprocess.PIPE,
@@ -450,13 +461,15 @@ def spawn_qemu(
     image: Union[UkVmSpec, NixosVmSpec],
     extra_args: List[str] = [],
     extra_args_pre: List[str] = [],
+    log: Optional[Path] = None,
     cpu_pinning: Optional[str] = None,
 ) -> Iterator[QemuVm]:
     with TemporaryDirectory() as tempdir:
         qmp_socket = Path(tempdir).joinpath("qmp.sock")
         cmd = extra_args_pre.copy()
+        ushell_socket = None
         if isinstance(image, UkVmSpec):
-            ushell_socket: Optional[Path] = Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
+            ushell_socket = Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
             cmd += uk_qemu_command(image, qmp_socket, ushell_socket, cpu_pinning=cpu_pinning)
         elif isinstance(image, NixosVmSpec):
             cmd += nixos_qemu_command(image, qmp_socket)
@@ -473,8 +486,8 @@ def spawn_qemu(
             "-s",
             "qemu",
             "-d",  # QEMU_DEBUG: for debugging early qemu crashes, comment this and switch the following two lines:
-            " ".join(map(quote, cmd)),
-            # " ".join(map(quote, cmd)) + " |& tee /tmp/foo; sleep 999999",
+            " ".join(map(quote, cmd)) + (f" |& tee {str(log)}" if log is not None else ""),
+            # " ".join(map(quote, cmd)) + " |& tee /tmp/foo; echo 'qemu ended'; sleep 999999",
         ]
         print("$ " + " ".join(map(quote, tmux)))
         subprocess.run(tmux, check=True)

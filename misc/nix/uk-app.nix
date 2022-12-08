@@ -26,11 +26,20 @@ pkgs.stdenv.mkDerivation {
         dst = "apps/${app}/build/libnewlibc/${version}.tar.gz";
       };
 
-      liblwip = with liblwip; {
+      liblwip_x = with liblwip_x; {
         version = "UNIKRAFT-2_1_x";
         src = builtins.fetchurl {
           url = "https://github.com/unikraft/fork-lwip/archive/refs/heads/${version}.zip";
           sha256 = "1bq38ikhnlqfyb24s7mixr68qnsm4dlvr96g4y9z8ih9lz45mw8w";
+        };
+        dst = "apps/${app}/build/liblwip/${version}.zip";
+      };
+
+      liblwip_2 = with liblwip_2; {
+        version = "STABLE-2_1_2_RELEASE";
+        src = builtins.fetchurl {
+          url = "https://github.com/unikraft/fork-lwip/archive/refs/tags/${version}.zip";
+          sha256 = "143qpsw4nnbnk0liyx030adq1cmd0k9ya3dhabl0qwh24xpf82lg";
         };
         dst = "apps/${app}/build/liblwip/${version}.zip";
       };
@@ -51,6 +60,15 @@ pkgs.stdenv.mkDerivation {
           sha256 = "1njdkpzzhg28cavq5n7rv4p6my0x7g3d3lg9cnc66s42rk8xd9z5";
         };
         dst = "apps/${app}/build/libredis/${version}.zip";
+      };
+
+      libsqlite = with libsqlite; {
+        version = "sqlite-amalgamation-3300100";
+        src = builtins.fetchurl {
+          url = "https://www.sqlite.org/2019/${version}.zip";
+          sha256 = "10ghqm6f5a30ha5va8qdb5lcmkmnfwjlmg5vz9ffm087q7a53w5d";
+        };
+        dst = "apps/${app}/build/libsqlite/${version}.zip";
       };
     };
   in ''

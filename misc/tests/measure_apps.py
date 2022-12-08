@@ -20,7 +20,7 @@ from pathlib import Path
 
 
 # overwrite the number of samples to take to a minimum
-QUICK = True
+QUICK = False
 
 
 DURATION = "1m"
@@ -175,9 +175,9 @@ def redis_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell"
 
             values = redis_bench("172.44.0.2", 6379)
             
+            ushell.close()
             return values
 
-        ushell.close()
 
     samples = sample(lambda: experiment())
     sets = []
@@ -189,6 +189,46 @@ def redis_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell"
 
     stats[name_set] = sets
     stats[name_get] = gets
+    util.write_stats(STATS_PATH, stats)
+
+
+def sqlite_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
+    """
+    with 9p: 4min per sample
+    """
+    name = f"sqlite_{shell}_{bootfs}_{human}"
+    if name in stats.keys():
+        print(f"skip {name}")
+        return
+
+    def experiment() -> float:
+        ushell = s.socket(s.AF_UNIX)
+
+        # with util.testbench_console(helpers) as vm:
+        with TemporaryDirectory() as tempdir_:
+            log = Path(tempdir_) / "qemu.log"
+            with helpers.spawn_qemu(helpers.uk_sqlite(shell = shell, bootfs = bootfs), log=log) as vm:
+                # vm.wait_for_ping("172.44.0.2")
+                # ushell.connect(bytes(vm.ushell_socket))
+
+                # ensure readiness of system
+                # time.sleep(1) # guest network stack is up, but also wait for application to start
+                # time.sleep(2) # for the count app we dont really have a way to check if it is online
+
+                # values = redis_bench("172.44.0.2", 6379)
+                
+                # return values
+                vm.wait_for_death()
+            ushell.close()
+            with open(log, 'r') as f:
+                sec = float(f.readlines()[-1])
+                print(f"sql operations took {sec}")
+                return sec
+
+
+    samples = sample(lambda: experiment())
+
+    stats[name] = samples
     util.write_stats(STATS_PATH, stats)
 
 
@@ -236,9 +276,9 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell"
                 human_.join(timeout=5)
                 if human_.is_alive(): raise Exception("human is still alive")
 
+            ushell.close()
             return value
 
-        ushell.close()
 
     samples = sample(lambda: experiment(human))
 
@@ -391,18 +431,21 @@ def main() -> None:
     def with_all_configs(f):
         for shell in [ "ushell", "noshell" ]:
             for bootfs in [ "initrd", "9p" ]:
-                print(f"measure performance for nginx ({shell}, {bootfs})")
+                print(f"\nmeasure performance for nginx ({shell}, {bootfs})\n")
                 f(helpers, stats, shell=shell, bootfs=bootfs)
 
+    with_all_configs(sqlite_ushell)
     with_all_configs(redis_ushell)
     with_all_configs(nginx_ushell)
+    print("\nmeasure performance for nginx ushell with initrd and human interaction\n")
     nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman")
+    print("\nmeasure performance for nginx ushell with 9p and human interaction\n")
     nginx_ushell(helpers, stats, shell="ushell", bootfs="9p", human="lshuman")
 
-    print("measure performance for nginx native")
+    print("\nmeasure performance for nginx native\n")
     nginx_native(helpers, stats)
 
-    print("measure performance for nginx qemu with 9p")
+    print("\nmeasure performance for nginx qemu with 9p\n")
     nginx_qemu_9p(helpers, stats)
 
     util.export_fio("app", stats)  # TODO rename

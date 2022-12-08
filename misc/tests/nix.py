@@ -35,6 +35,20 @@ def uk_build(name: str) -> Path:
     return Path(out)
 
 
+def uk_sqlite(shell: str, bootfs: str) -> UkVmSpec:
+    build = uk_build(f".#uk-sqlite_benchmark-{shell}-{bootfs}")
+    kernel = build / "sqlite_benchmark_kvm-x86_64"
+    initrd = build / "fs0.cpio"
+    return UkVmSpec(
+        kernel=kernel,
+        app_cmdline="",
+        netbridge=True,
+        ushell_devices=True,
+        initrd=initrd,
+        rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
+    )
+
+
 def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
     build = uk_build(f".#uk-redis-{shell}-{bootfs}")
     kernel = build / "redis_kvm-x86_64"

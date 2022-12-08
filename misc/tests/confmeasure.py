@@ -37,6 +37,10 @@ class Helpers:
         return nix.busybox_image()
 
     @staticmethod
+    def uk_sqlite(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
+        return nix.uk_sqlite(shell, bootfs)
+
+    @staticmethod
     def uk_redis(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
         return nix.uk_redis(shell, bootfs)
 
@@ -73,10 +77,11 @@ class Helpers:
     @staticmethod
     def spawn_qemu(
         image: Union[UkVmSpec, NixosVmSpec],
+        log: Optional[Path] = None,
         extra_args: List[str] = [],
         extra_args_pre: List[str] = [],
     ) -> "contextlib._GeneratorContextManager[QemuVm]":
-        return spawn_qemu(image, extra_args, extra_args_pre, cpu_pinning=CORES_QEMU)
+        return spawn_qemu(image, extra_args, extra_args_pre, log=log, cpu_pinning=CORES_QEMU)
 
 
 
