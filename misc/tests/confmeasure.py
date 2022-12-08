@@ -4,10 +4,11 @@ import contextlib
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Type, Optional
+from typing import List, Type, Optional, Union, Iterator
+from contextlib import contextmanager
 
 import pytest
-from qemu import QemuVm, VmImage, VmSpec, spawn_qemu
+from qemu import QemuVm, VmImage, NixosVmSpec, UkVmSpec, spawn_qemu
 import nix
 from root import TEST_ROOT
 
@@ -36,16 +37,22 @@ class Helpers:
         return nix.busybox_image()
 
     @staticmethod
-    def uk_redis(shell: str = "ushell", bootfs: str = "9p") -> VmSpec:
+    def uk_redis(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
         return nix.uk_redis(shell, bootfs)
 
     @staticmethod
-    def uk_nginx(shell: str = "ushell", bootfs: str = "9p") -> VmSpec:
+    def uk_nginx(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
         return nix.uk_nginx(shell, bootfs)
 
     @staticmethod
-    def uk_count() -> VmSpec:
+    def uk_count() -> UkVmSpec:
         return nix.uk_count()
+
+    @staticmethod
+    @contextmanager
+    def nixos_nginx() -> Iterator[NixosVmSpec]:
+        with nix.nixos_nginx() as a:
+            yield a
 
     # @staticmethod
     # def spawn_vmsh_command(
@@ -65,7 +72,7 @@ class Helpers:
 
     @staticmethod
     def spawn_qemu(
-        image: VmSpec,
+        image: Union[UkVmSpec, NixosVmSpec],
         extra_args: List[str] = [],
         extra_args_pre: List[str] = [],
     ) -> "contextlib._GeneratorContextManager[QemuVm]":

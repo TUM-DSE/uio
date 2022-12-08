@@ -274,6 +274,29 @@ def run_nginx_native() -> Iterator[Any]:
         nginx.wait(timeout=10)
 
 
+def nginx_qemu_9p(helpers: confmeasure.Helpers, stats: Any) -> None:
+    name = "nginx_qemu_9p"
+    if name in stats.keys():
+        print(f"skip {name}")
+        return
+
+    def experiment() -> float:
+        with helpers.nixos_nginx() as nixos:
+            with helpers.spawn_qemu(nixos) as vm:
+                vm.wait_for_ping("172.44.0.2") # TODO wait_for_ping
+
+                # ensure readiness of system
+                # time.sleep(1) # guest network stack is up, but also wait for application to start
+                time.sleep(2) # for the count app we dont really have a way to check if it is online
+
+                return nginx_bench("172.44.0.2")
+
+    samples = sample(lambda: experiment())
+
+    stats[name] = samples
+    util.write_stats(STATS_PATH, stats)
+
+
 def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
     name = "nginx_native"
     if name in stats.keys():
@@ -371,11 +394,6 @@ def main() -> None:
                 print(f"measure performance for nginx ({shell}, {bootfs})")
                 f(helpers, stats, shell=shell, bootfs=bootfs)
 
-    # print("measure performance for native")
-    # native(helpers, stats)
-    # print("measure performance for ssh")
-    # ssh(helpers, stats)
-
     with_all_configs(redis_ushell)
     with_all_configs(nginx_ushell)
     nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman")
@@ -383,6 +401,9 @@ def main() -> None:
 
     print("measure performance for nginx native")
     nginx_native(helpers, stats)
+
+    print("measure performance for nginx qemu with 9p")
+    nginx_qemu_9p(helpers, stats)
 
     util.export_fio("app", stats)  # TODO rename
 

@@ -12,7 +12,7 @@ from pathlib import Path
 from queue import Queue
 from shlex import quote
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterator, List, Text, Optional
+from typing import Any, Dict, Iterator, List, Text, Optional, Union
 
 from root import TEST_ROOT, PROJECT_ROOT
 from procs import run, pprint_cmd, ChildFd
@@ -29,13 +29,20 @@ class VmImage:
 
 
 @dataclass
-class VmSpec:
+class UkVmSpec:
     kernel: Path
     app_cmdline: str
     netbridge: bool
     ushell_devices: bool
     initrd: Optional[Path]
     rootfs_9p: Optional[Path]
+
+
+@dataclass
+class NixosVmSpec:
+    qcow: Path
+    netbridge: bool
+    mnt_9p: Optional[Path]
 
 
 class QmpSession:
@@ -315,8 +322,8 @@ def qemu_command_unreachable(
     ]
 
 
-def qemu_command(
-    spec: VmSpec,
+def uk_qemu_command(
+    spec: UkVmSpec,
     qmp_socket: Path,
     ushell_socket = Optional[Path],
     cpu_pinning: Optional[str] = None,
@@ -390,21 +397,73 @@ def qemu_command(
     return cmd
 
 
+def nixos_qemu_command(
+    spec: NixosVmSpec,
+    qmp_socket: Path,
+    cpu_pinning: Optional[str] = None,
+) -> List[str]:
+    cmd = [ ]
+
+    # general args
+
+    if cpu_pinning is not None:
+        cmd += [
+            "taskset",
+            "-c",
+            cpu_pinning,
+        ]
+
+    cmd += [
+        "qemu-system-x86_64",
+        "-enable-kvm",
+        "-cpu",
+        "host",
+        "-m",
+        "1024",
+        "-device", "virtio-serial",
+        "-drive", f"file={spec.qcow}",
+        "-nographic",
+        "-qmp",
+        f"unix:{str(qmp_socket)},server,nowait",
+    ]
+
+    if spec.netbridge:
+        cmd += [
+            "-netdev",
+            "bridge,id=en0,br=virbr0",
+            "-device",
+            "virtio-net-pci,netdev=en0",
+        ]
+
+    if spec.mnt_9p is not None:
+        cmd += [
+            "-fsdev",
+            f"local,id=myid,path={spec.mnt_9p},security_model=none",
+            "-device",
+            "virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off",
+        ]
+
+    return cmd
+
+
 @contextmanager
 def spawn_qemu(
-    image: VmSpec,
+    image: Union[UkVmSpec, NixosVmSpec],
     extra_args: List[str] = [],
     extra_args_pre: List[str] = [],
     cpu_pinning: Optional[str] = None,
 ) -> Iterator[QemuVm]:
     with TemporaryDirectory() as tempdir:
         qmp_socket = Path(tempdir).joinpath("qmp.sock")
-        ushell_socket: Optional[Path] = Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
         cmd = extra_args_pre.copy()
-        cmd += qemu_command(image, qmp_socket, ushell_socket)
+        if isinstance(image, UkVmSpec):
+            ushell_socket: Optional[Path] = Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
+            cmd += uk_qemu_command(image, qmp_socket, ushell_socket)
+        elif isinstance(image, NixosVmSpec):
+            cmd += nixos_qemu_command(image, qmp_socket)
+        else:
+            raise Exception("unreachable")
         cmd += extra_args
-        # cmd += [ "&&", "sleep", "99999" ]
-        # cmd = [ "bash", "-c", "echo foobar && sleep 99999" ]
 
         tmux_session = f"pytest-{os.getpid()}"
         tmux = [
@@ -419,7 +478,6 @@ def spawn_qemu(
             # " ".join(map(quote, cmd)) + " |& tee /tmp/foo; sleep 999999",
         ]
         print("$ " + " ".join(map(quote, tmux)))
-        # breakpoint()
         subprocess.run(tmux, check=True)
         try:
             proc = subprocess.run(

@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Iterator
 
-from qemu import VmImage, VmSpec
+from qemu import VmImage, NixosVmSpec, UkVmSpec
 from root import PROJECT_ROOT
 
 
@@ -35,11 +35,11 @@ def uk_build(name: str) -> Path:
     return Path(out)
 
 
-def uk_redis(shell: str, bootfs: str) -> VmSpec:
+def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
     build = uk_build(f".#uk-redis-{shell}-{bootfs}")
     kernel = build / "redis_kvm-x86_64"
     initrd = build / "fs0.cpio"
-    return VmSpec(
+    return UkVmSpec(
         kernel=kernel,
         app_cmdline="/redis.conf",
         netbridge=True,
@@ -49,11 +49,11 @@ def uk_redis(shell: str, bootfs: str) -> VmSpec:
     )
 
 
-def uk_nginx(shell: str, bootfs: str) -> VmSpec:
+def uk_nginx(shell: str, bootfs: str) -> UkVmSpec:
     build = uk_build(f".#uk-nginx-{shell}-{bootfs}")
     kernel = build / "nginx_kvm-x86_64"
     initrd = build / "fs0.cpio"
-    return VmSpec(
+    return UkVmSpec(
         kernel=kernel,
         app_cmdline="-c /nginx/conf/nginx.conf",
         netbridge=True,
@@ -62,11 +62,11 @@ def uk_nginx(shell: str, bootfs: str) -> VmSpec:
         rootfs_9p=PROJECT_ROOT / "apps/nginx/fs0",
     )
 
-def uk_count() -> VmSpec:
+def uk_count() -> UkVmSpec:
     build = uk_build(".#uk-count-ushell")
     kernel = build / "count_kvm-x86_64"
     initrd = build / "fs0.cpio"
-    return VmSpec(
+    return UkVmSpec(
         kernel=kernel,
         app_cmdline="",
         netbridge=True,
@@ -74,6 +74,25 @@ def uk_count() -> VmSpec:
         initrd=None,
         rootfs_9p=PROJECT_ROOT / "apps/count/fs0",
     )
+
+import shutil
+from tempfile import TemporaryDirectory
+@contextmanager
+def nixos_nginx() -> Iterator[NixosVmSpec]:
+    with TemporaryDirectory() as tempdir_:
+        tempdir = Path(tempdir_)
+        build = uk_build(".#nginx-image")
+        qcowRo = build / "nixos.qcow2" # read only
+        qcow = tempdir / "nixos.qcow2"
+        shutil.copy(
+            str(qcowRo),
+            str(qcow)
+        )
+        yield NixosVmSpec(
+            qcow = qcow,
+            netbridge = True,
+            mnt_9p = PROJECT_ROOT / "apps/nginx/fs0", # TODO do tmpdirs as with measure_apps.py run_nginx_native
+        )
 
 
 def writable_image(name: str) -> Iterator[Path]:
