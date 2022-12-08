@@ -36,12 +36,12 @@ class Helpers:
         return nix.busybox_image()
 
     @staticmethod
-    def uk_redis() -> VmSpec:
-        return nix.uk_redis()
+    def uk_redis(shell: str = "ushell", bootfs: str = "9p") -> VmSpec:
+        return nix.uk_redis(shell, bootfs)
 
     @staticmethod
-    def uk_nginx() -> VmSpec:
-        return nix.uk_nginx()
+    def uk_nginx(shell: str = "ushell", bootfs: str = "9p") -> VmSpec:
+        return nix.uk_nginx(shell, bootfs)
 
     @staticmethod
     def uk_count() -> VmSpec:

@@ -35,8 +35,8 @@ def uk_build(name: str) -> Path:
     return Path(out)
 
 
-def uk_redis() -> VmSpec:
-    build = uk_build(".#uk-redis")
+def uk_redis(shell: str, bootfs: str) -> VmSpec:
+    build = uk_build(f".#uk-redis-{shell}-{bootfs}")
     kernel = build / "redis_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return VmSpec(
@@ -44,13 +44,13 @@ def uk_redis() -> VmSpec:
         app_cmdline="/redis.conf",
         netbridge=True,
         ushell_devices=True,
-        initrd=None,
+        initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/redis/fs0",
     )
 
 
-def uk_nginx() -> VmSpec:
-    build = uk_build(".#uk-nginx-ushell")
+def uk_nginx(shell: str, bootfs: str) -> VmSpec:
+    build = uk_build(f".#uk-nginx-{shell}-{bootfs}")
     kernel = build / "nginx_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return VmSpec(
@@ -58,7 +58,7 @@ def uk_nginx() -> VmSpec:
         app_cmdline="-c /nginx/conf/nginx.conf",
         netbridge=True,
         ushell_devices=True,
-        initrd=None,
+        initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/nginx/fs0",
     )
 

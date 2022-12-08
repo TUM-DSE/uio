@@ -20,7 +20,7 @@ from pathlib import Path
 
 
 # overwrite the number of samples to take to a minimum
-QUICK = False
+QUICK = True
 
 
 DURATION = "1m"
@@ -153,8 +153,8 @@ def redis_bench(host: str, port: int, reps: int = REDIS_REPS, concurrent_connect
     return (set_, get)
 
 
-def redis_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = False) -> None:
-    name = "redis"
+def redis_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
+    name = f"redis_{shell}_{bootfs}_{human}"
     name_set = f"{name}-set"
     name_get = f"{name}-get"
     if name_set in stats.keys() and name_get in stats.keys():
@@ -165,7 +165,7 @@ def redis_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
         ushell = s.socket(s.AF_UNIX)
 
         # with util.testbench_console(helpers) as vm:
-        with helpers.spawn_qemu(helpers.uk_redis()) as vm:
+        with helpers.spawn_qemu(helpers.uk_redis(shell = shell, bootfs = bootfs)) as vm:
             vm.wait_for_ping("172.44.0.2")
             ushell.connect(bytes(vm.ushell_socket))
 
@@ -194,8 +194,8 @@ def redis_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
 
 import threading
 
-def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = False) -> None:
-    name = "nginx_ushell"
+def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
+    name = f"nginx_{shell}_{bootfs}_{human}"
     if name in stats.keys():
         print(f"skip {name}")
         return
@@ -209,11 +209,11 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
             sendall(ushell, "ls\n")
             expect(ushell, 10, "> ")
 
-    def experiment() -> float:
+    def experiment(human) -> float:
         ushell = s.socket(s.AF_UNIX)
 
         # with util.testbench_console(helpers) as vm:
-        with helpers.spawn_qemu(helpers.uk_nginx()) as vm:
+        with helpers.spawn_qemu(helpers.uk_nginx(shell = shell, bootfs = bootfs)) as vm:
             vm.wait_for_ping("172.44.0.2")
             ushell.connect(bytes(vm.ushell_socket))
 
@@ -221,7 +221,7 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
             # time.sleep(1) # guest network stack is up, but also wait for application to start
             time.sleep(2) # for the count app we dont really have a way to check if it is online
 
-            if with_human:
+            if human == "lshuman":
                 # start human ushell usage
                 alive = threading.Semaphore()
                 human = threading.Thread(target=lambda: human_using_ushell(ushell, alive), name="Human ushell user")
@@ -229,7 +229,7 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
 
             value = nginx_bench("172.44.0.2")
             
-            if with_human:
+            if human == "lshuman":
                 # terminate human
                 alive.acquire(True)
                 human.join(timeout=5)
@@ -239,7 +239,7 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
 
         ushell.close()
 
-    samples = sample(lambda: experiment())
+    samples = sample(lambda: experiment(human))
 
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
@@ -364,14 +364,21 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
+    def with_all_configs(f):
+        for shell in [ "ushell", "noshell" ]:
+            for bootfs in [ "initrd", "9p" ]:
+                print(f"measure performance for nginx ({shell}, {bootfs})")
+                f(helpers, stats, shell=shell, bootfs=bootfs)
+
     # print("measure performance for native")
     # native(helpers, stats)
     # print("measure performance for ssh")
     # ssh(helpers, stats)
-    print("measure performance for redis ushell")
-    redis_ushell(helpers, stats)
-    print("measure performance for nginx ushell")
-    nginx_ushell(helpers, stats, with_human=False)
+
+    with_all_configs(redis_ushell)
+    with_all_configs(nginx_ushell)
+    # nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd")
+
     print("measure performance for nginx native")
     nginx_native(helpers, stats)
 
