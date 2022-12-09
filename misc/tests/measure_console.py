@@ -114,10 +114,13 @@ def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
 
         # ensure readiness of system
         # time.sleep(1) # guest network stack is up, but also wait for application to start
-        time.sleep(2) # for the count app we dont really have a way to check if it is online
-        
+        time.sleep(
+            2
+        )  # for the count app we dont really have a way to check if it is online
+
         sendall(ushell, "\n")
-        while not expect(ushell, 10, "> "): pass
+        while not expect(ushell, 10, "> "):
+            pass
 
         samples = sample(lambda: echo_newline(ushell, "> "))
         print("samples:", samples)
@@ -143,7 +146,9 @@ def ushell_init(helpers: confmeasure.Helpers, stats: Any) -> None:
 
             # ensure readiness of system
             # time.sleep(1) # guest network stack is up, but also wait for application to start
-            time.sleep(2) # for the count app we dont really have a way to check if it is online
+            time.sleep(
+                2
+            )  # for the count app we dont really have a way to check if it is online
 
             return echo_newline(ushell, "> ")
 

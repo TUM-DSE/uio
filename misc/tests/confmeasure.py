@@ -81,8 +81,9 @@ class Helpers:
         extra_args: List[str] = [],
         extra_args_pre: List[str] = [],
     ) -> "contextlib._GeneratorContextManager[QemuVm]":
-        return spawn_qemu(image, extra_args, extra_args_pre, log=log, cpu_pinning=CORES_QEMU)
-
+        return spawn_qemu(
+            image, extra_args, extra_args_pre, log=log, cpu_pinning=CORES_QEMU
+        )
 
 
 @pytest.fixture
