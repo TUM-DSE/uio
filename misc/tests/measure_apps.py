@@ -154,6 +154,9 @@ def redis_bench(host: str, port: int, reps: int = REDIS_REPS, concurrent_connect
 
 
 def redis_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
+    """
+    per sample: 4s
+    """
     name = f"redis_{shell}_{bootfs}_{human}"
     name_set = f"{name}-set"
     name_get = f"{name}-get"
@@ -194,7 +197,9 @@ def redis_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell"
 
 def sqlite_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
     """
-    with 9p: 4min per sample
+    per sample:
+    with 9p: 150s
+    with initrd: 10s
     """
     name = f"sqlite_{shell}_{bootfs}_{human}"
     if name in stats.keys():
@@ -235,6 +240,9 @@ def sqlite_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell
 import threading
 
 def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
+    """
+    per sample: 65s
+    """
     name = f"nginx_{shell}_{bootfs}_{human}"
     if name in stats.keys():
         print(f"skip {name}")
@@ -301,6 +309,7 @@ def run_nginx_native() -> Iterator[Any]:
 
         print(f"\nnginx workdir {tempdir}", flush=True)
         cmd = [
+
             "nginx", "-c", str(root.PROJECT_ROOT / "apps/nginx/nginx.conf"),
             "-e", str(tempdir / "nginx.error"), "-p", str(tempdir)
         ]
@@ -315,6 +324,9 @@ def run_nginx_native() -> Iterator[Any]:
 
 
 def nginx_qemu_9p(helpers: confmeasure.Helpers, stats: Any) -> None:
+    """
+    per sample: 75s
+    """
     name = "nginx_qemu_9p"
     if name in stats.keys():
         print(f"skip {name}")
@@ -323,7 +335,7 @@ def nginx_qemu_9p(helpers: confmeasure.Helpers, stats: Any) -> None:
     def experiment() -> float:
         with helpers.nixos_nginx() as nixos:
             with helpers.spawn_qemu(nixos) as vm:
-                vm.wait_for_ping("172.44.0.2") # TODO wait_for_ping
+                vm.wait_for_ping("172.44.0.2")
 
                 # ensure readiness of system
                 # time.sleep(1) # guest network stack is up, but also wait for application to start
@@ -338,6 +350,9 @@ def nginx_qemu_9p(helpers: confmeasure.Helpers, stats: Any) -> None:
 
 
 def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
+    """
+    per sample: 65s
+    """
     name = "nginx_native"
     if name in stats.keys():
         print(f"skip {name}")
@@ -421,7 +436,7 @@ def ssh(helpers: confmeasure.Helpers, stats: Any) -> None:
 
 def main() -> None:
     """
-    not quick: 5 * fio_suite(5min) + 2 * sample(5min) = 35min
+    not quick: ~70 min
     """
     util.check_intel_turbo()
     helpers = confmeasure.Helpers()
@@ -431,24 +446,25 @@ def main() -> None:
     def with_all_configs(f):
         for shell in [ "ushell", "noshell" ]:
             for bootfs in [ "initrd", "9p" ]:
-                print(f"\nmeasure performance for nginx ({shell}, {bootfs})\n")
+                print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs})\n")
                 f(helpers, stats, shell=shell, bootfs=bootfs)
 
-    with_all_configs(sqlite_ushell)
-    with_all_configs(redis_ushell)
-    with_all_configs(nginx_ushell)
+    with_all_configs(sqlite_ushell) # 2x5x 150s + 2x5x 4s
+    with_all_configs(redis_ushell) # 4x5x 4s
+    with_all_configs(nginx_ushell) # 4x5x 65s
+    # 2x5x 65s
     print("\nmeasure performance for nginx ushell with initrd and human interaction\n")
-    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman")
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman") 
     print("\nmeasure performance for nginx ushell with 9p and human interaction\n")
     nginx_ushell(helpers, stats, shell="ushell", bootfs="9p", human="lshuman")
 
     print("\nmeasure performance for nginx native\n")
-    nginx_native(helpers, stats)
+    nginx_native(helpers, stats) # 5x 65s
 
     print("\nmeasure performance for nginx qemu with 9p\n")
-    nginx_qemu_9p(helpers, stats)
+    nginx_qemu_9p(helpers, stats) # 5x 75s
 
-    util.export_fio("app", stats)  # TODO rename
+    util.export_fio("app", stats)
 
 
 if __name__ == "__main__":

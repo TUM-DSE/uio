@@ -163,7 +163,7 @@ class QemuVm:
         self.qmp_session = qmp_session
         self.tmux_session = tmux_session
         self.pid = pid
-        self.ssh_port = 0 # get_ssh_port(qmp_session) # TODO
+        self.ssh_port = 0 # get_ssh_port(qmp_session)
         self.ushell_socket = ushell_socket
 
     def events(self) -> Iterator[Dict[str, Any]]:

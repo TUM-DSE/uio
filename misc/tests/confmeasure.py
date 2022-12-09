@@ -19,7 +19,7 @@ NOW = datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # passed to numactl, starts with 0
 CORES_VMSH = "1-3"
-CORES_QEMU = "4"
+CORES_QEMU = "4,5"
 CORES_BENCHMARK = "6,7"
 
 
