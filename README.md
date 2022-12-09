@@ -28,13 +28,16 @@ just attach
 
 ## measurements
 
+TODO: describe how to set up networking
+
 ```bash
 nix develop 
 # delete results from previous runs
 rm -r ./misc/tests/measurements 
 # or to redo specific ones
-rm -r ./misc/tests/measurements/*.json
+rm -r ./misc/tests/measurements/console-stats.json
 sudo python3.9 ./misc/tests/measure_console.py
+rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
 ```
 

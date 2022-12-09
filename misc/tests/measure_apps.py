@@ -153,8 +153,11 @@ def redis_bench(host: str, port: int, reps: int = REDIS_REPS, concurrent_connect
     return (set_, get)
 
 
-def redis_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = False) -> None:
-    name = "redis"
+def redis_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
+    """
+    per sample: 4s
+    """
+    name = f"redis_{shell}_{bootfs}_{human}"
     name_set = f"{name}-set"
     name_get = f"{name}-get"
     if name_set in stats.keys() and name_get in stats.keys():
@@ -165,7 +168,7 @@ def redis_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
         ushell = s.socket(s.AF_UNIX)
 
         # with util.testbench_console(helpers) as vm:
-        with helpers.spawn_qemu(helpers.uk_redis()) as vm:
+        with helpers.spawn_qemu(helpers.uk_redis(shell = shell, bootfs = bootfs)) as vm:
             vm.wait_for_ping("172.44.0.2")
             ushell.connect(bytes(vm.ushell_socket))
 
@@ -175,9 +178,9 @@ def redis_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
 
             values = redis_bench("172.44.0.2", 6379)
             
+            ushell.close()
             return values
 
-        ushell.close()
 
     samples = sample(lambda: experiment())
     sets = []
@@ -192,28 +195,74 @@ def redis_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
     util.write_stats(STATS_PATH, stats)
 
 
+def sqlite_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
+    """
+    per sample:
+    with 9p: 150s
+    with initrd: 10s
+    """
+    name = f"sqlite_{shell}_{bootfs}_{human}"
+    if name in stats.keys():
+        print(f"skip {name}")
+        return
+
+    def experiment() -> float:
+        ushell = s.socket(s.AF_UNIX)
+
+        # with util.testbench_console(helpers) as vm:
+        with TemporaryDirectory() as tempdir_:
+            log = Path(tempdir_) / "qemu.log"
+            with helpers.spawn_qemu(helpers.uk_sqlite(shell = shell, bootfs = bootfs), log=log) as vm:
+                # vm.wait_for_ping("172.44.0.2")
+                # ushell.connect(bytes(vm.ushell_socket))
+
+                # ensure readiness of system
+                # time.sleep(1) # guest network stack is up, but also wait for application to start
+                # time.sleep(2) # for the count app we dont really have a way to check if it is online
+
+                # values = redis_bench("172.44.0.2", 6379)
+                
+                # return values
+                vm.wait_for_death()
+            ushell.close()
+            with open(log, 'r') as f:
+                sec = float(f.readlines()[-1])
+                print(f"sql operations took {sec}")
+                return sec
+
+
+    samples = sample(lambda: experiment())
+
+    stats[name] = samples
+    util.write_stats(STATS_PATH, stats)
+
+
 import threading
 
-def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = False) -> None:
-    name = "nginx_ushell"
+def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell", bootfs: str = "9p", human: str = "nohuman") -> None:
+    """
+    per sample: 65s
+    """
+    name = f"nginx_{shell}_{bootfs}_{human}"
     if name in stats.keys():
         print(f"skip {name}")
         return
 
     def human_using_ushell(ushell: s.socket, alive) -> None:
         sendall(ushell, "\n")
-        expect(ushell, 10, "> ")
+        assert expect(ushell, 2, "> ")
+        time.sleep(1)
         while alive.acquire(False):
+            sendall(ushell, "ls\n")
+            assert expect(ushell, 2, "> ")
             alive.release()
             time.sleep(1)
-            sendall(ushell, "ls\n")
-            expect(ushell, 10, "> ")
 
-    def experiment() -> float:
+    def experiment(human) -> float:
         ushell = s.socket(s.AF_UNIX)
 
         # with util.testbench_console(helpers) as vm:
-        with helpers.spawn_qemu(helpers.uk_nginx()) as vm:
+        with helpers.spawn_qemu(helpers.uk_nginx(shell = shell, bootfs = bootfs)) as vm:
             vm.wait_for_ping("172.44.0.2")
             ushell.connect(bytes(vm.ushell_socket))
 
@@ -221,25 +270,25 @@ def nginx_ushell(helpers: confmeasure.Helpers, stats: Any, with_human: bool = Fa
             # time.sleep(1) # guest network stack is up, but also wait for application to start
             time.sleep(2) # for the count app we dont really have a way to check if it is online
 
-            if with_human:
+            if human == "lshuman":
                 # start human ushell usage
                 alive = threading.Semaphore()
-                human = threading.Thread(target=lambda: human_using_ushell(ushell, alive), name="Human ushell user")
-                human.start()
+                human_ = threading.Thread(target=lambda: human_using_ushell(ushell, alive), name="Human ushell user")
+                human_.start()
 
             value = nginx_bench("172.44.0.2")
             
-            if with_human:
+            if human == "lshuman":
                 # terminate human
                 alive.acquire(True)
-                human.join(timeout=5)
-                if human.is_alive(): raise Exception("human is still alive")
+                human_.join(timeout=5)
+                if human_.is_alive(): raise Exception("human is still alive")
 
+            ushell.close()
             return value
 
-        ushell.close()
 
-    samples = sample(lambda: experiment())
+    samples = sample(lambda: experiment(human))
 
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
@@ -260,12 +309,13 @@ def run_nginx_native() -> Iterator[Any]:
 
         print(f"\nnginx workdir {tempdir}", flush=True)
         cmd = [
+
             "nginx", "-c", str(root.PROJECT_ROOT / "apps/nginx/nginx.conf"),
             "-e", str(tempdir / "nginx.error"), "-p", str(tempdir)
         ]
         import subprocess
         nginx = subprocess.Popen(cmd) #, preexec_fn=os.setsid)
-        run(["taskset", "-p", confmeasure.CORES_BENCHMARK, str(nginx.pid)])
+        run(["taskset", "-p", confmeasure.CORES_QEMU, str(nginx.pid)])
 
         yield nginx
 
@@ -273,7 +323,36 @@ def run_nginx_native() -> Iterator[Any]:
         nginx.wait(timeout=10)
 
 
+def nginx_qemu_9p(helpers: confmeasure.Helpers, stats: Any) -> None:
+    """
+    per sample: 75s
+    """
+    name = "nginx_qemu_9p"
+    if name in stats.keys():
+        print(f"skip {name}")
+        return
+
+    def experiment() -> float:
+        with helpers.nixos_nginx() as nixos:
+            with helpers.spawn_qemu(nixos) as vm:
+                vm.wait_for_ping("172.44.0.2")
+
+                # ensure readiness of system
+                # time.sleep(1) # guest network stack is up, but also wait for application to start
+                time.sleep(2) # for the count app we dont really have a way to check if it is online
+
+                return nginx_bench("172.44.0.2")
+
+    samples = sample(lambda: experiment())
+
+    stats[name] = samples
+    util.write_stats(STATS_PATH, stats)
+
+
 def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
+    """
+    per sample: 65s
+    """
     name = "nginx_native"
     if name in stats.keys():
         print(f"skip {name}")
@@ -357,25 +436,35 @@ def ssh(helpers: confmeasure.Helpers, stats: Any) -> None:
 
 def main() -> None:
     """
-    not quick: 5 * fio_suite(5min) + 2 * sample(5min) = 35min
+    not quick: ~70 min
     """
     util.check_intel_turbo()
     helpers = confmeasure.Helpers()
 
     stats = util.read_stats(STATS_PATH)
 
-    # print("measure performance for native")
-    # native(helpers, stats)
-    # print("measure performance for ssh")
-    # ssh(helpers, stats)
-    print("measure performance for redis ushell")
-    redis_ushell(helpers, stats)
-    print("measure performance for nginx ushell")
-    nginx_ushell(helpers, stats, with_human=False)
-    print("measure performance for nginx native")
-    nginx_native(helpers, stats)
+    def with_all_configs(f):
+        for shell in [ "ushell", "noshell" ]:
+            for bootfs in [ "initrd", "9p" ]:
+                print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs})\n")
+                f(helpers, stats, shell=shell, bootfs=bootfs)
 
-    util.export_fio("console", stats)  # TODO rename
+    with_all_configs(sqlite_ushell) # 2x5x 150s + 2x5x 4s
+    with_all_configs(redis_ushell) # 4x5x 4s
+    with_all_configs(nginx_ushell) # 4x5x 65s
+    # 2x5x 65s
+    print("\nmeasure performance for nginx ushell with initrd and human interaction\n")
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman") 
+    print("\nmeasure performance for nginx ushell with 9p and human interaction\n")
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="9p", human="lshuman")
+
+    print("\nmeasure performance for nginx native\n")
+    nginx_native(helpers, stats) # 5x 65s
+
+    print("\nmeasure performance for nginx qemu with 9p\n")
+    nginx_qemu_9p(helpers, stats) # 5x 75s
+
+    util.export_fio("app", stats)
 
 
 if __name__ == "__main__":

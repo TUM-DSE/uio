@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Iterator
 
-from qemu import VmImage, VmSpec
+from qemu import VmImage, NixosVmSpec, UkVmSpec
 from root import PROJECT_ROOT
 
 
@@ -35,38 +35,52 @@ def uk_build(name: str) -> Path:
     return Path(out)
 
 
-def uk_redis() -> VmSpec:
-    build = uk_build(".#uk-redis")
+def uk_sqlite(shell: str, bootfs: str) -> UkVmSpec:
+    build = uk_build(f".#uk-sqlite_benchmark-{shell}-{bootfs}")
+    kernel = build / "sqlite_benchmark_kvm-x86_64"
+    initrd = build / "fs0.cpio"
+    return UkVmSpec(
+        kernel=kernel,
+        app_cmdline="",
+        netbridge=True,
+        ushell_devices=True,
+        initrd=initrd,
+        rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
+    )
+
+
+def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
+    build = uk_build(f".#uk-redis-{shell}-{bootfs}")
     kernel = build / "redis_kvm-x86_64"
     initrd = build / "fs0.cpio"
-    return VmSpec(
+    return UkVmSpec(
         kernel=kernel,
         app_cmdline="/redis.conf",
         netbridge=True,
         ushell_devices=True,
-        initrd=None,
+        initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/redis/fs0",
     )
 
 
-def uk_nginx() -> VmSpec:
-    build = uk_build(".#uk-nginx-ushell")
+def uk_nginx(shell: str, bootfs: str) -> UkVmSpec:
+    build = uk_build(f".#uk-nginx-{shell}-{bootfs}")
     kernel = build / "nginx_kvm-x86_64"
     initrd = build / "fs0.cpio"
-    return VmSpec(
+    return UkVmSpec(
         kernel=kernel,
         app_cmdline="-c /nginx/conf/nginx.conf",
         netbridge=True,
         ushell_devices=True,
-        initrd=None,
+        initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/nginx/fs0",
     )
 
-def uk_count() -> VmSpec:
+def uk_count() -> UkVmSpec:
     build = uk_build(".#uk-count-ushell")
     kernel = build / "count_kvm-x86_64"
     initrd = build / "fs0.cpio"
-    return VmSpec(
+    return UkVmSpec(
         kernel=kernel,
         app_cmdline="",
         netbridge=True,
@@ -74,6 +88,25 @@ def uk_count() -> VmSpec:
         initrd=None,
         rootfs_9p=PROJECT_ROOT / "apps/count/fs0",
     )
+
+import shutil
+from tempfile import TemporaryDirectory
+@contextmanager
+def nixos_nginx() -> Iterator[NixosVmSpec]:
+    with TemporaryDirectory() as tempdir_:
+        tempdir = Path(tempdir_)
+        build = uk_build(".#nginx-image")
+        qcowRo = build / "nixos.qcow2" # read only
+        qcow = tempdir / "nixos.qcow2"
+        shutil.copy(
+            str(qcowRo),
+            str(qcow)
+        )
+        yield NixosVmSpec(
+            qcow = qcow,
+            netbridge = True,
+            mnt_9p = PROJECT_ROOT / "apps/nginx/fs0", # TODO do tmpdirs as with measure_apps.py run_nginx_native
+        )
 
 
 def writable_image(name: str) -> Iterator[Path]:

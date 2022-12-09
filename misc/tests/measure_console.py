@@ -231,12 +231,12 @@ def main() -> None:
     # native(helpers, stats)
     # print("measure performance for ssh")
     # ssh(helpers, stats)
-    print("measure performance for ushell console")
+    print("\nmeasure performance for ushell console\n")
     ushell_console(helpers, stats)
-    print("measure performance of ushell init")
+    print("\nmeasure performance of ushell init\n")
     ushell_init(helpers, stats)
 
-    util.export_fio("console", stats)  # TODO rename
+    util.export_fio("console", stats)
 
 
 if __name__ == "__main__":

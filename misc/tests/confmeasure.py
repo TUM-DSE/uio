@@ -4,10 +4,11 @@ import contextlib
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Type, Optional
+from typing import List, Type, Optional, Union, Iterator
+from contextlib import contextmanager
 
 import pytest
-from qemu import QemuVm, VmImage, VmSpec, spawn_qemu
+from qemu import QemuVm, VmImage, NixosVmSpec, UkVmSpec, spawn_qemu
 import nix
 from root import TEST_ROOT
 
@@ -18,7 +19,7 @@ NOW = datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # passed to numactl, starts with 0
 CORES_VMSH = "1-3"
-CORES_QEMU = "4"
+CORES_QEMU = "4,5"
 CORES_BENCHMARK = "6,7"
 
 
@@ -36,16 +37,26 @@ class Helpers:
         return nix.busybox_image()
 
     @staticmethod
-    def uk_redis() -> VmSpec:
-        return nix.uk_redis()
+    def uk_sqlite(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
+        return nix.uk_sqlite(shell, bootfs)
 
     @staticmethod
-    def uk_nginx() -> VmSpec:
-        return nix.uk_nginx()
+    def uk_redis(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
+        return nix.uk_redis(shell, bootfs)
 
     @staticmethod
-    def uk_count() -> VmSpec:
+    def uk_nginx(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
+        return nix.uk_nginx(shell, bootfs)
+
+    @staticmethod
+    def uk_count() -> UkVmSpec:
         return nix.uk_count()
+
+    @staticmethod
+    @contextmanager
+    def nixos_nginx() -> Iterator[NixosVmSpec]:
+        with nix.nixos_nginx() as a:
+            yield a
 
     # @staticmethod
     # def spawn_vmsh_command(
@@ -65,11 +76,12 @@ class Helpers:
 
     @staticmethod
     def spawn_qemu(
-        image: VmSpec,
+        image: Union[UkVmSpec, NixosVmSpec],
+        log: Optional[Path] = None,
         extra_args: List[str] = [],
         extra_args_pre: List[str] = [],
     ) -> "contextlib._GeneratorContextManager[QemuVm]":
-        return spawn_qemu(image, extra_args, extra_args_pre, cpu_pinning=CORES_QEMU)
+        return spawn_qemu(image, extra_args, extra_args_pre, log=log, cpu_pinning=CORES_QEMU)
 
 
 
