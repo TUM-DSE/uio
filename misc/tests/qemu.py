@@ -159,11 +159,17 @@ def ssh_cmd(port: int) -> List[str]:
 
 
 class QemuVm:
-    def __init__(self, qmp_session: QmpSession, tmux_session: str, pid: int, ushell_socket: Optional[Path]) -> None:
+    def __init__(
+        self,
+        qmp_session: QmpSession,
+        tmux_session: str,
+        pid: int,
+        ushell_socket: Optional[Path],
+    ) -> None:
         self.qmp_session = qmp_session
         self.tmux_session = tmux_session
         self.pid = pid
-        self.ssh_port = 0 # get_ssh_port(qmp_session)
+        self.ssh_port = 0  # get_ssh_port(qmp_session)
         self.ushell_socket = ushell_socket
 
     def events(self) -> Iterator[Dict[str, Any]]:
@@ -193,11 +199,13 @@ class QemuVm:
         @host: example: 172.44.0.2
         """
         timeout = 0.5
-        max_ = int(1/timeout * 60)
+        max_ = int(1 / timeout * 60)
         for i in range(0, max_):
-            response = run(["ping", "-c", "1", "-W", f"{timeout}", f"{host}"], check=False)
+            response = run(
+                ["ping", "-c", "1", "-W", f"{timeout}", f"{host}"], check=False
+            )
             if response.returncode == 0:
-                return # its up
+                return  # its up
         raise Exception(f"VM is still not responding after {max_}sec")
 
     def wait_for_death(self) -> None:
@@ -336,10 +344,10 @@ def qemu_command_unreachable(
 def uk_qemu_command(
     spec: UkVmSpec,
     qmp_socket: Path,
-    ushell_socket = Optional[Path],
+    ushell_socket=Optional[Path],
     cpu_pinning: Optional[str] = None,
 ) -> List[str]:
-    cmd = [ ]
+    cmd = []
 
     # general args
 
@@ -384,7 +392,9 @@ def uk_qemu_command(
 
     if spec.ushell_devices:
         if ushell_socket is None:
-            raise Exception("ushell devices are activated but ushell socket is not defined")
+            raise Exception(
+                "ushell devices are activated but ushell socket is not defined"
+            )
         cmd += [
             "-chardev",
             f"socket,path={ushell_socket},server=on,wait=off,id=char0",
@@ -413,7 +423,7 @@ def nixos_qemu_command(
     qmp_socket: Path,
     cpu_pinning: Optional[str] = None,
 ) -> List[str]:
-    cmd = [ ]
+    cmd = []
 
     # general args
     if cpu_pinning is not None:
@@ -430,8 +440,10 @@ def nixos_qemu_command(
         "host",
         "-m",
         "1024",
-        "-device", "virtio-serial",
-        "-drive", f"file={spec.qcow}",
+        "-device",
+        "virtio-serial",
+        "-drive",
+        f"file={spec.qcow}",
         "-nographic",
         "-qmp",
         f"unix:{str(qmp_socket)},server,nowait",
@@ -469,8 +481,12 @@ def spawn_qemu(
         cmd = extra_args_pre.copy()
         ushell_socket = None
         if isinstance(image, UkVmSpec):
-            ushell_socket = Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
-            cmd += uk_qemu_command(image, qmp_socket, ushell_socket, cpu_pinning=cpu_pinning)
+            ushell_socket = (
+                Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
+            )
+            cmd += uk_qemu_command(
+                image, qmp_socket, ushell_socket, cpu_pinning=cpu_pinning
+            )
         elif isinstance(image, NixosVmSpec):
             cmd += nixos_qemu_command(image, qmp_socket)
         else:
@@ -486,7 +502,8 @@ def spawn_qemu(
             "-s",
             "qemu",
             "-d",  # QEMU_DEBUG: for debugging early qemu crashes, comment this and switch the following two lines:
-            " ".join(map(quote, cmd)) + (f" |& tee {str(log)}" if log is not None else ""),
+            " ".join(map(quote, cmd))
+            + (f" |& tee {str(log)}" if log is not None else ""),
             # " ".join(map(quote, cmd)) + " |& tee /tmp/foo; echo 'qemu ended'; sleep 999999",
         ]
         print("$ " + " ".join(map(quote, tmux)))
@@ -511,7 +528,9 @@ def spawn_qemu(
                     os.kill(qemu_pid, 0)
                     time.sleep(0.1)
                 except ProcessLookupError:
-                    raise Exception("Qemu vm was terminated quickly. Check QEMU_DEBUG above.")
+                    raise Exception(
+                        "Qemu vm was terminated quickly. Check QEMU_DEBUG above."
+                    )
             with connect_qmp(qmp_socket) as session:
                 yield QemuVm(session, tmux_session, qemu_pid, ushell_socket)
         finally:
