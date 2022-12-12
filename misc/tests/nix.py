@@ -46,6 +46,7 @@ def uk_sqlite(shell: str, bootfs: str) -> UkVmSpec:
         ushell_devices=True,
         initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs1",
     )
 
 
@@ -60,6 +61,7 @@ def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
         ushell_devices=True,
         initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/redis/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/redis/fs1",
     )
 
 
@@ -74,6 +76,7 @@ def uk_nginx(shell: str, bootfs: str) -> UkVmSpec:
         ushell_devices=True,
         initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/nginx/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/nginx/fs1",
     )
 
 
@@ -88,6 +91,7 @@ def uk_count() -> UkVmSpec:
         ushell_devices=True,
         initrd=None,
         rootfs_9p=PROJECT_ROOT / "apps/count/fs0",
+        fs1_9p=None,
     )
 
 

@@ -36,6 +36,7 @@ class UkVmSpec:
     ushell_devices: bool
     initrd: Optional[Path]
     rootfs_9p: Optional[Path]
+    fs1_9p: Optional[Path]
 
 
 @dataclass
@@ -413,6 +414,14 @@ def uk_qemu_command(
             f"local,id=myid,path={spec.rootfs_9p},security_model=none",
             "-device",
             "virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off",
+        ]
+
+    if spec.fs1_9p is not None:
+        cmd += [
+            "-fsdev",
+            f"local,id=myid2,path={spec.fs1_9p},security_model=none",
+            "-device",
+            "virtio-9p-pci,fsdev=myid2,mount_tag=fs1,disable-modern=on,disable-legacy=off",
         ]
 
     return cmd

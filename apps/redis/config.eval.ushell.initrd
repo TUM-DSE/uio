@@ -1,8 +1,8 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Unikraft/0.9.0~8ed9279 Configuration
+# Unikraft/0.9.0~b44e5b8 Configuration
 #
-CONFIG_UK_FULLVERSION="0.9.0~8ed9279"
+CONFIG_UK_FULLVERSION="0.9.0~b44e5b8"
 CONFIG_UK_CODENAME="Hyperion"
 CONFIG_UK_ARCH="x86_64"
 CONFIG_UK_BASE="/scratch/okelmann/unikraft-development/unikraft"
@@ -180,6 +180,7 @@ CONFIG_LIBUKSWRAND_INITIALSEED_TIME=y
 CONFIG_LIBUKTIME=y
 CONFIG_LIBUKTIMECONV=y
 CONFIG_LIBUSHELL=y
+CONFIG_LIBUSHELL_FSDEV="fs1"
 CONFIG_LIBVFSCORE=y
 
 #
