@@ -34,3 +34,12 @@ gdb:
 
 attach:
     sudo socat /tmp/port0 -
+
+gen_sym_txt:
+    nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 > ./fs0/symbol.txt
+
+gen_sym_txt_mini:
+    nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 | grep ushell_puts > ./fs0/symbol_mini.txt
+    nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 | grep ushell_loader_test_func >> ./fs0/symbol_mini.txt
+    nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 | grep ushell_loader_test_data >> ./fs0/symbol_mini.txt
+
