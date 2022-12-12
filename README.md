@@ -32,13 +32,16 @@ TODO: describe how to set up networking
 
 ```bash
 nix develop 
-# delete results from previous runs
-rm -r ./misc/tests/measurements 
-# or to redo specific ones
+
 rm -r ./misc/tests/measurements/console-stats.json
 sudo python3.9 ./misc/tests/measure_console.py
+python3.9 ./misc/tests/graph.py misc/tests/measurements/console-latest.tsv
+ls ./console.pdf
+
 rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
+python3.9 ./misc/tests/graph.py misc/tests/measurements/app-latest.tsv
+ls ./redis.pdf ./sqlite.pdf ./nginx.pdf
 ```
 
 Measure other code other from what is locked by flake.lock:

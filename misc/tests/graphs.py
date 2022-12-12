@@ -26,6 +26,9 @@ if PAPER_MODE:
 else:
     out_format = ".png"
 
+palette = sns.color_palette("colorblind")
+palette = [palette[-1], palette[1], palette[2]]
+
 ROW_ALIASES.update(
     {
         "direction": dict(read_mean="read", write_mean="write"),
@@ -194,6 +197,59 @@ def system_to_iotype(df: pd.DataFrame, value: str) -> pd.DataFrame:
     return df.assign(iotype=iotype)
 
 
+def parse_app_system(df: pd.DataFrame) -> pd.DataFrame:
+    def h(row: Any) -> Any:
+        if "redis" in row.system:
+            return "redis"
+        elif "nginx" in row.system:
+            return "nginx"
+        elif "sqlite" in row.system:
+            return "sqlite"
+
+    app = df.apply(h, axis=1)
+    ret = df.assign(app=app)
+
+    def i(row: Any) -> Any:
+        if "-set" in row.system:
+            return "set"
+        elif "-get" in row.system:
+            return "get"
+        else:
+            return ""
+
+    direction = df.apply(i, axis=1)
+    ret = ret.assign(direction=direction)
+
+    def j(row: Any) -> Any:
+        if "-set" in row.system:
+            return row.system[:-4]
+        elif "-get" in row.system:
+            return row.system[:-4]
+        else:
+            return row.system
+
+    system = df.apply(j, axis=1)
+    ret = ret.assign(system=system)
+
+    def f(row: Any) -> Any:
+        if "noshell" in row.system:
+            return "noshell"
+        elif "ushell" in row.system:
+            return "ushell"
+
+    shell = df.apply(f, axis=1)
+    ret = ret.assign(shell=shell)
+
+    def g(row: Any) -> Any:
+        if "9p" in row.system:
+            return "9p"
+        elif "initrd" in row.system:
+            return "initrd"
+
+    rootfs = df.apply(g, axis=1)
+    return ret.assign(rootfs=rootfs)
+
+
 def fio(df: pd.DataFrame, what: str, value_name: str) -> Any:
     df = df[df["benchmark"] == what][df["system"] != "direct_host2"]
     df = df.melt(
@@ -275,7 +331,7 @@ def console(df: pd.DataFrame) -> Any:
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
         height=1.1,
         aspect=4,
-        palette=None,
+        palette=palette,
     )
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
@@ -411,6 +467,151 @@ def phoronix(df: pd.DataFrame) -> Any:
     )
     return g
 
+hatches = ["/", ".", ""]
+def add_hatches(plot) -> None:
+    for bars, hatch in zip(plot.ax.containers, hatches):
+        for bar in bars:
+            bar.set_hatch(hatch)
+
+def nginx(df: pd.DataFrame, what: str) -> Any:
+    # df = df[df["benchmark"] == what]
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="requests")
+    df = parse_app_system(df)
+    df = df[df["rootfs"] == "initrd"][df["app"] == what]
+
+    g = catplot(
+        data=apply_aliases(df),
+        y=column_alias("system"),
+        # order=systems_order(df),
+        x=column_alias("requests"),
+        # hue=column_alias("direction"),
+        kind="bar",
+        ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
+        height=2.3,
+        aspect=2,
+        palette=palette,
+        legend=False,
+        row="app",
+        # sharex=True,
+        # sharey=False,
+        # facet_kws=dict({"gridspec_kws": {"height_ratios": [directs, files]}}),
+    )
+    # g.ax.set_xscale("log")
+
+    FONT_SIZE = 8
+    g.ax.annotate(
+        "Higher is better",
+        xycoords="axes points",
+        xy=(0, 0),
+        xytext=(-90, -30),
+        fontsize=FONT_SIZE,
+        color="navy",
+        weight="bold",
+    )
+    g.ax.annotate(
+        "",
+        xycoords="axes points",
+        xy=(-0, -27),
+        xytext=(-15, -27),
+        fontsize=FONT_SIZE,
+        arrowprops=dict(arrowstyle="-|>", color="navy"),
+    )
+
+    return g
+
+
+def redis(df: pd.DataFrame, what: str) -> Any:
+    # df = df[df["benchmark"] == what]
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="requests")
+    df = parse_app_system(df)
+    df = df[df["rootfs"] == "initrd"][df["app"] == what]
+    g = catplot(
+        data=apply_aliases(df),
+        y=column_alias("system"),
+        # order=systems_order(df),
+        x=column_alias("requests"),
+        hue=column_alias("direction"),
+        kind="bar",
+        ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
+        height=2.3,
+        aspect=2,
+        palette=palette,
+        legend=True,
+        row="app",
+        # sharex=True,
+        # sharey=False,
+        # facet_kws=dict({"gridspec_kws": {"height_ratios": [directs, files]}}),
+    )
+    # g.ax.set_xscale("log")
+    add_hatches(g)
+
+    FONT_SIZE = 8
+    g.ax.annotate(
+        "Higher is better",
+        xycoords="axes points",
+        xy=(0, 0),
+        xytext=(-90, -30),
+        fontsize=FONT_SIZE,
+        color="navy",
+        weight="bold",
+    )
+    g.ax.annotate(
+        "",
+        xycoords="axes points",
+        xy=(-0, -27),
+        xytext=(-15, -27),
+        fontsize=FONT_SIZE,
+        arrowprops=dict(arrowstyle="-|>", color="navy"),
+    )
+
+    return g
+
+
+def sqlite(df: pd.DataFrame, what: str) -> Any:
+    # df = df[df["benchmark"] == what]
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="time")
+    df = parse_app_system(df)
+    df = df[df["rootfs"] == "initrd"][df["app"] == what]
+
+    g = catplot(
+        data=apply_aliases(df),
+        y=column_alias("system"),
+        # order=systems_order(df),
+        x=column_alias("time"),
+        # hue=column_alias("direction"),
+        kind="bar",
+        ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
+        height=2.3,
+        aspect=2,
+        palette=palette,
+        legend=False,
+        row="app",
+        # sharex=True,
+        # sharey=False,
+        # facet_kws=dict({"gridspec_kws": {"height_ratios": [directs, files]}}),
+    )
+    # g.ax.set_xscale("log")
+
+    FONT_SIZE = 8
+    g.ax.annotate(
+        "Lower is better",
+        xycoords="axes points",
+        xy=(0, 0),
+        xytext=(1, -30),
+        fontsize=FONT_SIZE,
+        color="navy",
+        weight="bold",
+    )
+    g.ax.annotate(
+        "",
+        xycoords="axes points",
+        xy=(-15, -27),
+        xytext=(0, -27),
+        fontsize=FONT_SIZE,
+        arrowprops=dict(arrowstyle="-|>", color="navy"),
+    )
+
+    return g
 
 def fio_overhead(df: pd.DataFrame, what: str, value_name: str) -> Any:
     df = df[df["benchmark"] == what]
@@ -533,6 +734,10 @@ def main() -> None:
                     fio_overhead(df, "worst-case-iops-seperate", "iops"),
                 )
             )
+        elif name.startswith("app"):
+            graphs.append(("nginx", nginx(df, "nginx")))
+            graphs.append(("sqlite", sqlite(df, "sqlite")))
+            graphs.append(("redis", redis(df, "redis")))
         elif name.startswith("console"):
             graphs.append(("console", console(df)))
         elif name.startswith("phoronix"): # unreachable
