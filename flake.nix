@@ -29,6 +29,11 @@
           fire
           jedi
           tqdm # progress bars
+
+          # for graphs.py
+          natsort 
+          matplotlib
+          seaborn
         ]);
         buildDeps = [
           pkgs.yapf
