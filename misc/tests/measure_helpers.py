@@ -223,6 +223,17 @@ def check_intel_turbo() -> None:
                 )
                 exit(1)
 
+def is_hyperthreading_enabled():
+    cpuinfo = dict(map(str.strip, line.split(':'))
+                   for line in open('/proc/cpuinfo')
+                   if ':' in line)
+
+    return cpuinfo['siblings'] != cpuinfo['cpu cores']
+
+def check_hyperthreading() -> None:
+    if is_hyperthreading_enabled():
+        print("Warn: Please disable hyperthreading in you BIOS.")
+        # exit(1)
 
 MEMORY_HOG = bytearray(0)
 

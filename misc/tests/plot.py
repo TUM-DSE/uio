@@ -68,10 +68,14 @@ def systems_order(df: pd.DataFrame) -> List[str]:
 
 def catplot(**kwargs: Any) -> Any:
     # kwargs.setdefault("palette", "Greys")
+    kwargs.setdefault("edgecolor", "k")
+    kwargs.setdefault("errcolor", "black")
+    kwargs.setdefault("errwidth", 1)
+    kwargs.setdefault("capsize", 0.2)
     g = sns.catplot(**kwargs)
     g.despine(top=False, right=False)
-    plt.autoscale()
-    plt.subplots_adjust(top=0.98)
+    # plt.autoscale()
+    # plt.subplots_adjust(top=0.98)
     return g
 
 
@@ -97,6 +101,12 @@ def rescale_barplot_width(ax: Any, factor: float = 0.6) -> None:
         bar.set_width(new_width)
         bar.set_x(center - new_width / 2.0)
 
+def set_barplot_width(ax: Any, width: float) -> None:
+    for bar in ax.patches:
+        x = bar.get_x()
+        center = x + bar.get_width() / 2.0
+        bar.set_width(width)
+        bar.set_x(center - width / 2.0)
 
 def column_alias(name: str) -> str:
     return COLUMN_ALIASES.get(name, name)

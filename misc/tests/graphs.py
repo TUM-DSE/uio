@@ -18,6 +18,7 @@ from plot import (
     plt,
     format,
     magnitude_formatter,
+    change_width,
 )
 from plot import ROW_ALIASES, COLUMN_ALIASES, FORMATTER
 
@@ -32,73 +33,32 @@ palette = [palette[-1], palette[1], palette[2]]
 ROW_ALIASES.update(
     {
         "direction": dict(read_mean="read", write_mean="write"),
-        "system": dict(
-            direct_host1="native",
-            direct_host2="native #2",
-            direct_detached_qemublk=r"$\ast \dag$ qemu-blk",
-            direct_ws_qemublk=r"$\dag$ wrap_syscall qemu-blk",
-            direct_ws_javdev=r"$\ast$ wrap_syscall vmsh-blk",
-            direct_iorefd_qemublk=r"$\dag$ ioregionfd qemu-blk",
-            direct_iorefd_javdev=r"$\ast$ ioregionfd vmsh-blk",
-            detached_qemublk=r"$\ddag$ qemu-blk",
-            detached_qemu9p=r"$\ddag$ qemu-9p",
-            attached_ws_javdev="wrap_syscall vmsh-blk",
-            attached_iorefd_javdev="ioregionfd vmsh-blk",
-        ),
+        "system": {
+            "ushell-console": "ushell console",
+            "ushell-init": "wo/ isolation",
+            "redis_ushell_initrd_nohuman": "ushell nohuman",
+            "redis_noshell_initrd_nohuman": "noshell nohuman",
+            "sqlite_ushell_initrd_nohuman": "ushell nohuman",
+            "sqlite_noshell_initrd_nohuman": "noshell nohuman",
+            "nginx_ushell_initrd_nohuman": "ushell nohuman",
+            "nginx_noshell_initrd_nohuman": "noshell nohuman",
+            "nginx_ushell_initrd_lshuman": "ushell lshuman",
+        },
         "iotype": dict(
             direct="Direct/Block IO",
             file="File IO",
         ),
-        "benchmark_id": {
-            "Compile Bench: Test: Compile [MB/s]": "Compile Bench: Compile",
-            "Compile Bench: Test: Initial Create [MB/s]": "Compile Bench: Create",
-            "Compile Bench: Test: Read Compiled Tree [MB/s]": "Compile Bench: Read tree",
-            "Dbench: 1 Clients [MB/s]": "Dbench: 1 Client",
-            "Dbench: 12 Clients [MB/s]": "Dbench: 12 Clients",
-            "FS-Mark: Test: 1000 Files, 1MB Size [Files/s]": "FS-Mark: 1000 Files, 1MB",
-            "FS-Mark: Test: 1000 Files, 1MB Size, No Sync/FSync [Files/s]": "FS-Mark: 1k Files, No Sync",
-            "FS-Mark: Test: 4000 Files, 32 Sub Dirs, 1MB Size [Files/s]": "FS-Mark: 4k Files, 32 Dirs",
-            "FS-Mark: Test: 5000 Files, 1MB Size, 4 Threads [Files/s]": "FS-Mark: 5k Files, 1MB, 4 Threads",
-            "Flexible IO Tester: Type: Random Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory [IOPS]": "Fio: Rand read, 4KB",
-            "Flexible IO Tester: Type: Random Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 2MB - Disk Target: Default Test Directory [IOPS]": "Fio: Rand read, 2MB",
-            "Flexible IO Tester: Type: Random Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory [IOPS]": "Fio: Rand write, 4KB",
-            "Flexible IO Tester: Type: Random Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 2MB - Disk Target: Default Test Directory [IOPS]": "Fio: Rand write, 2MB",
-            "Flexible IO Tester: Type: Sequential Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory [IOPS]": "Fio: Sequential read, 4KB",
-            "Flexible IO Tester: Type: Sequential Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 2MB - Disk Target: Default Test Directory [IOPS]": "Fio: Sequential read, 2MB",
-            "Flexible IO Tester: Type: Sequential Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory [IOPS]": "Fio: Sequential write, 2KB",
-            "Flexible IO Tester: Type: Sequential Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 2MB - Disk Target: Default Test Directory [IOPS]": "Fio: Sequential write, 2MB",
-            "IOR: Block Size: 2MB - Disk Target: Default Test Directory [MB/s]": "IOR: 2MB",
-            "IOR: Block Size: 4MB - Disk Target: Default Test Directory [MB/s]": "IOR: 4MB",
-            "IOR: Block Size: 8MB - Disk Target: Default Test Directory [MB/s]": "IOR: 8MB",
-            "IOR: Block Size: 16MB - Disk Target: Default Test Directory [MB/s]": "IOR: 16MB",
-            "IOR: Block Size: 32MB - Disk Target: Default Test Directory [MB/s]": "IOR: 32MB",
-            "IOR: Block Size: 64MB - Disk Target: Default Test Directory [MB/s]": "IOR: 64MB",
-            "IOR: Block Size: 256MB - Disk Target: Default Test Directory [MB/s]": "IOR: 256MB",
-            "IOR: Block Size: 512MB - Disk Target: Default Test Directory [MB/s]": "IOR: 512MB",
-            "IOR: Block Size: 1024MB - Disk Target: Default Test Directory [MB/s]": "IOR: 1025MB",
-            "PostMark: Disk Transaction Performance [TPS]": "PostMark: Disk transactions",
-            "SQLite: Threads / Copies: 1 [Seconds]": "Sqlite: 1 Threads",
-            "SQLite: Threads / Copies: 8 [Seconds]": "Sqlite: 8 Threads",
-            "SQLite: Threads / Copies: 32 [Seconds]": "Sqlite: 32 Threads",
-            "SQLite: Threads / Copies: 64 [Seconds]": "Sqlite: 64 Threads",
-            "SQLite: Threads / Copies: 128 [Seconds]": "Sqlite: 128 Threads",
-            "AIO-Stress: Random Write": "AIO-Stress: Random Write",
-            "SQLite: Timed SQLite Insertions": "SQlite",
-            "FS-Mark: 1000 Files, 1MB Size": "FS-Mark",
-        },
     }
 )
 
-ROW_ALIASES["system"]["ushell-console"] = "ushell console"
-ROW_ALIASES["system"]["ushell-init"] = "ushell init"
 
 COLUMN_ALIASES.update(
     {
-        "container_size": "image size [MB]",
-        "iops": "IOPS [k]",
-        "io_throughput": "Throughput [GB/s]",
-        "direction": "Direction",
-        "seconds": "latency [s]",
+        "ushell-console-seconds": "latency [s]",
+        "ushell-init-seconds": "time [s]",
+        "redis-requests": "requests/s",
+        "nginx-requests": "requests/s",
+        "sqlite-seconds": "time [s]",
     }
 )
 FORMATTER.update(
@@ -318,42 +278,46 @@ def fio(df: pd.DataFrame, what: str, value_name: str) -> Any:
     return g
 
 
-def console(df: pd.DataFrame) -> Any:
-    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="seconds")
-    df = df[df["system"] == "ushell-console"]
+def console(df: pd.DataFrame, name: str) -> Any:
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"{name}-seconds")
+    df = df[df["system"] == name]
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
+    width = 3.3
+    aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
         # order=systems_order(df),
-        x=column_alias("seconds"),
+        x=column_alias(f"{name}-seconds"),
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
-        height=1.1,
-        aspect=4,
+        height=width/aspect,
+        aspect=aspect,
         palette=palette,
     )
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
-    FONT_SIZE = 8
+
+    FONT_SIZE = 9
     g.ax.annotate(
         "Lower is better",
-        xycoords="axes fraction",
+        xycoords="axes points",
         xy=(0, 0),
-        xytext=(0.07, -0.62),
+        xytext=(1, -30),
         fontsize=FONT_SIZE,
         color="navy",
         weight="bold",
     )
     g.ax.annotate(
         "",
-        xycoords="axes fraction",
-        xy=(0.0, -0.56),
-        xytext=(0.07, -0.56),
+        xycoords="axes points",
+        xy=(-15, -27),
+        xytext=(0, -27),
         fontsize=FONT_SIZE,
         arrowprops=dict(arrowstyle="-|>", color="navy"),
     )
+
     g.despine()
     format(g.ax.xaxis, "seconds")
     return g
@@ -475,20 +439,22 @@ def add_hatches(plot) -> None:
 
 def nginx(df: pd.DataFrame, what: str) -> Any:
     # df = df[df["benchmark"] == what]
-    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="requests")
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="nginx-requests")
     df = parse_app_system(df)
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
 
+    width = 3.3
+    aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
         # order=systems_order(df),
-        x=column_alias("requests"),
+        x=column_alias("nginx-requests"),
         # hue=column_alias("direction"),
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
-        height=2.3,
-        aspect=2,
+        height=width/aspect,
+        aspect=aspect,
         palette=palette,
         legend=False,
         row="app",
@@ -498,7 +464,7 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
     )
     # g.ax.set_xscale("log")
 
-    FONT_SIZE = 8
+    FONT_SIZE = 9
     g.ax.annotate(
         "Higher is better",
         xycoords="axes points",
@@ -522,30 +488,37 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
 
 def redis(df: pd.DataFrame, what: str) -> Any:
     # df = df[df["benchmark"] == what]
-    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="requests")
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="redis-requests")
     df = parse_app_system(df)
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
+    # default font size seems to be 9, scaling it to around 10 crashes seaborn though
+    # sns.set(font_scale=1.11)
+    width = 3.3
+    aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
         # order=systems_order(df),
-        x=column_alias("requests"),
+        x=column_alias("redis-requests"),
         hue=column_alias("direction"),
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
-        height=2.3,
-        aspect=2,
+        height=width/aspect,
+        aspect=aspect,
         palette=palette,
         legend=True,
         row="app",
+        # fontsize=FONT_SIZE,
         # sharex=True,
         # sharey=False,
         # facet_kws=dict({"gridspec_kws": {"height_ratios": [directs, files]}}),
     )
+    # g.ax.set_xlabel("foo", fontsize=10)
     # g.ax.set_xscale("log")
     add_hatches(g)
+    # change_width(g.ax, 3.3)
 
-    FONT_SIZE = 8
+    FONT_SIZE = 9
     g.ax.annotate(
         "Higher is better",
         xycoords="axes points",
@@ -569,20 +542,22 @@ def redis(df: pd.DataFrame, what: str) -> Any:
 
 def sqlite(df: pd.DataFrame, what: str) -> Any:
     # df = df[df["benchmark"] == what]
-    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="time")
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="sqlite-seconds")
     df = parse_app_system(df)
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
 
+    width = 3.3
+    aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
         # order=systems_order(df),
-        x=column_alias("time"),
+        x=column_alias("sqlite-seconds"),
         # hue=column_alias("direction"),
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
-        height=2.3,
-        aspect=2,
+        height=width/aspect,
+        aspect=aspect,
         palette=palette,
         legend=False,
         row="app",
@@ -592,7 +567,7 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
     )
     # g.ax.set_xscale("log")
 
-    FONT_SIZE = 8
+    FONT_SIZE = 9
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
@@ -739,7 +714,8 @@ def main() -> None:
             graphs.append(("sqlite", sqlite(df, "sqlite")))
             graphs.append(("redis", redis(df, "redis")))
         elif name.startswith("console"):
-            graphs.append(("console", console(df)))
+            graphs.append(("console", console(df, "ushell-console")))
+            graphs.append(("init", console(df, "ushell-init")))
         elif name.startswith("phoronix"): # unreachable
             graphs.append(("phoronix", phoronix(df)))
         else:

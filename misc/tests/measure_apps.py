@@ -506,6 +506,7 @@ def main() -> None:
     not quick: ~70 min
     """
     util.check_intel_turbo()
+    util.check_hyperthreading()
     helpers = confmeasure.Helpers()
 
     stats = util.read_stats(STATS_PATH)
