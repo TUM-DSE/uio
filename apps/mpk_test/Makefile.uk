@@ -1,0 +1,3 @@
+$(eval $(call addlib,appmpk_test))
+
+APPMPK_TEST_SRCS-y += $(APPMPK_TEST_BASE)/main.c

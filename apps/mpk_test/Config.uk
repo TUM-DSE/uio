@@ -1,0 +1,3 @@
+config APPMPK_TEST
+	bool
+	default y
