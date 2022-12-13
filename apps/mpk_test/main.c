@@ -58,6 +58,12 @@ int main()
 	int rc;
 	struct uk_thread *thr = NULL;
 
+	/*
+	 * Disable all memory access.
+	 * This should result to Segmentation fault if MPK works
+	 */
+	wrpkru(0xffffffff);
+
 	key0 = pkey_alloc(0, 0);
 	if (key0 < 0) {
 		printf("key0 returned %d", errno);
