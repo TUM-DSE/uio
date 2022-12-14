@@ -54,8 +54,8 @@ ROW_ALIASES.update(
 
 COLUMN_ALIASES.update(
     {
-        "ushell-console-seconds": "latency [s]",
-        "ushell-init-seconds": "time [s]",
+        "ushell-console-seconds": "latency [ms]",
+        "ushell-init-seconds": "time [ms]",
         "redis-requests": "requests/s",
         "nginx-requests": "requests/s",
         "sqlite-seconds": "time [s]",

@@ -18,7 +18,7 @@ from tqdm import tqdm
 QUICK = False
 
 
-SIZE = 32
+SIZE = 30
 WARMUP = 0
 if QUICK:
     WARMUP = 0

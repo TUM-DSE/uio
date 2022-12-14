@@ -91,7 +91,7 @@ def uk_count() -> UkVmSpec:
         ushell_devices=True,
         initrd=None,
         rootfs_9p=PROJECT_ROOT / "apps/count/fs0",
-        fs1_9p=None,
+        fs1_9p=PROJECT_ROOT / "apps/count/fs0",
     )
 
 

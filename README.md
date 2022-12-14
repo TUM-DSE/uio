@@ -34,7 +34,7 @@ TODO: describe how to set up networking
 nix develop 
 
 rm -r ./misc/tests/measurements/console-stats.json
-sudo python3.9 ./misc/tests/measure_console.py
+sudo python3.9 ./misc/tests/measure_console.py # depending on your system configuration, qemu has to be started as root. In that case you have to start python as root. 
 python3.9 ./misc/tests/graph.py misc/tests/measurements/console-latest.tsv
 ls ./console.pdf
 

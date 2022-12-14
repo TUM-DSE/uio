@@ -73,6 +73,7 @@
             # needed for app/nginx benchmark
             pkgs.wrk 
             pkgs.nginx
+            # gcc (is already in mkShell)
           ];
         };
         packages = builtins.listToAttrs ( pkgs.lib.flatten (
