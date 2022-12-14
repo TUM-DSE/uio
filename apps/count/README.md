@@ -22,3 +22,10 @@ just attach
 > free hello
 > free-all  // free all programs
 ```
+
+### Program examples
+- set_count
+    - change the counter value
+```
+> set_count 100
+```

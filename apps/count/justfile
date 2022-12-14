@@ -44,6 +44,7 @@ compile_hello:
 compile_progs:
     @just compile_cmd 'hello'
     @just compile_cmd 'empty'
+    @just compile_cmd 'set_count'
 
 gen_sym_txt:
     nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 > ./fs0/symbol.txt
