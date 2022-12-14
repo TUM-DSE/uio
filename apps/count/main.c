@@ -3,6 +3,9 @@
 
 int count;
 
+/* this function is used in unikraft/lib/ushell/ushell.c
+ * as an example of built-in command
+ */
 void set_count(int c)
 {
 	count = c;
