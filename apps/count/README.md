@@ -27,5 +27,5 @@ just attach
 - set_count
     - change the counter value
 ```
-> set_count 100
+> run set_count 100
 ```
