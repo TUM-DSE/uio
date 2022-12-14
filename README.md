@@ -31,7 +31,13 @@ just attach
 TODO: describe how to set up networking
 
 ```bash
-nix develop 
+# enter the development shell
+nix develop
+
+# you can choose to build all the things in advance
+python3.9 ./misc/test/nix.py
+
+# run the actual tests
 
 rm -r ./misc/tests/measurements/console-stats.json
 sudo python3.9 ./misc/tests/measure_console.py # depending on your system configuration, qemu has to be started as root. In that case you have to start python as root. 

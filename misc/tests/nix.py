@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Iterator
+from tqdm import tqdm
 
 from qemu import VmImage, NixosVmSpec, UkVmSpec
 from root import PROJECT_ROOT
@@ -165,3 +166,21 @@ def notos_image_custom_kernel(nix: str = NOTOS_IMAGE) -> VmImage:
     image.kerneldir = PROJECT_ROOT.joinpath("..", "linux")
     image.kernel = image.kerneldir.joinpath("arch", "x86", "boot")
     return image
+
+def build_all():
+    print("Building all nix (flake) packages in this repository.")
+    result = subprocess.run(
+        ["nix", "flake", "show", "--json"],
+        text=True,
+        stdout=subprocess.PIPE,
+        check=True,
+        cwd=PROJECT_ROOT,
+    )
+    outputs = json.loads(result.stdout)
+    for package in tqdm(outputs['packages']['x86_64-linux']):
+        print(f"\nBuilding {package}...")
+        nix_build(f".#{package}")
+
+
+if __name__ == "__main__":
+    build_all()
