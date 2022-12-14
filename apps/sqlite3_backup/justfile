@@ -39,3 +39,12 @@ test:
 
 attach:
     sudo socat /tmp/port0 -
+
+compile_cmd target:
+    gcc -fPIC -c -o fs0/{{target}} fs0/{{target}}.c
+
+compile_progs:
+    @just compile_cmd 'call_backup'
+
+gen_sym_txt:
+    nm ./build/{{APP}}.dbg | cut -d ' ' -f1,3 > ./fs0/symbol.txt
