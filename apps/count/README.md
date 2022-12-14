@@ -11,3 +11,9 @@ just attach
 > load symbol.txt
 > run hello
 ```
+
+- Programs are cached. If you want to free them, then
+```
+> free hello
+> free-all  // free all programs
+```
