@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 
 # overwrite the number of samples to take to a minimum
-QUICK = False
+QUICK = True
 
 
 SIZE = 30
@@ -27,8 +27,8 @@ if QUICK:
 
 # QUICK: 20s else: 5min
 def sample(
-    f: Callable[[], Optional[float]], size: int = SIZE, warmup: int = WARMUP
-) -> List[float]:
+    f: Callable[[], Optional[Any]], size: int = SIZE, warmup: int = WARMUP
+) -> List[Any]:
     ret = []
     for i in tqdm(range(0, warmup)):
         f()
@@ -131,13 +131,14 @@ def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
     util.write_stats(STATS_PATH, stats)
 
 
-def ushell_init(helpers: confmeasure.Helpers, stats: Any) -> None:
+def ushell_init(helpers: confmeasure.Helpers, stats: Any, do_reattach: bool = True) -> None:
     name = "ushell-init"
-    if name in stats.keys():
+    name2 = "ushell-init-reattach"
+    if name in stats.keys() and name2 in stats.keys():
         print(f"skip {name}")
         return
 
-    def experiment() -> float:
+    def experiment() -> List[float]:
         ushell = s.socket(s.AF_UNIX)
 
         with util.testbench_console(helpers) as vm:
@@ -150,13 +151,31 @@ def ushell_init(helpers: confmeasure.Helpers, stats: Any) -> None:
                 2
             )  # for the count app we dont really have a way to check if it is online
 
-            return echo_newline(ushell, "> ")
+            ret  = []
+
+            # measure init
+            ret += [echo_newline(ushell, "> ")]
+
+            if do_reattach:
+                # measure re-attach
+                sendall(ushell, "quit")
+                assertline(ushell, "bye")
+                time.sleep(0.5)
+                ret += [echo_newline(ushell, "> ")]
+            
+            return ret
 
         ushell.close()
 
     samples = sample(lambda: experiment())
+    attach = []
+    reattach = []
+    for i in samples:
+        attach += [i[0]]
+        if do_reattach: reattach += [i[1]]
 
-    stats[name] = samples
+    stats[name] = attach
+    if do_reattach: stats[name2] = reattach
     util.write_stats(STATS_PATH, stats)
 
 
@@ -242,7 +261,7 @@ def main() -> None:
     print("\nmeasure performance for ushell console\n")
     ushell_console(helpers, stats)
     print("\nmeasure performance of ushell init\n")
-    ushell_init(helpers, stats)
+    ushell_init(helpers, stats, do_reattach=False)
 
     util.export_fio("console", stats)
 
