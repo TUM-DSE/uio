@@ -79,18 +79,17 @@ def catplot(**kwargs: Any) -> Any:
     return g
 
 
-def apply_hatch(groups: int, g: Any, legend: bool) -> None:
-    hatch_list = ["", "///", "---", "\\"]
-    if len(g.ax.patches) == groups:
-        for i, bar in enumerate(g.ax.patches):
-            hatch = hatch_list[i]
+def apply_hatch(g: Any, patch_legend: bool = False, hatch_list = ["", "///", "---", "\\"]) -> None:
+    for bars, hatch in zip(g.ax.containers, hatch_list):
+        for bar in bars:
             bar.set_hatch(hatch)
-    else:
-        for i, bar in enumerate(g.ax.patches):
-            hatch = hatch_list[int(i / groups)]
-            bar.set_hatch(hatch)
-    if legend:
-        g.ax.legend(loc="best", fontsize="small")
+
+    if patch_legend:
+        legends = g._legend.get_children()[0].get_children()[1].get_children()[0].get_children()
+        for idx, legend in enumerate(legends):
+            hatch = hatch_list[idx%len(legends)]
+            legend.get_children()[0].get_children()[0].set_hatch(f"{hatch}{hatch}")
+
 
 
 def rescale_barplot_width(ax: Any, factor: float = 0.6) -> None:

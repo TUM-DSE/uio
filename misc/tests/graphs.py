@@ -19,6 +19,7 @@ from plot import (
     format,
     magnitude_formatter,
     change_width,
+    apply_hatch
 )
 from plot import ROW_ALIASES, COLUMN_ALIASES, FORMATTER
 
@@ -30,6 +31,8 @@ else:
 palette = sns.color_palette("colorblind")
 palette = [palette[-1], palette[1], palette[2]]
 
+hatches = ["//", "..", ""]
+
 ROW_ALIASES.update(
     {
         "direction": dict(read_mean="read", write_mean="write"),
@@ -37,11 +40,11 @@ ROW_ALIASES.update(
             "ushell-console": "ushell console",
             "ushell-init": "wo/ isolation",
             "redis_ushell_initrd_nohuman": "ushell nohuman",
-            "redis_noshell_initrd_nohuman": "noshell nohuman",
+            "redis_noshell_initrd_nohuman": "baseline",
             "sqlite_ushell_initrd_nohuman": "ushell nohuman",
-            "sqlite_noshell_initrd_nohuman": "noshell nohuman",
+            "sqlite_noshell_initrd_nohuman": "baseline",
             "nginx_ushell_initrd_nohuman": "ushell nohuman",
-            "nginx_noshell_initrd_nohuman": "noshell nohuman",
+            "nginx_noshell_initrd_nohuman": "baseline",
             "nginx_ushell_initrd_lshuman": "ushell lshuman",
         },
         "iotype": dict(
@@ -431,17 +434,19 @@ def phoronix(df: pd.DataFrame) -> Any:
     )
     return g
 
-hatches = ["/", ".", ""]
-def add_hatches(plot) -> None:
-    for bars, hatch in zip(plot.ax.containers, hatches):
-        for bar in bars:
-            bar.set_hatch(hatch)
+
+def sort_baseline_first(df: pd.DataFrame, baseline_system: str) -> pd.DataFrame:
+    beginning = df[df["system"] == baseline_system]
+    end = df[df["system"] != baseline_system]
+    return pd.concat([beginning, end])
+
 
 def nginx(df: pd.DataFrame, what: str) -> Any:
     # df = df[df["benchmark"] == what]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="nginx-requests")
     df = parse_app_system(df)
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
+    df = sort_baseline_first(df, "nginx_noshell_initrd_nohuman")
 
     width = 3.3
     aspect = 2.0
@@ -491,16 +496,18 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="redis-requests")
     df = parse_app_system(df)
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
+    df = sort_baseline_first(df, "redis_noshell_initrd_nohuman")
     # default font size seems to be 9, scaling it to around 10 crashes seaborn though
     # sns.set(font_scale=1.11)
+    
     width = 3.3
     aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
-        y=column_alias("system"),
+        y=column_alias("direction"),
         # order=systems_order(df),
         x=column_alias("redis-requests"),
-        hue=column_alias("direction"),
+        hue=column_alias("system"),
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
         height=width/aspect,
@@ -515,7 +522,8 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     )
     # g.ax.set_xlabel("foo", fontsize=10)
     # g.ax.set_xscale("log")
-    add_hatches(g)
+    apply_hatch(g, patch_legend=True, hatch_list=hatches)
+
     # change_width(g.ax, 3.3)
 
     FONT_SIZE = 9
@@ -545,6 +553,7 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="sqlite-seconds")
     df = parse_app_system(df)
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
+    df = sort_baseline_first(df, "sqlite_noshell_initrd_nohuman")
 
     width = 3.3
     aspect = 2.0
@@ -682,42 +691,13 @@ def main() -> None:
         assert isinstance(df, pd.DataFrame)
         name = tsv_path.stem
 
-        if name == "docker-images": # unreachable
-            graphs.append(("docker-images", image_sizes(df)))
-        elif name.startswith("fio"): # unreachable
-            graphs.append(
-                (
-                    "fio-best-case-bw-seperate",
-                    fio(df, "best-case-bw-seperate", "io_throughput"),
-                )
-            )
-            graphs.append(
-                (
-                    "fio-worst-case-iops-seperate",
-                    fio(df, "worst-case-iops-seperate", "iops"),
-                )
-            )
-            graphs.append(
-                (
-                    "fio-best-case-bw-seperate_overhead",
-                    fio_overhead(df, "best-case-bw-seperate", "io_throughput"),
-                )
-            )
-            graphs.append(
-                (
-                    "fio-worst-case-iops-seperate_overhead",
-                    fio_overhead(df, "worst-case-iops-seperate", "iops"),
-                )
-            )
-        elif name.startswith("app"):
+        if name.startswith("app"):
             graphs.append(("nginx", nginx(df, "nginx")))
             graphs.append(("sqlite", sqlite(df, "sqlite")))
             graphs.append(("redis", redis(df, "redis")))
         elif name.startswith("console"):
             graphs.append(("console", console(df, "ushell-console")))
             graphs.append(("init", console(df, "ushell-init")))
-        elif name.startswith("phoronix"): # unreachable
-            graphs.append(("phoronix", phoronix(df)))
         else:
             print(f"unhandled graph name: {tsv_path}", file=sys.stderr)
             sys.exit(1)
