@@ -338,10 +338,6 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
-    # print("measure performance for native")
-    # native(helpers, stats)
-    # print("measure performance for ssh")
-    # ssh(helpers, stats)
     print("\nmeasure performance for ushell console\n")
     ushell_console(helpers, stats)
     print("\nmeasure performance of ushell init\n")

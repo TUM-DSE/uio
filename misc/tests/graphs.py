@@ -47,6 +47,8 @@ ROW_ALIASES.update(
             "nginx_ushell_initrd_nohuman": "ushell nohuman",
             "nginx_noshell_initrd_nohuman": "baseline",
             "nginx_ushell_initrd_lshuman": "ushell lshuman",
+            "ushell_run": "run hello",
+            "ushell-run-cached": "run hello (cached)",
         },
         "iotype": dict(
             direct="Direct/Block IO",
@@ -60,6 +62,7 @@ COLUMN_ALIASES.update(
     {
         "ushell-console-seconds": "latency [ms]",
         "ushell-init-seconds": "time [ms]",
+        "ushell_run-seconds": "time [ms]",
         "redis-requests": "requests/s",
         "nginx-requests": "requests/s",
         "sqlite-seconds": "time [s]",
@@ -533,7 +536,7 @@ def redis(df: pd.DataFrame, what: str) -> Any:
         "Higher is better",
         xycoords="axes points",
         xy=(0, 0),
-        xytext=(-90, -30),
+        xytext=(-50, -30),
         fontsize=FONT_SIZE,
         color="navy",
         weight="bold",
@@ -541,8 +544,8 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     g.ax.annotate(
         "",
         xycoords="axes points",
-        xy=(-0, -27),
-        xytext=(-15, -27),
+        xy=(50, -27),
+        xytext=(35, -27),
         fontsize=FONT_SIZE,
         arrowprops=dict(arrowstyle="-|>", color="navy"),
     )
@@ -697,6 +700,7 @@ def main() -> None:
             graphs.append(("nginx", nginx(df, "nginx")))
             graphs.append(("sqlite", sqlite(df, "sqlite")))
             graphs.append(("redis", redis(df, "redis")))
+            graphs.append(("run", console(df, "ushell_run", names=["ushell_run", "ushell-run-cached"])))
         elif name.startswith("console"):
             graphs.append(("console", console(df, "ushell-console", names=["ushell-console", "qemu_ssh_console"])))
             graphs.append(("init", console(df, "ushell-init")))

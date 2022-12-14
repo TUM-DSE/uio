@@ -469,11 +469,12 @@ def ushell_run(
     per sample:
     """
     name = f"ushell_run"
-    if name in stats.keys():
+    name2 = "ushell-run-cached"
+    if name in stats.keys() and name2 in stats.keys():
         print(f"skip {name}")
         return
 
-    def experiment(loadable: str) -> float:
+    def experiment(loadable: str) -> List[float]:
         ushell = s.socket(s.AF_UNIX)
 
         # with util.testbench_console(helpers) as vm:
@@ -499,17 +500,25 @@ def ushell_run(
                 # time.sleep(2) # for the count app we dont really have a way to check if it is online
 
                 value = run_bin(ushell, "> ", run=loadable, load="symbol.txt")
+                value_cached = run_bin(ushell, "> ", run=loadable, load="symbol.txt")
                 print("sample:", value)
+                print("sample (cached):", value_cached)
 
 
                 # return values
                 # vm.wait_for_death()
             ushell.close()
-            return value
+            return [value, value_cached]
 
     samples = sample(lambda: experiment("hello"))
+    run_ = []
+    run_cached = []
+    for i in samples:
+        run_ += [i[0]]
+        run_cached += [i[1]]
 
-    stats[name] = samples
+    stats[name] = run_
+    stats[name2] = run_cached
     util.write_stats(STATS_PATH, stats)
 
 
@@ -594,6 +603,8 @@ def main() -> None:
                 print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs})\n")
                 f(helpers, stats, shell=shell, bootfs=bootfs)
 
+
+    print("\nmeasure performance when running external apps\n")
     ushell_run(helpers, stats)
 
     with_all_configs(sqlite_ushell)  # 2x5x 150s + 2x5x 4s
