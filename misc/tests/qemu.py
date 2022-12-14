@@ -148,7 +148,7 @@ def get_ssh_port(session: QmpSession) -> int:
 
 
 def ssh_cmd(port: int) -> List[str]:
-    key_path = TEST_ROOT.joinpath("..", "nix", "ssh_key")
+    key_path = PROJECT_ROOT / "misc/nix/ssh_key"
     key_path.chmod(0o400)
     return [
         "ssh",
@@ -157,10 +157,11 @@ def ssh_cmd(port: int) -> List[str]:
         "-p",
         str(port),
         "-oBatchMode=yes",
-        "-oStrictHostKeyChecking=no",
-        "-oConnectTimeout=5",
-        "-oUserKnownHostsFile=/dev/null",
-        "root@127.0.1",
+        "-oIdentitiesOnly=yes", # avoid ssh agend
+        "-oStrictHostKeyChecking=no", # avoid host key check
+        "-oConnectTimeout=5", # fail early
+        "-oUserKnownHostsFile=/dev/null", # dont try to add host as known
+        "root@172.44.0.2",
     ]
 
 
@@ -175,7 +176,7 @@ class QemuVm:
         self.qmp_session = qmp_session
         self.tmux_session = tmux_session
         self.pid = pid
-        self.ssh_port = 0  # get_ssh_port(qmp_session)
+        self.ssh_port = 22  # get_ssh_port(qmp_session)
         self.ushell_socket = ushell_socket
 
     def events(self) -> Iterator[Dict[str, Any]]:

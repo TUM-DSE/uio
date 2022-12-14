@@ -36,6 +36,16 @@ nixos-generators.nixosGenerate {
         '';
       };
 
+      services.sshd.enable = true;
+      services.openssh.permitRootLogin = "yes";
+      users.users.root.openssh.authorizedKeys.keys = [
+        (builtins.readFile ./ssh_key.pub)
+      ];
+      programs.bash.promptInit= ''
+        PS1="# "
+      '';
+
+      networking.hostName = "qemu";
       networking.useDHCP = false;
       networking.interfaces.ens4.useDHCP = false;
       networking.interfaces.ens4.ipv4.addresses = [ {

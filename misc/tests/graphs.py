@@ -4,7 +4,7 @@ import pandas as pd
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 from natsort import natsort_keygen
 import warnings
 
@@ -37,7 +37,8 @@ ROW_ALIASES.update(
     {
         "direction": dict(read_mean="read", write_mean="write"),
         "system": {
-            "ushell-console": "ushell console",
+            "ushell-console": "ushell",
+            "qemu_ssh_console": "linux + ssh",
             "ushell-init": "wo/ isolation",
             "redis_ushell_initrd_nohuman": "ushell nohuman",
             "redis_noshell_initrd_nohuman": "baseline",
@@ -281,9 +282,10 @@ def fio(df: pd.DataFrame, what: str, value_name: str) -> Any:
     return g
 
 
-def console(df: pd.DataFrame, name: str) -> Any:
+def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
+    if len(names) == 0: names = [name]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"{name}-seconds")
-    df = df[df["system"] == name]
+    df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
     width = 3.3
     aspect = 2.0
@@ -696,7 +698,7 @@ def main() -> None:
             graphs.append(("sqlite", sqlite(df, "sqlite")))
             graphs.append(("redis", redis(df, "redis")))
         elif name.startswith("console"):
-            graphs.append(("console", console(df, "ushell-console")))
+            graphs.append(("console", console(df, "ushell-console", names=["ushell-console", "qemu_ssh_console"])))
             graphs.append(("init", console(df, "ushell-init")))
         else:
             print(f"unhandled graph name: {tsv_path}", file=sys.stderr)

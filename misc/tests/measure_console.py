@@ -99,6 +99,55 @@ def echo_newline(ushell: s.socket, prompt: str) -> float:
     time.sleep(0.5)
     return sw
 
+def expect_tty(fd: int, timeout: int, until: Optional[str] = None) -> bool:
+    """
+    @return true if terminated because of until
+    """
+    if QUICK:
+        print("begin readall until", until)
+    import select
+
+    buf = ""
+    ret = False
+    (r, _, _) = select.select([fd], [], [], timeout)
+    if QUICK:
+        print("[readall] ", end="")
+    while fd in r:
+        out = os.read(fd, 1).decode()
+        buf += out
+        if until is not None and until in buf:
+            ret = True
+            break
+        (r, _, _) = select.select([fd], [], [], timeout)
+        if len(out) == 0:
+            break
+    if QUICK:
+        if not ret:
+            print(f"'{buf}' != '{until}'")
+    return ret
+
+
+def assertline_tty(ptmfd: int, value: str) -> None:
+    assert expect_tty(ptmfd, 2, f"{value}")  # not sure why and when how many \r's occur.
+
+
+def writeall_tty(fd: int, content: str) -> None:
+    if QUICK:
+        print("[writeall]", content.strip())
+    c = os.write(fd, str.encode(content))
+    if c != len(content):
+        raise Exception("TODO implement writeall")
+
+def echo_newline_tty(ptmfd: int, prompt: str) -> float:
+    if QUICK:
+        print("measuring echo")
+    sw = time.monotonic()
+    writeall_tty(ptmfd, "\n")
+    assert expect_tty(ptmfd, 2, prompt)
+    sw = time.monotonic() - sw
+    time.sleep(0.5)
+    return sw
+
 
 def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
     name = "ushell-console"
@@ -134,7 +183,7 @@ def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
 def ushell_init(helpers: confmeasure.Helpers, stats: Any, do_reattach: bool = True) -> None:
     name = "ushell-init"
     name2 = "ushell-init-reattach"
-    if name in stats.keys() and name2 in stats.keys():
+    if name in stats.keys() and (not do_reattach or name2 in stats.keys()):
         print(f"skip {name}")
         return
 
@@ -177,7 +226,6 @@ def ushell_init(helpers: confmeasure.Helpers, stats: Any, do_reattach: bool = Tr
     stats[name] = attach
     if do_reattach: stats[name2] = reattach
     util.write_stats(STATS_PATH, stats)
-
 
 def set_console_raw() -> None:
     fd = sys.stdin.fileno()
@@ -241,6 +289,42 @@ def ssh(helpers: confmeasure.Helpers, stats: Any) -> None:
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
 
+def qemu_ssh(helpers: confmeasure.Helpers, stats: Any) -> None:
+    """
+    per sample:
+    """
+    name = "qemu_ssh_console"
+    if name in stats.keys():
+        print(f"skip {name}")
+        return
+
+    (ptmfd, ptsfd) = pty.openpty()
+    (ptmfd_stub, ptsfd_stub) = pty.openpty()
+    pts_stub = os.readlink(f"/proc/self/fd/{ptsfd_stub}")
+    os.close(ptsfd_stub)
+
+    with helpers.nixos_nginx() as nixos:
+        with helpers.spawn_qemu(nixos) as vm:
+            vm.wait_for_ping("172.44.0.2")
+            time.sleep(3) # wait for sshd
+            sh = vm.ssh_Popen(stdin=ptsfd, stdout=ptsfd, stderr=ptsfd)
+
+            # discard first stuff (MODT etc)
+            expect_tty(ptmfd, 2, "this will always throw a warning")
+
+            samples = sample(lambda: echo_newline_tty(ptmfd, "# "))
+
+            sh.kill()
+            sh.wait()
+            print("samples:", samples)
+
+    os.close(ptmfd_stub)
+    os.close(ptsfd)
+    os.close(ptmfd)
+
+    stats[name] = samples
+    util.write_stats(STATS_PATH, stats)
+
 
 def main() -> None:
     """
@@ -262,6 +346,8 @@ def main() -> None:
     ushell_console(helpers, stats)
     print("\nmeasure performance of ushell init\n")
     ushell_init(helpers, stats, do_reattach=False)
+    print("\nmeasure performance of ssh console\n")
+    qemu_ssh(helpers, stats)
 
     util.export_fio("console", stats)
 
