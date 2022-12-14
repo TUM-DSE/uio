@@ -230,6 +230,11 @@ def is_hyperthreading_enabled():
 
     return cpuinfo['siblings'] != cpuinfo['cpu cores']
 
+def check_root():
+    import getpass
+    if getpass.getuser() != 'root':
+        print("Warn: Depending on your system configuration, qemu has to be started as root. In that case you have to start this script as root.")
+
 def check_hyperthreading() -> None:
     if is_hyperthreading_enabled():
         print("Warn: Please disable hyperthreading in you BIOS.")

@@ -1,6 +1,7 @@
 from root import MEASURE_RESULTS
 import confmeasure
 import measure_helpers as util
+from pylib import unwrap, unsafe_cast
 from procs import run
 import root
 
@@ -54,19 +55,6 @@ def sample(f: Callable[[], Any], size: int = SIZE, warmup: int = WARMUP) -> List
 
 
 STATS_PATH = MEASURE_RESULTS.joinpath("app-stats.json")
-
-
-U = TypeVar('U')
-def unwrap(a: Optional[U]) -> U: 
-    assert a is not None
-    return a
-
-
-def unsafe_cast(a: Any) -> Any:
-    """
-    this function does nothing but statisfy the type system
-    """
-    return a
 
 
 def expect(ushell: s.socket, timeout: int, until: Optional[str] = None) -> bool:
@@ -414,7 +402,7 @@ def run_nginx_native() -> Iterator[Any]:
         import subprocess
 
         nginx = subprocess.Popen(cmd)  # , preexec_fn=os.setsid)
-        run(["taskset", "-p", confmeasure.CORES_QEMU, str(nginx.pid)])
+        run(["taskset", "-pc", confmeasure.CORES_QEMU, str(nginx.pid)])
 
         yield nginx
 
@@ -594,6 +582,7 @@ def main() -> None:
     """
     util.check_intel_turbo()
     util.check_hyperthreading()
+    util.check_root()
     helpers = confmeasure.Helpers()
 
     stats = util.read_stats(STATS_PATH)
