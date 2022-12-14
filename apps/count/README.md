@@ -12,6 +12,11 @@ just attach
 > run hello
 ```
 
+- Load program without execution
+```
+> prog-load hello
+```
+
 - Programs are cached. If you want to free them, then
 ```
 > free hello
