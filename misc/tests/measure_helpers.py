@@ -235,6 +235,12 @@ def check_root():
     if getpass.getuser() != 'root':
         print("Warn: Depending on your system configuration, qemu has to be started as root. In that case you have to start this script as root.")
 
+def check_cpu_isolation():
+    with open("/sys/devices/system/cpu/isolated") as f:
+        lines = f.readlines()
+        if len(f.readlines()) == 0:
+            print("Warn: seems like you dont isolate cpu cores for the benchmark: add isolcpus=4-7 to your kernel parameters.")
+
 def check_hyperthreading() -> None:
     if is_hyperthreading_enabled():
         print("Warn: Please disable hyperthreading in you BIOS.")

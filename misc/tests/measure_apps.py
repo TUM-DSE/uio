@@ -583,6 +583,7 @@ def main() -> None:
     util.check_intel_turbo()
     util.check_hyperthreading()
     util.check_root()
+    util.check_cpu_isolation()
     helpers = confmeasure.Helpers()
 
     stats = util.read_stats(STATS_PATH)
