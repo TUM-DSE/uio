@@ -75,7 +75,7 @@ def catplot(**kwargs: Any) -> Any:
     g = sns.catplot(**kwargs)
     g.despine(top=False, right=False)
     # plt.autoscale()
-    # plt.subplots_adjust(top=0.98)
+    plt.subplots_adjust(top=0.98)
     return g
 
 

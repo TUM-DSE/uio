@@ -37,10 +37,12 @@ def uk_build(name: str) -> Path:
 
 
 def uk_sqlite(shell: str, bootfs: str) -> UkVmSpec:
-    build = uk_build(f".#uk-sqlite_benchmark-{shell}-{bootfs}")
+    flake_name = f"uk-sqlite_benchmark-{shell}-{bootfs}"
+    build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite_benchmark_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return UkVmSpec(
+        flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
         netbridge=True,
@@ -52,10 +54,12 @@ def uk_sqlite(shell: str, bootfs: str) -> UkVmSpec:
 
 
 def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
-    build = uk_build(f".#uk-redis-{shell}-{bootfs}")
+    flake_name = f"uk-redis-{shell}-{bootfs}"
+    build = uk_build(f".#{flake_name}")
     kernel = build / "redis_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return UkVmSpec(
+        flake_name=flake_name,
         kernel=kernel,
         app_cmdline="/redis.conf",
         netbridge=True,
@@ -67,10 +71,12 @@ def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
 
 
 def uk_nginx(shell: str, bootfs: str) -> UkVmSpec:
-    build = uk_build(f".#uk-nginx-{shell}-{bootfs}")
+    flake_name = f"uk-nginx-{shell}-{bootfs}"
+    build = uk_build(f".#{flake_name}")
     kernel = build / "nginx_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return UkVmSpec(
+        flake_name=flake_name,
         kernel=kernel,
         app_cmdline="-c /nginx/conf/nginx.conf",
         netbridge=True,
@@ -81,11 +87,13 @@ def uk_nginx(shell: str, bootfs: str) -> UkVmSpec:
     )
 
 
-def uk_count() -> UkVmSpec:
-    build = uk_build(".#uk-count-ushell")
+def uk_count(shell: str = "ushell") -> UkVmSpec:
+    flake_name = f"uk-count-{shell}"
+    build = uk_build(f".#{flake_name}")
     kernel = build / "count_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return UkVmSpec(
+        flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
         netbridge=True,

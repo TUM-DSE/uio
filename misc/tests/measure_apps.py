@@ -460,7 +460,6 @@ def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
     util.write_stats(STATS_PATH, stats)
 
 
-
 def ushell_run(
     helpers: confmeasure.Helpers,
     stats: Any,

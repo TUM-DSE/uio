@@ -31,6 +31,7 @@ class VmImage:
 
 @dataclass
 class UkVmSpec:
+    flake_name: str
     kernel: Path
     app_cmdline: str
     netbridge: bool

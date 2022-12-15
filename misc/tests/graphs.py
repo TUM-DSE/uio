@@ -49,6 +49,15 @@ ROW_ALIASES.update(
             "nginx_ushell_initrd_lshuman": "ushell lshuman",
             "ushell_run": "run hello",
             "ushell-run-cached": "run hello (cached)",
+            "uk-nginx-noshell-initrd": "nginx",
+            "uk-nginx-ushell-initrd": "nginx ushell",
+            "uk-redis-noshell-initrd": "redis",
+            "uk-redis-ushell-initrd": "redis ushell",
+            "uk-sqlite_benchmark-noshell-initrd": "sqlite",
+            "uk-sqlite_benchmark-ushell-initrd": "sqlite ushell",
+        },
+        "shell": {
+            "noshell": "baseline",
         },
         "iotype": dict(
             direct="Direct/Block IO",
@@ -66,6 +75,7 @@ COLUMN_ALIASES.update(
         "redis-requests": "requests/s",
         "nginx-requests": "requests/s",
         "sqlite-seconds": "time [s]",
+        "image-size": "size [kB]",
     }
 )
 FORMATTER.update(
@@ -73,6 +83,7 @@ FORMATTER.update(
         "iops": magnitude_formatter(3),
         "io_throughput": magnitude_formatter(6),
         "seconds": magnitude_formatter(-3),
+        "kB": magnitude_formatter(3),
     }
 )
 
@@ -172,6 +183,8 @@ def parse_app_system(df: pd.DataFrame) -> pd.DataFrame:
             return "nginx"
         elif "sqlite" in row.system:
             return "sqlite"
+        elif "count" in row.system:
+            return "count"
 
     app = df.apply(h, axis=1)
     ret = df.assign(app=app)
@@ -285,6 +298,11 @@ def fio(df: pd.DataFrame, what: str, value_name: str) -> Any:
     return g
 
 
+def sort(df: pd.DataFrame, systems: List[str]) -> pd.DataFrame:
+    sparse = pd.concat([ df[df["system"] == n] for n in systems ])
+    return pd.concat([ sparse, df ]).drop_duplicates(keep='first')
+
+
 def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     if len(names) == 0: names = [name]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"{name}-seconds")
@@ -328,6 +346,56 @@ def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
 
     g.despine()
     format(g.ax.xaxis, "seconds")
+    return g
+
+
+def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
+    if len(names) == 0: names = [name]
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"image-size")
+    df = parse_app_system(df)
+
+    # df = pd.concat([ df[df["system"] == n] for n in names ])
+    # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
+    width = 2.8
+    aspect = 1.5
+    g = catplot(
+        data=apply_aliases(df),
+        y=column_alias("app"),
+        # order=systems_order(df),
+        x=column_alias(f"image-size"),
+        kind="bar",
+        hue="shell",
+        ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
+        height=width/aspect,
+        aspect=aspect,
+        palette=palette,
+    )
+    # apply_to_graphs(g.ax, False, 0.285)
+    # g.ax.set_xscale("log")
+    g.ax.set_ylabel("")
+    apply_hatch(g, patch_legend=True, hatch_list=hatches)
+
+    FONT_SIZE = 9
+    g.ax.annotate(
+        "Lower is better",
+        xycoords="axes points",
+        xy=(0, 0),
+        xytext=(1, -30),
+        fontsize=FONT_SIZE,
+        color="navy",
+        weight="bold",
+    )
+    g.ax.annotate(
+        "",
+        xycoords="axes points",
+        xy=(-15, -27),
+        xytext=(0, -27),
+        fontsize=FONT_SIZE,
+        arrowprops=dict(arrowstyle="-|>", color="navy"),
+    )
+
+    g.despine()
+    format(g.ax.xaxis, "kB")
     return g
 
 
@@ -451,7 +519,7 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="nginx-requests")
     df = parse_app_system(df)
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
-    df = sort_baseline_first(df, "nginx_noshell_initrd_nohuman")
+    df = sort(df, ["nginx_noshell_initrd_nohuman", "nginx_ushell_initrd_nohuman"])
 
     width = 3.3
     aspect = 2.0
@@ -505,8 +573,8 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     # default font size seems to be 9, scaling it to around 10 crashes seaborn though
     # sns.set(font_scale=1.11)
     
-    width = 3.3
-    aspect = 2.0
+    width = 2.5
+    aspect = 1.5
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("direction"),
@@ -528,6 +596,8 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     # g.ax.set_xlabel("foo", fontsize=10)
     # g.ax.set_xscale("log")
     apply_hatch(g, patch_legend=True, hatch_list=hatches)
+    # sns.move_legend(g.ax, "upper center")
+    # g.ax.legend(loc='upper center')
 
     # change_width(g.ax, 3.3)
 
@@ -536,7 +606,7 @@ def redis(df: pd.DataFrame, what: str) -> Any:
         "Higher is better",
         xycoords="axes points",
         xy=(0, 0),
-        xytext=(-50, -30),
+        xytext=(-30, -30),
         fontsize=FONT_SIZE,
         color="navy",
         weight="bold",
@@ -544,8 +614,8 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     g.ax.annotate(
         "",
         xycoords="axes points",
-        xy=(50, -27),
-        xytext=(35, -27),
+        xy=(70, -27),
+        xytext=(55, -27),
         fontsize=FONT_SIZE,
         arrowprops=dict(arrowstyle="-|>", color="navy"),
     )
@@ -702,8 +772,10 @@ def main() -> None:
             graphs.append(("redis", redis(df, "redis")))
             graphs.append(("run", console(df, "ushell_run", names=["ushell_run", "ushell-run-cached"])))
         elif name.startswith("console"):
-            graphs.append(("console", console(df, "ushell-console", names=["ushell-console", "qemu_ssh_console"])))
+            graphs.append(("console", console(df, "ushell-console", names=["qemu_ssh_console", "ushell-console"])))
             graphs.append(("init", console(df, "ushell-init")))
+        elif name.startswith("image"):
+            graphs.append(("images", images(df, "image-sizes")))
         else:
             print(f"unhandled graph name: {tsv_path}", file=sys.stderr)
             sys.exit(1)

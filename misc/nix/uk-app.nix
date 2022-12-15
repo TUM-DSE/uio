@@ -99,7 +99,7 @@ pkgs.stdenv.mkDerivation {
     make oldconfig # ensure consistency and update absolute paths
   '';
   buildPhase = ''
-    make -j
+    make -j $NIX_BUILD_CORES
   '';
   installPhase = ''
     mkdir -p $out

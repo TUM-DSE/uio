@@ -90,27 +90,21 @@
           )))
         )) //
         {
-        #packages_ = {
-          #uk-nginx-noshell-initrd = pkgs.callPackage ./misc/nix/uk-app.nix { 
-            #inherit pkgs self-stable buildDeps;
-            #app = "nginx";
-            #config = "config.eval.noshell.initrd";
-          #};
-          #uk-nginx-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
-            #inherit pkgs self-stable buildDeps;
-            #app = "nginx";
-            #config = "config.eval.ushell.9p";
-          #};
           uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
             inherit pkgs self-stable buildDeps;
             app = "count";
+            config = "config.eval.ushell";
+          };
+          uk-count-noshell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.noshell";
+          };
+          uk-sqlite3_backup-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "sqlite3_backup";
             config = ".config";
           };
-          #uk-redis = pkgs.callPackage ./misc/nix/uk-app.nix { 
-            #inherit pkgs self-stable buildDeps;
-            #app = "redis";
-            #config = ".config";
-          #};
           nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix { 
             inherit pkgs nixos-generators; 
           };
