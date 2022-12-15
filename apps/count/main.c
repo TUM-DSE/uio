@@ -4,7 +4,7 @@
 int count;
 
 /* This function is exported (see exportsyms.uk), and therefore
- * ushell program can call this function (see fs0/set_count.c).
+ * ushell program can call this function (see fs0/set_count_func.c).
  * This function is also used in unikraft/lib/ushell/ushell.c
  * as an example of creating ushell's built-in command.
  */

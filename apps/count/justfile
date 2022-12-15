@@ -45,6 +45,7 @@ compile_progs:
     @just compile_cmd 'hello'
     @just compile_cmd 'empty'
     @just compile_cmd 'set_count'
+    @just compile_cmd 'set_count_func'
     @just compile_cmd 'perf'
 
 gen_sym_txt:
