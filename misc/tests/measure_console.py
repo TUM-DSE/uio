@@ -148,6 +148,24 @@ def echo_newline_tty(ptmfd: int, prompt: str) -> float:
     time.sleep(0.5)
     return sw
 
+import subprocess
+def nginx_load(
+    host_port, length: str = "10m", connections: int = 30, threads: int = 14
+) -> subprocess.Popen:
+    cmd = [
+        "taskset",
+        "-c",
+        confmeasure.CORES_BENCHMARK,
+        "wrk",
+        "-t",
+        str(threads),
+        f"-d{length}",
+        "-c",
+        str(connections),
+        f"http://{host_port}/index.html",
+    ]
+    return subprocess.Popen(cmd)
+
 
 def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
     name = "ushell-console"
@@ -179,6 +197,41 @@ def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
 
+def ushell_console_nginx(helpers: confmeasure.Helpers, stats: Any) -> None:
+    name = "ushell-console-nginx"
+    if name in stats.keys():
+        print(f"skip {name}")
+        return
+
+    ushell = s.socket(s.AF_UNIX)
+
+    with helpers.spawn_qemu(helpers.uk_nginx(shell="ushell", bootfs="initrd")) as vm:
+        # vm.wait_for_ping("172.44.0.2")
+        ushell.connect(bytes(vm.ushell_socket))
+
+        # ensure readiness of system
+        # time.sleep(1) # guest network stack is up, but also wait for application to start
+        time.sleep(
+            2
+        )  # for the count app we dont really have a way to check if it is online
+
+        sendall(ushell, "\n")
+        while not expect(ushell, 10, "> "):
+            pass
+
+        
+        nginx = nginx_load("172.44.0.2")
+        time.sleep(2)
+
+        samples = sample(lambda: echo_newline(ushell, "> "))
+        print("samples:", samples)
+
+        nginx.terminate()
+
+    ushell.close()
+
+    stats[name] = samples
+    util.write_stats(STATS_PATH, stats)
 
 def ushell_init(helpers: confmeasure.Helpers, stats: Any, do_reattach: bool = True) -> None:
     name = "ushell-init"
@@ -340,6 +393,8 @@ def main() -> None:
 
     print("\nmeasure performance for ushell console\n")
     ushell_console(helpers, stats)
+    print("\nmeasure performance for ushell console with nignx load\n")
+    ushell_console_nginx(helpers, stats)
     print("\nmeasure performance of ushell init\n")
     ushell_init(helpers, stats, do_reattach=False)
     print("\nmeasure performance of ssh console\n")

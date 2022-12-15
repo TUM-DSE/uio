@@ -38,6 +38,7 @@ ROW_ALIASES.update(
         "direction": dict(read_mean="read", write_mean="write"),
         "system": {
             "ushell-console": "ushell",
+            "ushell-console-nginx": "ushell + nginx load",
             "qemu_ssh_console": "linux + ssh",
             "ushell-init": "wo/ isolation",
             "redis_ushell_initrd_nohuman": "ushell nohuman",
@@ -772,7 +773,7 @@ def main() -> None:
             graphs.append(("redis", redis(df, "redis")))
             graphs.append(("run", console(df, "ushell_run", names=["ushell_run", "ushell-run-cached"])))
         elif name.startswith("console"):
-            graphs.append(("console", console(df, "ushell-console", names=["qemu_ssh_console", "ushell-console"])))
+            graphs.append(("console", console(df, "ushell-console", names=["qemu_ssh_console", "ushell-console", "ushell-console-nginx"])))
             graphs.append(("init", console(df, "ushell-init")))
         elif name.startswith("image"):
             graphs.append(("images", images(df, "image-sizes")))
