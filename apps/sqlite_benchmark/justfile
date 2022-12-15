@@ -15,7 +15,7 @@ run:
         -device virtconsole,chardev=char0,id=ushell,nr=0 \
         -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
         -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
-        -initrd ./fs0.cpio \
+        -initrd ./build/fs0.cpio \
         -kernel {{APP}} -nographic
 
 debug:
