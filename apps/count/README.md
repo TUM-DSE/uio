@@ -29,3 +29,10 @@ just attach
 ```
 > run set_count 100
 ```
+
+- perf
+    - print llc cache misses using performance counters
+```
+> run perf
+```
+
