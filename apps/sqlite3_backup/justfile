@@ -15,6 +15,8 @@ run:
         -device virtconsole,chardev=char0,id=ushell,nr=0 \
         -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
         -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
+        -fsdev local,id=myid2,path=$(pwd)/fs1,security_model=none \
+        -device virtio-9p-pci,fsdev=myid2,mount_tag=fs1,disable-modern=on,disable-legacy=off \
         -kernel {{APP}} -nographic
 
 debug:
@@ -41,10 +43,10 @@ attach:
     sudo socat /tmp/port0 -
 
 compile_cmd target:
-    gcc -fPIC -c -o fs0/{{target}} fs0/{{target}}.c
+    gcc -fPIC -c -o fs1/{{target}} fs1/{{target}}.c
 
 compile_progs:
     @just compile_cmd 'call_backup'
 
 gen_sym_txt:
-    nm ./build/{{APP}}.dbg | cut -d ' ' -f1,3 > ./fs0/symbol.txt
+    nm {{APP}}.dbg | cut -d ' ' -f1,3 > ./fs1/symbol.txt
