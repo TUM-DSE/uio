@@ -57,6 +57,10 @@ ROW_ALIASES.update(
             "uk-sqlite_benchmark-noshell-initrd": "sqlite",
             "uk-sqlite_benchmark-ushell-initrd": "sqlite ushell",
         },
+        "ltoshell": {
+            "noshell": "baseline",
+            "noshell-lto": "baseline-lto",
+        },
         "shell": {
             "noshell": "baseline",
         },
@@ -212,6 +216,15 @@ def parse_app_system(df: pd.DataFrame) -> pd.DataFrame:
     system = df.apply(j, axis=1)
     ret = ret.assign(system=system)
 
+    def k(row: Any) -> Any:
+        if "-lto" in row.system:
+            return f"{row.app}-lto"
+        else:
+            return f"{row.app}"
+
+    ltoapp = ret.apply(k, axis=1)
+    ret = ret.assign(ltoapp=ltoapp)
+
     def f(row: Any) -> Any:
         if "noshell" in row.system:
             return "noshell"
@@ -220,6 +233,15 @@ def parse_app_system(df: pd.DataFrame) -> pd.DataFrame:
 
     shell = df.apply(f, axis=1)
     ret = ret.assign(shell=shell)
+
+    def l(row: Any) -> Any:
+        if "-lto" in row.system:
+            return f"{row.shell}-lto"
+        else:
+            return f"{row.shell}"
+
+    ltoshell = ret.apply(l, axis=1)
+    ret = ret.assign(ltoshell=ltoshell)
 
     def g(row: Any) -> Any:
         if "9p" in row.system:
@@ -322,6 +344,8 @@ def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
         aspect=aspect,
         palette=palette,
     )
+    import plot
+    plot.set_barplot_height(g.ax, 0.3)
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
@@ -354,6 +378,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     if len(names) == 0: names = [name]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"image-size")
     df = parse_app_system(df)
+    df = df.sort_values(by="shell")
 
     # df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
@@ -365,7 +390,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
         # order=systems_order(df),
         x=column_alias(f"image-size"),
         kind="bar",
-        hue="shell",
+        hue="ltoshell",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
         height=width/aspect,
         aspect=aspect,
@@ -374,6 +399,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
+    hatches = ["//", "..", "//", ".."]
     apply_hatch(g, patch_legend=True, hatch_list=hatches)
 
     FONT_SIZE = 9

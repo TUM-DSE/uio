@@ -76,6 +76,7 @@
             # gcc (is already in mkShell)
           ];
         };
+        # app x shell x fs
         packages = builtins.listToAttrs ( pkgs.lib.flatten (
           pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" ] (app:
           pkgs.lib.forEach [ "noshell" "ushell" ] (shell:
@@ -89,6 +90,21 @@
             )
           )))
         )) //
+        # (app x shell) with lto
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "noshell" "ushell" ] (shell:
+          pkgs.lib.forEach [ "initrd" ] (bootfs:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}-lto" (
+              pkgs.callPackage ./misc/nix/uk-app.nix { 
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.${bootfs}.lto";
+              }
+            )
+          )))
+        )) //
+        # some manual packages
         {
           uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
             inherit pkgs self-stable buildDeps;
@@ -99,6 +115,16 @@
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.noshell";
+          };
+          uk-count-ushell-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushell.lto";
+          };
+          uk-count-noshell-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.noshell.lto";
           };
           uk-sqlite3_backup-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
             inherit pkgs self-stable buildDeps;

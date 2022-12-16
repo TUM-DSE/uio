@@ -330,6 +330,15 @@ def main() -> None:
     image_size(helpers, stats, nix.uk_sqlite("noshell", "initrd"))
     image_size(helpers, stats, nix.uk_sqlite("ushell", "initrd"))
 
+    image_size(helpers, stats, nix.uk_count("noshell", lto=True))
+    image_size(helpers, stats, nix.uk_count("ushell", lto=True))
+    image_size(helpers, stats, nix.uk_nginx("noshell", "initrd", lto=True))
+    image_size(helpers, stats, nix.uk_nginx("ushell", "initrd", lto=True))
+    image_size(helpers, stats, nix.uk_redis("noshell", "initrd", lto=True))
+    image_size(helpers, stats, nix.uk_redis("ushell", "initrd", lto=True))
+    image_size(helpers, stats, nix.uk_sqlite("noshell", "initrd", lto=True))
+    image_size(helpers, stats, nix.uk_sqlite("ushell", "initrd", lto=True))
+
     util.export_fio("image", stats)
 
 

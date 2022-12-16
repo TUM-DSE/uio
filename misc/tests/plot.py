@@ -87,10 +87,17 @@ def apply_hatch(g: Any, patch_legend: bool = False, hatch_list = ["", "///", "--
     if patch_legend:
         legends = g._legend.get_children()[0].get_children()[1].get_children()[0].get_children()
         for idx, legend in enumerate(legends):
-            hatch = hatch_list[idx%len(legends)]
+            hatch = hatch_list[idx%len(legends)%len(hatch_list)]
             legend.get_children()[0].get_children()[0].set_hatch(f"{hatch}{hatch}")
 
 
+def rescale_barplot_height(ax: Any, factor: float = 0.6) -> None:
+    for bar in ax.patches:
+        y = bar.get_y()
+        new_height = bar.get_height() * factor
+        center = y + bar.get_height() / 2.0
+        bar.set_height(new_height)
+        bar.set_y(center - new_height / 2.0)
 
 def rescale_barplot_width(ax: Any, factor: float = 0.6) -> None:
     for bar in ax.patches:
@@ -99,6 +106,13 @@ def rescale_barplot_width(ax: Any, factor: float = 0.6) -> None:
         center = x + bar.get_width() / 2.0
         bar.set_width(new_width)
         bar.set_x(center - new_width / 2.0)
+
+def set_barplot_height(ax: Any, height: float) -> None:
+    for bar in ax.patches:
+        y = bar.get_y()
+        center = y + bar.get_height() / 2.0
+        bar.set_height(height)
+        bar.set_y(center - height / 2.0)
 
 def set_barplot_width(ax: Any, width: float) -> None:
     for bar in ax.patches:
