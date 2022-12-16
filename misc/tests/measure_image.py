@@ -1,6 +1,7 @@
 from root import MEASURE_RESULTS
 import confmeasure
 import measure_helpers as util
+import nix
 
 from typing import List, Any, Optional, Callable
 import time
@@ -40,7 +41,7 @@ def sample(
     return ret
 
 
-STATS_PATH = MEASURE_RESULTS.joinpath("console-stats.json")
+STATS_PATH = MEASURE_RESULTS.joinpath("image-stats.json")
 
 
 def expect(ushell: s.socket, timeout: int, until: Optional[str] = None) -> bool:
@@ -148,90 +149,19 @@ def echo_newline_tty(ptmfd: int, prompt: str) -> float:
     time.sleep(0.5)
     return sw
 
-import subprocess
-def nginx_load(
-    host_port, length: str = "10m", connections: int = 30, threads: int = 14
-) -> subprocess.Popen:
-    cmd = [
-        "taskset",
-        "-c",
-        confmeasure.CORES_BENCHMARK,
-        "wrk",
-        "-t",
-        str(threads),
-        f"-d{length}",
-        "-c",
-        str(connections),
-        f"http://{host_port}/index.html",
-    ]
-    return subprocess.Popen(cmd)
 
-
-def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "ushell-console"
+def image_size(helpers: confmeasure.Helpers, stats: Any, vmspec: nix.UkVmSpec) -> None:
+    name = vmspec.flake_name
     if name in stats.keys():
         print(f"skip {name}")
         return
 
-    ushell = s.socket(s.AF_UNIX)
+    num_bytes = os.path.getsize(vmspec.kernel)
 
-    with util.testbench_console(helpers) as vm:
-        # vm.wait_for_ping("172.44.0.2")
-        ushell.connect(bytes(vm.ushell_socket))
 
-        # ensure readiness of system
-        # time.sleep(1) # guest network stack is up, but also wait for application to start
-        time.sleep(
-            2
-        )  # for the count app we dont really have a way to check if it is online
-
-        sendall(ushell, "\n")
-        while not expect(ushell, 10, "> "):
-            pass
-
-        samples = sample(lambda: echo_newline(ushell, "> "))
-        print("samples:", samples)
-
-    ushell.close()
-
-    stats[name] = samples
+    stats[name] = [ num_bytes ]
     util.write_stats(STATS_PATH, stats)
 
-def ushell_console_nginx(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "ushell-console-nginx"
-    if name in stats.keys():
-        print(f"skip {name}")
-        return
-
-    ushell = s.socket(s.AF_UNIX)
-
-    with helpers.spawn_qemu(helpers.uk_nginx(shell="ushell", bootfs="initrd")) as vm:
-        # vm.wait_for_ping("172.44.0.2")
-        ushell.connect(bytes(vm.ushell_socket))
-
-        # ensure readiness of system
-        # time.sleep(1) # guest network stack is up, but also wait for application to start
-        time.sleep(
-            2
-        )  # for the count app we dont really have a way to check if it is online
-
-        sendall(ushell, "\n")
-        while not expect(ushell, 10, "> "):
-            pass
-
-        
-        nginx = nginx_load("172.44.0.2")
-        time.sleep(2)
-
-        samples = sample(lambda: echo_newline(ushell, "> "))
-        print("samples:", samples)
-
-        nginx.terminate()
-
-    ushell.close()
-
-    stats[name] = samples
-    util.write_stats(STATS_PATH, stats)
 
 def ushell_init(helpers: confmeasure.Helpers, stats: Any, do_reattach: bool = True) -> None:
     name = "ushell-init"
@@ -391,16 +321,16 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
-    print("\nmeasure performance for ushell console\n")
-    ushell_console(helpers, stats)
-    print("\nmeasure performance for ushell console with nignx load\n")
-    ushell_console_nginx(helpers, stats)
-    print("\nmeasure performance of ushell init\n")
-    ushell_init(helpers, stats, do_reattach=False)
-    print("\nmeasure performance of ssh console\n")
-    qemu_ssh(helpers, stats)
+    image_size(helpers, stats, nix.uk_count("noshell"))
+    image_size(helpers, stats, nix.uk_count("ushell"))
+    image_size(helpers, stats, nix.uk_nginx("noshell", "initrd"))
+    image_size(helpers, stats, nix.uk_nginx("ushell", "initrd"))
+    image_size(helpers, stats, nix.uk_redis("noshell", "initrd"))
+    image_size(helpers, stats, nix.uk_redis("ushell", "initrd"))
+    image_size(helpers, stats, nix.uk_sqlite("noshell", "initrd"))
+    image_size(helpers, stats, nix.uk_sqlite("ushell", "initrd"))
 
-    util.export_fio("console", stats)
+    util.export_fio("image", stats)
 
 
 if __name__ == "__main__":

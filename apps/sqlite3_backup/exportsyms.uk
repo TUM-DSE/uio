@@ -1,2 +1,3 @@
 main
 sqlite3_save
+sqlite3_generate_table

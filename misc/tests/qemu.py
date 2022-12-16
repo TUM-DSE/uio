@@ -16,6 +16,7 @@ from typing import Any, Dict, Iterator, List, Text, Optional, Union
 
 from root import TEST_ROOT, PROJECT_ROOT
 from procs import run, pprint_cmd, ChildFd
+from pylib import unwrap, unsafe_cast
 
 
 @dataclass
@@ -30,12 +31,14 @@ class VmImage:
 
 @dataclass
 class UkVmSpec:
+    flake_name: str
     kernel: Path
     app_cmdline: str
     netbridge: bool
     ushell_devices: bool
     initrd: Optional[Path]
     rootfs_9p: Optional[Path]
+    fs1_9p: Optional[Path]
 
 
 @dataclass
@@ -95,6 +98,10 @@ class QmpSession:
         self.writer.flush()
         return self._result()
 
+    def query_vcpu_threads(self) -> List[int]:
+        return [unsafe_cast(thread[unsafe_cast('thread-id')]) for thread in self.send("query-cpus-fast")['return']]
+            
+
 
 def is_port_open(ip: str, port: int, wait_response: bool = False) -> bool:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -142,7 +149,7 @@ def get_ssh_port(session: QmpSession) -> int:
 
 
 def ssh_cmd(port: int) -> List[str]:
-    key_path = TEST_ROOT.joinpath("..", "nix", "ssh_key")
+    key_path = PROJECT_ROOT / "misc/nix/ssh_key"
     key_path.chmod(0o400)
     return [
         "ssh",
@@ -151,10 +158,11 @@ def ssh_cmd(port: int) -> List[str]:
         "-p",
         str(port),
         "-oBatchMode=yes",
-        "-oStrictHostKeyChecking=no",
-        "-oConnectTimeout=5",
-        "-oUserKnownHostsFile=/dev/null",
-        "root@127.0.1",
+        "-oIdentitiesOnly=yes", # avoid ssh agend
+        "-oStrictHostKeyChecking=no", # avoid host key check
+        "-oConnectTimeout=5", # fail early
+        "-oUserKnownHostsFile=/dev/null", # dont try to add host as known
+        "root@172.44.0.2",
     ]
 
 
@@ -169,11 +177,17 @@ class QemuVm:
         self.qmp_session = qmp_session
         self.tmux_session = tmux_session
         self.pid = pid
-        self.ssh_port = 0  # get_ssh_port(qmp_session)
+        self.ssh_port = 22  # get_ssh_port(qmp_session)
         self.ushell_socket = ushell_socket
 
     def events(self) -> Iterator[Dict[str, Any]]:
         return self.qmp_session.events()
+
+    def set_vcpumap(self, cpumap: List[int]):
+        threads = self.qmp_session.query_vcpu_threads()
+        for i in range(0, min(len(cpumap), len(threads))):
+            # pin threads[i] to cpu cpumap[i]
+            run(["taskset", "-pc", str(cpumap[i]), str(threads[i])])
 
     def wait_for_ssh(self) -> None:
         """
@@ -415,6 +429,14 @@ def uk_qemu_command(
             "virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off",
         ]
 
+    if spec.fs1_9p is not None:
+        cmd += [
+            "-fsdev",
+            f"local,id=myid2,path={spec.fs1_9p},security_model=none",
+            "-device",
+            "virtio-9p-pci,fsdev=myid2,mount_tag=fs1,disable-modern=on,disable-legacy=off",
+        ]
+
     return cmd
 
 
@@ -475,6 +497,7 @@ def spawn_qemu(
     extra_args_pre: List[str] = [],
     log: Optional[Path] = None,
     cpu_pinning: Optional[str] = None,
+    vcpu_pinning: List[int] = [],
 ) -> Iterator[QemuVm]:
     with TemporaryDirectory() as tempdir:
         qmp_socket = Path(tempdir).joinpath("qmp.sock")
@@ -532,7 +555,9 @@ def spawn_qemu(
                         "Qemu vm was terminated quickly. Check QEMU_DEBUG above."
                     )
             with connect_qmp(qmp_socket) as session:
-                yield QemuVm(session, tmux_session, qemu_pid, ushell_socket)
+                vm = QemuVm(session, tmux_session, qemu_pid, ushell_socket)
+                vm.set_vcpumap(vcpu_pinning)
+                yield vm
         finally:
             subprocess.run(["tmux", "-L", tmux_session, "kill-server"])
             while True:

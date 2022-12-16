@@ -1,10 +1,11 @@
 from root import MEASURE_RESULTS
 import confmeasure
 import measure_helpers as util
+from pylib import unwrap, unsafe_cast
 from procs import run
 import root
 
-from typing import List, Any, Optional, Callable, Generator, Iterator, Tuple
+from typing import List, Any, Optional, Callable, Generator, Iterator, Tuple, TypeVar
 import time
 import pty
 import os
@@ -20,7 +21,7 @@ from pathlib import Path
 
 
 # overwrite the number of samples to take to a minimum
-QUICK = False
+QUICK = True
 
 
 DURATION = "1m"
@@ -28,7 +29,7 @@ if QUICK:
     DURATION = "10s"
 
 
-SIZE = 5
+SIZE = 10
 WARMUP = 0
 if QUICK:
     WARMUP = 0
@@ -95,6 +96,27 @@ def sendall(ushell: s.socket, content: str) -> None:
     c = ushell.send(str.encode(content))
     if c != len(content):
         raise Exception("TODO implement writeall")
+
+
+def run_bin(ushell: s.socket, prompt: str, run: str = "hello", load: Optional[str] = None) -> float:
+    """
+    send newline and expect prompt back. Time to reply is returned.
+    """
+    if QUICK:
+        print("measuring run")
+    sw = time.monotonic()
+    
+    if load is not None:
+        sendall(ushell, f"load {load}")
+        assertline(ushell, prompt)
+    
+    sendall(ushell, f"run {run}")
+    assertline(ushell, prompt)
+
+    sw = time.monotonic() - sw
+
+    time.sleep(0.5)
+    return sw
 
 
 def echo_newline(ushell: s.socket, prompt: str) -> float:
@@ -380,7 +402,7 @@ def run_nginx_native() -> Iterator[Any]:
         import subprocess
 
         nginx = subprocess.Popen(cmd)  # , preexec_fn=os.setsid)
-        run(["taskset", "-p", confmeasure.CORES_QEMU, str(nginx.pid)])
+        run(["taskset", "-pc", confmeasure.CORES_QEMU, str(nginx.pid)])
 
         yield nginx
 
@@ -435,6 +457,67 @@ def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
     samples = sample(lambda: experiment())
 
     stats[name] = samples
+    util.write_stats(STATS_PATH, stats)
+
+
+def ushell_run(
+    helpers: confmeasure.Helpers,
+    stats: Any,
+) -> None:
+    """
+    per sample:
+    """
+    name = f"ushell_run"
+    name2 = "ushell-run-cached"
+    if name in stats.keys() and name2 in stats.keys():
+        print(f"skip {name}")
+        return
+
+    def experiment(loadable: str) -> List[float]:
+        ushell = s.socket(s.AF_UNIX)
+
+        # with util.testbench_console(helpers) as vm:
+        with TemporaryDirectory() as tempdir_:
+            log = Path(tempdir_) / "qemu.log"
+            vm_spec = helpers.uk_count()
+            with helpers.spawn_qemu(vm_spec, log=log) as vm:
+                # if vm_spec.fs1_9p is not None:
+                    # raise Exception("unwrap failed")
+                bin_source = unwrap(vm_spec.fs1_9p) / f"{loadable}.c"
+                bin_out = unwrap(vm_spec.fs1_9p) / f"{loadable}"
+                bin_syms = unwrap(vm_spec.fs1_9p) / "symbol.txt"
+                # build the executable
+                run(["gcc", "-fPIC", "-c", "-o", str(bin_out), str(bin_source)])
+                # extract symbols
+                run(["sh", "-c", f"nm {unwrap(vm_spec.kernel)}.dbg | cut -d ' ' -f1,3 > {bin_syms}"])
+
+                # vm.wait_for_ping("172.44.0.2")
+                ushell.connect(bytes(unsafe_cast(vm.ushell_socket)))
+
+                # ensure readiness of system
+                time.sleep(5) # guest network stack is up, but also wait for application to start
+                # time.sleep(2) # for the count app we dont really have a way to check if it is online
+
+                value = run_bin(ushell, "> ", run=loadable, load="symbol.txt")
+                value_cached = run_bin(ushell, "> ", run=loadable, load="symbol.txt")
+                print("sample:", value)
+                print("sample (cached):", value_cached)
+
+
+                # return values
+                # vm.wait_for_death()
+            ushell.close()
+            return [value, value_cached]
+
+    samples = sample(lambda: experiment("hello"))
+    run_ = []
+    run_cached = []
+    for i in samples:
+        run_ += [i[0]]
+        run_cached += [i[1]]
+
+    stats[name] = run_
+    stats[name2] = run_cached
     util.write_stats(STATS_PATH, stats)
 
 
@@ -506,6 +589,9 @@ def main() -> None:
     not quick: ~70 min
     """
     util.check_intel_turbo()
+    util.check_hyperthreading()
+    util.check_root()
+    util.check_cpu_isolation()
     helpers = confmeasure.Helpers()
 
     stats = util.read_stats(STATS_PATH)
@@ -515,6 +601,10 @@ def main() -> None:
             for bootfs in ["initrd", "9p"]:
                 print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs})\n")
                 f(helpers, stats, shell=shell, bootfs=bootfs)
+
+
+    print("\nmeasure performance when running external apps\n")
+    ushell_run(helpers, stats)
 
     with_all_configs(sqlite_ushell)  # 2x5x 150s + 2x5x 4s
     with_all_configs(redis_ushell)  # 4x5x 4s

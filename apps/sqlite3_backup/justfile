@@ -47,6 +47,16 @@ compile_cmd target:
 
 compile_progs:
     @just compile_cmd 'call_backup'
+    @just compile_cmd 'generate_table'
 
 gen_sym_txt:
     nm {{APP}}.dbg | cut -d ' ' -f1,3 > ./fs1/symbol.txt
+
+help:
+  # how to confirm that the backup works:
+  # in the uk-sqlite prompt run the following queries:
+  # CREATE TABLE foo(bar INT);
+  # INSERT INTO foo (bar) VALUES (1);
+  # INSERT INTO foo (bar) VALUES (5);
+  # then attach ushell, load symbol.txt and run call_backup
+  # now you can upload fs0/dump to http://www.sqliteonline.net/ and inspect the dump

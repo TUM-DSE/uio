@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Iterator
+from tqdm import tqdm
 
 from qemu import VmImage, NixosVmSpec, UkVmSpec
 from root import PROJECT_ROOT
@@ -36,58 +37,70 @@ def uk_build(name: str) -> Path:
 
 
 def uk_sqlite(shell: str, bootfs: str) -> UkVmSpec:
-    build = uk_build(f".#uk-sqlite_benchmark-{shell}-{bootfs}")
+    flake_name = f"uk-sqlite_benchmark-{shell}-{bootfs}"
+    build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite_benchmark_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return UkVmSpec(
+        flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
         netbridge=True,
         ushell_devices=True,
         initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs1",
     )
 
 
 def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
-    build = uk_build(f".#uk-redis-{shell}-{bootfs}")
+    flake_name = f"uk-redis-{shell}-{bootfs}"
+    build = uk_build(f".#{flake_name}")
     kernel = build / "redis_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return UkVmSpec(
+        flake_name=flake_name,
         kernel=kernel,
         app_cmdline="/redis.conf",
         netbridge=True,
         ushell_devices=True,
         initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/redis/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/redis/fs1",
     )
 
 
 def uk_nginx(shell: str, bootfs: str) -> UkVmSpec:
-    build = uk_build(f".#uk-nginx-{shell}-{bootfs}")
+    flake_name = f"uk-nginx-{shell}-{bootfs}"
+    build = uk_build(f".#{flake_name}")
     kernel = build / "nginx_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return UkVmSpec(
+        flake_name=flake_name,
         kernel=kernel,
         app_cmdline="-c /nginx/conf/nginx.conf",
         netbridge=True,
         ushell_devices=True,
         initrd=initrd,
         rootfs_9p=PROJECT_ROOT / "apps/nginx/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/nginx/fs1",
     )
 
 
-def uk_count() -> UkVmSpec:
-    build = uk_build(".#uk-count-ushell")
+def uk_count(shell: str = "ushell") -> UkVmSpec:
+    flake_name = f"uk-count-{shell}"
+    build = uk_build(f".#{flake_name}")
     kernel = build / "count_kvm-x86_64"
     initrd = build / "fs0.cpio"
     return UkVmSpec(
+        flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
         netbridge=True,
         ushell_devices=True,
         initrd=None,
         rootfs_9p=PROJECT_ROOT / "apps/count/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/count/fs0",
     )
 
 
@@ -161,3 +174,21 @@ def notos_image_custom_kernel(nix: str = NOTOS_IMAGE) -> VmImage:
     image.kerneldir = PROJECT_ROOT.joinpath("..", "linux")
     image.kernel = image.kerneldir.joinpath("arch", "x86", "boot")
     return image
+
+def build_all():
+    print("Building all nix (flake) packages in this repository.")
+    result = subprocess.run(
+        ["nix", "flake", "show", "--json"],
+        text=True,
+        stdout=subprocess.PIPE,
+        check=True,
+        cwd=PROJECT_ROOT,
+    )
+    outputs = json.loads(result.stdout)
+    for package in tqdm(outputs['packages']['x86_64-linux']):
+        print(f"\nBuilding {package}...")
+        nix_build(f".#{package}")
+
+
+if __name__ == "__main__":
+    build_all()

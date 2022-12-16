@@ -31,14 +31,23 @@ just attach
 TODO: describe how to set up networking
 
 ```bash
-nix develop 
-# delete results from previous runs
-rm -r ./misc/tests/measurements 
-# or to redo specific ones
+# enter the development shell
+nix develop
+
+# you can choose to build all the things in advance
+python3.9 ./misc/test/nix.py
+
+# run the actual tests
+
 rm -r ./misc/tests/measurements/console-stats.json
-sudo python3.9 ./misc/tests/measure_console.py
+sudo python3.9 ./misc/tests/measure_console.py # depending on your system configuration, qemu has to be started as root. In that case you have to start python as root. 
+python3.9 ./misc/tests/graph.py misc/tests/measurements/console-latest.tsv
+ls ./console.pdf
+
 rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
+python3.9 ./misc/tests/graph.py misc/tests/measurements/app-latest.tsv
+ls ./redis.pdf ./sqlite.pdf ./nginx.pdf
 ```
 
 Measure other code other from what is locked by flake.lock:
