@@ -66,7 +66,8 @@
         ];
       in
       {
-        devShell = pkgs.mkShell {
+        devShell = pkgs.gcc9Stdenv.mkDerivation {
+          name = "devShell";
           buildInputs = buildDeps ++ [
             pythonEnv
 

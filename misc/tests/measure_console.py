@@ -395,8 +395,10 @@ def main() -> None:
     ushell_console(helpers, stats)
     print("\nmeasure performance for ushell console with nignx load\n")
     ushell_console_nginx(helpers, stats)
-    print("\nmeasure performance of ushell init\n")
-    ushell_init(helpers, stats, do_reattach=False)
+    # print("\nmeasure performance of ushell init\n")
+    # ushell_init(helpers, stats, do_reattach=False)
+    # print("\nmeasure performance of ushell reattach\n")
+    # ushell_init(helpers, stats, do_reattach=True)
     print("\nmeasure performance of ssh console\n")
     qemu_ssh(helpers, stats)
 

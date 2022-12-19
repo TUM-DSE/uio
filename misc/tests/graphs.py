@@ -59,7 +59,8 @@ ROW_ALIASES.update(
         },
         "ltoshell": {
             "noshell": "baseline",
-            "noshell-lto": "baseline-lto",
+            "noshell-lto": "baseline (opt)",
+            "ushell-lto": "ushell (opt)",
         },
         "shell": {
             "noshell": "baseline",
@@ -349,6 +350,10 @@ def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
+
+    for c in g.ax.containers:
+        labels = [f'   {(v.get_width()*1000*1000):.1f}us' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge')
 
     FONT_SIZE = 9
     g.ax.annotate(
