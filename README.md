@@ -28,13 +28,16 @@ just attach
 
 ## measurements
 
-TODO: describe how to set up networking
-
 ```bash
 # enter the development shell
 nix develop
 
-# you can choose to build all the things in advance
+# set up a bridge for qemu networking
+pushd apps/nginx
+just setup_bridge
+popd
+
+# you can choose to build all the unikraft kernels in advance
 python3.9 ./misc/test/nix.py
 
 # run the actual tests
@@ -48,7 +51,12 @@ rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
 python3.9 ./misc/tests/graph.py misc/tests/measurements/app-latest.tsv
 ls ./redis.pdf ./sqlite.pdf ./nginx.pdf
+
+rm -r ./misc/tests/measurements/image-stats.json
+sudo python3.9 ./misc/tests/measure_image.py
+python3.9 ./misc/tests/graph.py misc/tests/measurements/image-latest.tsv
+ls ./images.pdf
 ```
 
-Measure other code other from what is locked by flake.lock:
-Make `self-stable.url` in `flake.nix` point i.e. to your local git checkout and run `nix flake lock --update-input self-stable` every time the sources change.
+By default we use a pinned version of the measured unikraft kernels for reproducability. 
+Measure other kernel configs/versions by updating the `self-stable.url` in `flake.nix` to point i.e. to your local git checkout. Every time the unikraft sources change, run `nix flake lock --update-input self-stable` to tell the nix builder about the new sources.

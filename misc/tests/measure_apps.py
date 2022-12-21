@@ -499,11 +499,15 @@ def ushell_run(
                 time.sleep(5) # guest network stack is up, but also wait for application to start
                 # time.sleep(2) # for the count app we dont really have a way to check if it is online
 
-                value = run_bin(ushell, "> ", run=loadable, load="symbol.txt")
-                value_cached = run_bin(ushell, "> ", run=loadable, load="symbol.txt")
+                # load has huge variances (0.009-0.000,09s). Thus we exclude it from measurements.
+                sendall(ushell, f"load {bin_syms}")
+                assertline(ushell, "> ")
+                time.sleep(0.5)
+
+                value = run_bin(ushell, "> ", run=loadable, load=None)
+                value_cached = run_bin(ushell, "> ", run=loadable, load=None)
                 print("sample:", value)
                 print("sample (cached):", value_cached)
-
 
                 # return values
                 # vm.wait_for_death()
@@ -519,69 +523,6 @@ def ushell_run(
 
     stats[name] = run_
     stats[name2] = run_cached
-    util.write_stats(STATS_PATH, stats)
-
-
-def set_console_raw() -> None:
-    fd = sys.stdin.fileno()
-    new = termios.tcgetattr(fd)
-    new[3] = new[3] & ~termios.ECHO
-    termios.tcsetattr(fd, termios.TCSADRAIN, new)
-
-
-def native(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "native"
-    if name in stats.keys():
-        print(f"skip {name}")
-        return
-    (pid, ptsfd) = pty.fork()
-
-    if pid == 0:
-        # normalize prompt by removing bash version number
-        os.environ["PS1"] = "$ "
-        set_console_raw()
-        os.execlp("/bin/sh", "/bin/sh")
-
-    assert expect(ptsfd, 2, "$")
-    samples = sample(
-        lambda: echo(
-            ptsfd,
-            "$",
-        )
-    )
-    print("samples:", samples)
-    os.kill(pid, signal.SIGKILL)
-    os.waitpid(pid, 0)
-
-    os.close(ptsfd)
-
-    stats[name] = samples
-    util.write_stats(STATS_PATH, stats)
-
-
-def ssh(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "ssh"
-    if name in stats.keys():
-        print(f"skip {name}")
-        return
-    (ptmfd, ptsfd) = pty.openpty()
-    (ptmfd_stub, ptsfd_stub) = pty.openpty()
-    pts_stub = os.readlink(f"/proc/self/fd/{ptsfd_stub}")
-    os.close(ptsfd_stub)
-    with util.testbench_console(helpers, pts_stub, guest_cmd=["/bin/ls"]) as vm:
-        # breakpoint()
-        sh = vm.ssh_Popen(stdin=ptsfd, stdout=ptsfd, stderr=ptsfd)
-        assert expect(ptmfd, 2, "~]$")
-        samples = sample(lambda: echo(ptmfd, "~]$"))
-        sh.kill()
-        sh.wait()
-        print("samples:", samples)
-
-    os.close(ptmfd_stub)
-    os.close(ptsfd)
-    os.close(ptmfd)
-
-    stats[name] = samples
     util.write_stats(STATS_PATH, stats)
 
 

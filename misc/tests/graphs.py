@@ -29,7 +29,8 @@ if PAPER_MODE:
 else:
     out_format = ".png"
 
-palette = sns.color_palette("colorblind")
+palette = sns.color_palette()
+# palette = sns.color_palette("colorblind")
 # palette = [palette[-1], palette[1], palette[2]]
 
 hatches = ["//", "..", ""]
