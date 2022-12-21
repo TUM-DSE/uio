@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, List
 from natsort import natsort_keygen
 import warnings
+import plot
 
 from plot import (
     apply_aliases,
@@ -29,27 +30,36 @@ else:
     out_format = ".png"
 
 palette = sns.color_palette("colorblind")
-palette = [palette[-1], palette[1], palette[2]]
+# palette = [palette[-1], palette[1], palette[2]]
 
 hatches = ["//", "..", ""]
+barheight = 0.5
 
 ROW_ALIASES.update(
     {
         "direction": dict(read_mean="read", write_mean="write"),
         "system": {
             "ushell-console": "ushell",
+            "ushellmpk-console": "ushell (mpk)",
             "ushell-console-nginx": "ushell + nginx load",
+            "ushellmpk-console-nginx": "ushell (mpk) + nginx load",
             "qemu_ssh_console": "linux + ssh",
             "ushell-init": "wo/ isolation",
-            "redis_ushell_initrd_nohuman": "ushell nohuman",
+            "redis_ushell_initrd_nohuman": "ushell",
+            "redis_ushellmpk_initrd_nohuman": "ushell mpk",
             "redis_noshell_initrd_nohuman": "baseline",
-            "sqlite_ushell_initrd_nohuman": "ushell nohuman",
+            "sqlite_ushell_initrd_nohuman": "ushell",
+            "sqlite_ushellmpk_initrd_nohuman": "ushell mpk",
             "sqlite_noshell_initrd_nohuman": "baseline",
-            "nginx_ushell_initrd_nohuman": "ushell nohuman",
+            "nginx_ushell_initrd_nohuman": "ushell",
+            "nginx_ushellmpk_initrd_nohuman": "ushell mpk",
             "nginx_noshell_initrd_nohuman": "baseline",
             "nginx_ushell_initrd_lshuman": "ushell lshuman",
+            "nginx_ushellmpk_initrd_lshuman": "ushell mpk lshuman",
             "ushell_run": "run hello",
+            "ushellmpk_run": "run hello (mpk)",
             "ushell-run-cached": "run hello (cached)",
+            "ushellmpk-run-cached": "run hello (cached, mpk)",
             "uk-nginx-noshell-initrd": "nginx",
             "uk-nginx-ushell-initrd": "nginx ushell",
             "uk-redis-noshell-initrd": "redis",
@@ -88,7 +98,7 @@ FORMATTER.update(
     {
         "iops": magnitude_formatter(3),
         "io_throughput": magnitude_formatter(6),
-        "seconds": magnitude_formatter(-3),
+        "useconds": magnitude_formatter(-3),
         "kB": magnitude_formatter(3),
     }
 )
@@ -326,6 +336,25 @@ def sort(df: pd.DataFrame, systems: List[str]) -> pd.DataFrame:
     sparse = pd.concat([ df[df["system"] == n] for n in systems ])
     return pd.concat([ sparse, df ]).drop_duplicates(keep='first')
 
+def annotate_bar_values_s(g: Any):
+    for c in g.ax.containers:
+        labels = [f'   {(v.get_width()):.2f}s' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge')
+
+def annotate_bar_values_us(g: Any):
+    for c in g.ax.containers:
+        labels = [f'   {(v.get_width()*1000*1000):.1f}us' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge')
+
+def annotate_bar_values_k(g: Any):
+    for c in g.ax.containers:
+        labels = [f'   {(v.get_width()/1000):.1f}k' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge')
+
+def annotate_bar_values_M(g: Any):
+    for c in g.ax.containers:
+        labels = [f'   {(v.get_width()/1000/1000):.2f}M' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge')
 
 def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     if len(names) == 0: names = [name]
@@ -345,15 +374,11 @@ def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
         aspect=aspect,
         palette=palette,
     )
-    import plot
-    plot.set_barplot_height(g.ax, 0.3)
+    plot.set_barplot_height(g.ax, barheight)
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
-
-    for c in g.ax.containers:
-        labels = [f'   {(v.get_width()*1000*1000):.1f}us' for v in c]
-        g.ax.bar_label(c, labels=labels, label_type='edge')
+    annotate_bar_values_us(g)
 
     FONT_SIZE = 9
     g.ax.annotate(
@@ -375,7 +400,7 @@ def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     )
 
     g.despine()
-    format(g.ax.xaxis, "seconds")
+    format(g.ax.xaxis, "useconds")
     return g
 
 
@@ -574,6 +599,10 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
     )
     # g.ax.set_xscale("log")
 
+    plot.set_barplot_height(g.ax, barheight)
+    annotate_bar_values_k(g)
+    g.despine()
+
     FONT_SIZE = 9
     g.ax.annotate(
         "Higher is better",
@@ -630,6 +659,9 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     apply_hatch(g, patch_legend=True, hatch_list=hatches)
     # sns.move_legend(g.ax, "upper center")
     # g.ax.legend(loc='upper center')
+    # plot.set_barplot_height(g.ax, barheight)
+    annotate_bar_values_M(g)
+    g.despine()
 
     # change_width(g.ax, 3.3)
 
@@ -682,6 +714,9 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
         # facet_kws=dict({"gridspec_kws": {"height_ratios": [directs, files]}}),
     )
     # g.ax.set_xscale("log")
+    annotate_bar_values_s(g)
+    g.despine()
+    plot.set_barplot_height(g.ax, barheight)
 
     FONT_SIZE = 9
     g.ax.annotate(
@@ -802,9 +837,9 @@ def main() -> None:
             graphs.append(("nginx", nginx(df, "nginx")))
             graphs.append(("sqlite", sqlite(df, "sqlite")))
             graphs.append(("redis", redis(df, "redis")))
-            graphs.append(("run", console(df, "ushell_run", names=["ushell_run", "ushell-run-cached"])))
+            graphs.append(("run", console(df, "ushell_run", names=["ushell_run", "ushellmpk_run", "ushell-run-cached", "ushellmpk-run-cached"])))
         elif name.startswith("console"):
-            graphs.append(("console", console(df, "ushell-console", names=["qemu_ssh_console", "ushell-console", "ushell-console-nginx"])))
+            graphs.append(("console", console(df, "ushell-console", names=["qemu_ssh_console", "ushell-console", "ushellmpk-console", "ushell-console-nginx", "ushellmpk-console-nginx"])))
             graphs.append(("init", console(df, "ushell-init")))
         elif name.startswith("image"):
             graphs.append(("images", images(df, "image-sizes")))

@@ -167,15 +167,15 @@ def nginx_load(
     return subprocess.Popen(cmd)
 
 
-def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "ushell-console"
+def ushell_console(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell") -> None:
+    name = f"{shell}-console"
     if name in stats.keys():
         print(f"skip {name}")
         return
 
     ushell = s.socket(s.AF_UNIX)
 
-    with util.testbench_console(helpers) as vm:
+    with helpers.spawn_qemu(helpers.uk_count(shell = shell)) as vm:
         # vm.wait_for_ping("172.44.0.2")
         ushell.connect(bytes(vm.ushell_socket))
 
@@ -197,15 +197,15 @@ def ushell_console(helpers: confmeasure.Helpers, stats: Any) -> None:
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
 
-def ushell_console_nginx(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "ushell-console-nginx"
+def ushell_console_nginx(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell") -> None:
+    name = f"{shell}-console-nginx"
     if name in stats.keys():
         print(f"skip {name}")
         return
 
     ushell = s.socket(s.AF_UNIX)
 
-    with helpers.spawn_qemu(helpers.uk_nginx(shell="ushell", bootfs="initrd")) as vm:
+    with helpers.spawn_qemu(helpers.uk_nginx(shell=shell, bootfs="initrd")) as vm:
         # vm.wait_for_ping("172.44.0.2")
         ushell.connect(bytes(vm.ushell_socket))
 
@@ -393,8 +393,12 @@ def main() -> None:
 
     print("\nmeasure performance for ushell console\n")
     ushell_console(helpers, stats)
+    print("\nmeasure performance for ushellmpk console\n")
+    ushell_console(helpers, stats, shell = "ushellmpk")
     print("\nmeasure performance for ushell console with nignx load\n")
     ushell_console_nginx(helpers, stats)
+    print("\nmeasure performance for ushellmpk console with nignx load\n")
+    ushell_console_nginx(helpers, stats, shell = "ushellmpk")
     # print("\nmeasure performance of ushell init\n")
     # ushell_init(helpers, stats, do_reattach=False)
     # print("\nmeasure performance of ushell reattach\n")

@@ -50,7 +50,7 @@ class Helpers:
         return nix.uk_nginx(shell, bootfs)
 
     @staticmethod
-    def uk_count() -> UkVmSpec:
+    def uk_count(shell: str = "ushell") -> UkVmSpec:
         return nix.uk_count()
 
     @staticmethod
