@@ -357,13 +357,12 @@ def annotate_bar_values_M(g: Any):
         labels = [f'   {(v.get_width()/1000/1000):.2f}M' for v in c]
         g.ax.bar_label(c, labels=labels, label_type='edge')
 
-def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
+def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] = []) -> Any:
     if len(names) == 0: names = [name]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"{name}-seconds")
     df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
     width = 3.3
-    aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
@@ -375,7 +374,7 @@ def console(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
         aspect=aspect,
         palette=palette,
     )
-    plot.set_barplot_height(g.ax, barheight)
+    # plot.set_barplot_height(g.ax, barheight)
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
@@ -600,7 +599,7 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
     )
     # g.ax.set_xscale("log")
 
-    plot.set_barplot_height(g.ax, barheight)
+    # plot.set_barplot_height(g.ax, barheight)
     annotate_bar_values_k(g)
     g.despine()
 
@@ -696,7 +695,7 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
     df = sort_baseline_first(df, "sqlite_noshell_initrd_nohuman")
 
     width = 3.3
-    aspect = 2.0
+    aspect = 2.9
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
@@ -717,7 +716,7 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
     # g.ax.set_xscale("log")
     annotate_bar_values_s(g)
     g.despine()
-    plot.set_barplot_height(g.ax, barheight)
+    # plot.set_barplot_height(g.ax, barheight)
 
     FONT_SIZE = 9
     g.ax.annotate(
@@ -838,9 +837,9 @@ def main() -> None:
             graphs.append(("nginx", nginx(df, "nginx")))
             graphs.append(("sqlite", sqlite(df, "sqlite")))
             graphs.append(("redis", redis(df, "redis")))
-            graphs.append(("run", console(df, "ushell_run", names=["ushell_run", "ushellmpk_run", "ushell-run-cached", "ushellmpk-run-cached"])))
+            graphs.append(("run", console(df, "ushell_run", aspect = 2.3, names=["ushell_run", "ushellmpk_run", "ushell-run-cached", "ushellmpk-run-cached"])))
         elif name.startswith("console"):
-            graphs.append(("console", console(df, "ushell-console", names=["qemu_ssh_console", "ushell-console", "ushellmpk-console", "ushell-console-nginx", "ushellmpk-console-nginx"])))
+            graphs.append(("console", console(df, "ushell-console", aspect = 1.8, names=["qemu_ssh_console", "ushell-console", "ushellmpk-console", "ushell-console-nginx", "ushellmpk-console-nginx"])))
             graphs.append(("init", console(df, "ushell-init")))
         elif name.startswith("image"):
             graphs.append(("images", images(df, "image-sizes")))
