@@ -58,5 +58,16 @@ python3.9 ./misc/tests/graph.py misc/tests/measurements/image-latest.tsv
 ls ./images.pdf
 ```
 
+### developing measurements
+
 By default we use a pinned version of the measured unikraft kernels for reproducability. 
 Measure other kernel configs/versions by updating the `self-stable.url` in `flake.nix` to point i.e. to your local git checkout. Every time the unikraft sources change, run `nix flake lock --update-input self-stable` to tell the nix builder about the new sources.
+
+Measure_${title}.py files have a quick flag: Set to false runs a longer running version of the benchmark with less debug output which is meant for final evaluation.
+
+Implementation Structure:
+
+- nix.py: here we build our kernels
+- qemu.py: here we start qemu in a tmux session
+- measure_${title}.py: here we run all benchmarks that are not present yet in the .json file. On completion, it is written into the .tsv file.
+- graph.py: takes a tsv file and creates plots from it depending on its filename
