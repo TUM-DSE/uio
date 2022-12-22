@@ -79,6 +79,11 @@ def catplot(**kwargs: Any) -> Any:
     return g
 
 
+def apply_hatch2(g: Any, patch_legend: bool = False, hatch_list = ["", "///", "---", "\\"]) -> None:
+    for idx, bar in enumerate(g.ax.containers[0]):
+        bar.set_hatch(hatch_list[idx%len(hatch_list)])
+
+
 def apply_hatch(g: Any, patch_legend: bool = False, hatch_list = ["", "///", "---", "\\"]) -> None:
     for bars, hatch in zip(g.ax.containers, hatch_list):
         for bar in bars:
@@ -133,11 +138,11 @@ def apply_aliases(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(index=str, columns=COLUMN_ALIASES)
 
 
-def magnitude_formatter(orderOfMagnitude: int) -> mpl.ticker.Formatter:
+def magnitude_formatter(orderOfMagnitude: int, offsetstring: bool = False) -> mpl.ticker.Formatter:
     fac = pow(10, orderOfMagnitude)
     ff = mpl.ticker.FuncFormatter(lambda val, pos: f"{val/fac:g}")
     # ff.set_offset_string(f"1e{orderOfMagnitude}")
-    ff.set_offset_string("")
+    if not offsetstring: ff.set_offset_string("")
     return ff
 
 

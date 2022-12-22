@@ -20,7 +20,8 @@ from plot import (
     format,
     magnitude_formatter,
     change_width,
-    apply_hatch
+    apply_hatch,
+    apply_hatch2
 )
 from plot import ROW_ALIASES, COLUMN_ALIASES, FORMATTER
 
@@ -29,12 +30,13 @@ if PAPER_MODE:
 else:
     out_format = ".png"
 
-palette = sns.color_palette()
+palette = sns.color_palette("pastel")
 # palette = sns.color_palette("colorblind")
 # palette = [palette[-1], palette[1], palette[2]]
 
-hatches = ["//", "..", ""]
+hatches = ["", "..", "//"]
 barheight = 0.5
+app_height = 2.0
 sysname = "uShell"
 
 ROW_ALIASES.update(
@@ -48,7 +50,7 @@ ROW_ALIASES.update(
             "ushell-init": "wo/ isolation",
             "redis_ushell_initrd_nohuman": f"{sysname}",
             "redis_ushellmpk_initrd_nohuman": f"isolated-{sysname}",
-            "redis_noshell_initrd_nohuman": "Redis-Unikraft",
+            "redis_noshell_initrd_nohuman": "Unikraft",
             "sqlite_ushell_initrd_nohuman": f"{sysname}",
             "sqlite_ushellmpk_initrd_nohuman": f"isolated-{sysname}",
             "sqlite_noshell_initrd_nohuman": "SQlite-Unikraft",
@@ -104,6 +106,7 @@ FORMATTER.update(
         "io_throughput": magnitude_formatter(6),
         "useconds": magnitude_formatter(-3),
         "kB": magnitude_formatter(3),
+        "krps": magnitude_formatter(3, offsetstring=True),
     }
 )
 
@@ -122,7 +125,7 @@ def image_sizes(df: pd.DataFrame) -> Any:
     df_after = df.assign(when="after", container_size=lambda x: x.new_size / 10e6)
     merged = pd.concat([df_before, df_after])
 
-    sns.set(font_scale=1.3)
+    # sns.set(font_scale=1.3)
     sns.set_style("whitegrid")
     g = sns.boxplot(
         y=column_alias("container_size"),
@@ -345,6 +348,11 @@ def annotate_bar_values_s(g: Any):
         labels = [f'   {(v.get_width()):.2f}s' for v in c]
         g.ax.bar_label(c, labels=labels, label_type='edge')
 
+def annotate_bar_values_s2(g: Any):
+    for c in g.ax.containers:
+        labels = [f'{(v.get_height()):.2f}s' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge', padding=3)
+
 def annotate_bar_values_us(g: Any):
     for c in g.ax.containers:
         labels = [f'   {(v.get_width()*1000*1000):.1f}us' for v in c]
@@ -355,10 +363,20 @@ def annotate_bar_values_k(g: Any):
         labels = [f'   {(v.get_width()/1000):.1f}k' for v in c]
         g.ax.bar_label(c, labels=labels, label_type='edge')
 
+def annotate_bar_values_k2(g: Any):
+    for c in g.ax.containers:
+        labels = [f'{(v.get_height()/1000):.1f}k' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge', padding=3)
+
 def annotate_bar_values_M(g: Any):
     for c in g.ax.containers:
         labels = [f'   {(v.get_width()/1000/1000):.2f}M' for v in c]
         g.ax.bar_label(c, labels=labels, label_type='edge')
+
+def annotate_bar_values_M2(g: Any):
+    for c in g.ax.containers:
+        labels = [f'{(v.get_height()/1000/1000):.2f}M' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge', padding=3)
 
 def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] = []) -> Any:
     if len(names) == 0: names = [name]
@@ -382,6 +400,8 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
     annotate_bar_values_us(g)
+    if name == "ushell-console": apply_hatch2(g, patch_legend=False, hatch_list=["", "...", "///", "...", "///"])
+    if name == "ushell_run": apply_hatch2(g, patch_legend=False, hatch_list=["..", "//"])
 
     FONT_SIZE = 9
     g.ax.annotate(
@@ -416,7 +436,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     # df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
     width = 2.8
-    aspect = 1.5
+    aspect = 1
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("app"),
@@ -579,20 +599,22 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="nginx-requests")
     df = parse_app_system(df)
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
+    names = [ "nginx_noshell_initrd_nohuman", "nginx_ushell_initrd_nohuman", "nginx_ushellmpk_initrd_nohuman"]
+    df = pd.concat([ df[df["system"] == n] for n in names ])
     df = sort(df, ["nginx_noshell_initrd_nohuman", "nginx_ushell_initrd_nohuman"])
 
     width = 3.3
     aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
-        y=column_alias("system"),
+        x=column_alias("system"),
         # order=systems_order(df),
-        x=column_alias("nginx-requests"),
+        y=column_alias("nginx-requests"),
         # hue=column_alias("direction"),
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
-        height=width/aspect,
-        aspect=aspect,
+        height=app_height,
+        aspect=1.1,
         palette=palette,
         legend=False,
         row="app",
@@ -603,16 +625,20 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
     # g.ax.set_xscale("log")
 
     # plot.set_barplot_height(g.ax, barheight)
-    annotate_bar_values_k(g)
+    annotate_bar_values_k2(g)
     g.despine()
+    g.set(xticklabels=[])
+    apply_hatch2(g, patch_legend=False, hatch_list=hatches)
+    # format(g.ax.yaxis, "krps")
 
     FONT_SIZE = 9
     g.ax.annotate(
         "Higher is better",
         xycoords="axes points",
         xy=(0, 0),
-        xytext=(-90, -30),
+        xytext=(-70, -30),
         fontsize=FONT_SIZE,
+        rotation=90,
         color="navy",
         weight="bold",
     )
@@ -641,14 +667,14 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     aspect = 1.5
     g = catplot(
         data=apply_aliases(df),
-        y=column_alias("direction"),
+        x=column_alias("direction"),
         # order=systems_order(df),
-        x=column_alias("redis-requests"),
+        y=column_alias("redis-requests"),
         hue=column_alias("system"),
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
-        height=width/aspect,
-        aspect=aspect,
+        height=app_height,
+        aspect=1.5,
         palette=palette,
         legend=True,
         row="app",
@@ -663,7 +689,7 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     # sns.move_legend(g.ax, "upper center")
     # g.ax.legend(loc='upper center')
     # plot.set_barplot_height(g.ax, barheight)
-    annotate_bar_values_M(g)
+    annotate_bar_values_M2(g)
     g.despine()
 
     # change_width(g.ax, 3.3)
@@ -689,7 +715,6 @@ def redis(df: pd.DataFrame, what: str) -> Any:
 
     return g
 
-
 def sqlite(df: pd.DataFrame, what: str) -> Any:
     # df = df[df["benchmark"] == what]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="sqlite-seconds")
@@ -701,14 +726,14 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
     aspect = 2.9
     g = catplot(
         data=apply_aliases(df),
-        y=column_alias("system"),
+        x=column_alias("system"),
         # order=systems_order(df),
-        x=column_alias("sqlite-seconds"),
+        y=column_alias("sqlite-seconds"),
         # hue=column_alias("direction"),
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
-        height=width/aspect,
-        aspect=aspect,
+        height=app_height,
+        aspect=0.9,
         palette=palette,
         legend=False,
         row="app",
@@ -717,9 +742,11 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
         # facet_kws=dict({"gridspec_kws": {"height_ratios": [directs, files]}}),
     )
     # g.ax.set_xscale("log")
-    annotate_bar_values_s(g)
+    annotate_bar_values_s2(g)
     g.despine()
     # plot.set_barplot_height(g.ax, barheight)
+    g.set(xticklabels=[])
+    apply_hatch2(g, patch_legend=False, hatch_list=hatches)
 
     FONT_SIZE = 9
     g.ax.annotate(
