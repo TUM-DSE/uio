@@ -35,47 +35,48 @@ palette = sns.color_palette()
 
 hatches = ["//", "..", ""]
 barheight = 0.5
+sysname = "uShell"
 
 ROW_ALIASES.update(
     {
-        "direction": dict(read_mean="read", write_mean="write"),
         "system": {
-            "ushell-console": "ushell",
-            "ushellmpk-console": "ushell (mpk)",
-            "ushell-console-nginx": "ushell + nginx load",
-            "ushellmpk-console-nginx": "ushell (mpk) + nginx load",
+            "ushell-console": f"{sysname}",
+            "ushellmpk-console": f"isolated-{sysname}",
+            "ushell-console-nginx": f"{sysname} + nginx load",
+            "ushellmpk-console-nginx": f"isol.-{sysname} + nginx load",
             "qemu_ssh_console": "linux + ssh",
             "ushell-init": "wo/ isolation",
-            "redis_ushell_initrd_nohuman": "ushell",
-            "redis_ushellmpk_initrd_nohuman": "ushell mpk",
-            "redis_noshell_initrd_nohuman": "baseline",
-            "sqlite_ushell_initrd_nohuman": "ushell",
-            "sqlite_ushellmpk_initrd_nohuman": "ushell mpk",
-            "sqlite_noshell_initrd_nohuman": "baseline",
-            "nginx_ushell_initrd_nohuman": "ushell",
-            "nginx_ushellmpk_initrd_nohuman": "ushell mpk",
-            "nginx_noshell_initrd_nohuman": "baseline",
-            "nginx_ushell_initrd_lshuman": "ushell lshuman",
-            "nginx_ushellmpk_initrd_lshuman": "ushell mpk lshuman",
-            "ushell_run": "run hello",
-            "ushellmpk_run": "run hello (mpk)",
-            "ushell-run-cached": "run hello (cached)",
-            "ushellmpk-run-cached": "run hello (cached, mpk)",
-            "uk-nginx-noshell-initrd": "nginx",
-            "uk-nginx-ushell-initrd": "nginx ushell",
-            "uk-redis-noshell-initrd": "redis",
-            "uk-redis-ushell-initrd": "redis ushell",
-            "uk-sqlite_benchmark-noshell-initrd": "sqlite",
-            "uk-sqlite_benchmark-ushell-initrd": "sqlite ushell",
+            "redis_ushell_initrd_nohuman": f"{sysname}",
+            "redis_ushellmpk_initrd_nohuman": f"isolated-{sysname}",
+            "redis_noshell_initrd_nohuman": "Redis-Unikraft",
+            "sqlite_ushell_initrd_nohuman": f"{sysname}",
+            "sqlite_ushellmpk_initrd_nohuman": f"isolated-{sysname}",
+            "sqlite_noshell_initrd_nohuman": "SQlite-Unikraft",
+            "nginx_ushell_initrd_nohuman": f"{sysname}",
+            "nginx_ushellmpk_initrd_nohuman": f"isolated-{sysname}",
+            "nginx_noshell_initrd_nohuman": "Nginx-Unikraft",
+            "nginx_ushell_initrd_lshuman": f"{sysname} interaction",
+            "nginx_ushellmpk_initrd_lshuman": f"isol.-{sysname} interaction",
+            "ushell_run": f"{sysname} run hello",
+            "ushellmpk_run": "isolated",
+            "ushell-run-cached": "cached",
+            "ushellmpk-run-cached": "cached + isolated",
+            "uk-nginx-noshell-initrd": "Nginx",
+            "uk-nginx-ushell-initrd": f"Nginx {sysname}",
+            "uk-redis-noshell-initrd": "Redis",
+            "uk-redis-ushell-initrd": f"Redis {sysname}",
+            "uk-sqlite_benchmark-noshell-initrd": "SQlite",
+            "uk-sqlite_benchmark-ushell-initrd": f"SQlite {sysname}",
         },
         "ltoshell": {
-            "noshell": "baseline",
-            "noshell-lto": "baseline (opt)",
-            "ushell-lto": "ushell (opt)",
+            "noshell": "Unikraft",
+            "noshell-lto": "Unikraft (opt)",
+            "ushell": f"w/ {sysname}",
+            "ushell-lto": f"w/ {sysname} (opt)",
         },
-        "shell": {
-            "noshell": "baseline",
-        },
+        # "shell": {
+            # "noshell": "baseline",
+        # },
         "iotype": dict(
             direct="Direct/Block IO",
             file="File IO",
@@ -93,6 +94,8 @@ COLUMN_ALIASES.update(
         "nginx-requests": "requests/s",
         "sqlite-seconds": "time [s]",
         "image-size": "size [kB]",
+        # "ltoshell": "Variant",
+        "system": "system"
     }
 )
 FORMATTER.update(
