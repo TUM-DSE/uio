@@ -33,6 +33,9 @@ else:
 palette = sns.color_palette("pastel")
 # palette = sns.color_palette("colorblind")
 # palette = [palette[-1], palette[1], palette[2]]
+col_base = palette[0]
+col_ushell = palette[1]
+col_ushellmpk = palette[2]
 
 hatches = ["", "..", "//"]
 barheight = 0.5
@@ -45,7 +48,7 @@ ROW_ALIASES.update(
             "ushell-console": f"{sysname}",
             "ushellmpk-console": f"isolated-{sysname}",
             "ushell-console-nginx": f"{sysname} + nginx load",
-            "ushellmpk-console-nginx": f"isol.-{sysname} + nginx load",
+            "ushellmpk-console-nginx": f"isolated-{sysname} + nginx load",
             "qemu_ssh_console": "linux + ssh",
             "ushell-init": "wo/ isolation",
             "redis_ushell_initrd_nohuman": f"{sysname}",
@@ -58,8 +61,8 @@ ROW_ALIASES.update(
             "nginx_ushellmpk_initrd_nohuman": f"isolated-{sysname}",
             "nginx_noshell_initrd_nohuman": "Nginx-Unikraft",
             "nginx_ushell_initrd_lshuman": f"{sysname} interaction",
-            "nginx_ushellmpk_initrd_lshuman": f"isol.-{sysname} interaction",
-            "ushell_run": f"{sysname} run hello",
+            "nginx_ushellmpk_initrd_lshuman": f"isolated-{sysname} interaction",
+            "ushell_run": f"{sysname}",
             "ushellmpk_run": "isolated",
             "ushell-run-cached": "cached",
             "ushellmpk-run-cached": "cached + isolated",
@@ -363,6 +366,11 @@ def annotate_bar_values_k(g: Any):
         labels = [f'   {(v.get_width()/1000):.1f}k' for v in c]
         g.ax.bar_label(c, labels=labels, label_type='edge')
 
+def annotate_bar_values_kB(g: Any):
+    for c in g.ax.containers:
+        labels = [f'   {(v.get_width()/1024/1024):.2f}MB' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge')
+
 def annotate_bar_values_k2(g: Any):
     for c in g.ax.containers:
         labels = [f'{(v.get_height()/1000):.1f}k' for v in c]
@@ -383,7 +391,7 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"{name}-seconds")
     df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
-    width = 3.3
+    width = 3.5
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
@@ -400,8 +408,12 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
     annotate_bar_values_us(g)
-    if name == "ushell-console": apply_hatch2(g, patch_legend=False, hatch_list=["", "...", "///", "...", "///"])
-    if name == "ushell_run": apply_hatch2(g, patch_legend=False, hatch_list=["..", "//"])
+    if name == "ushell-console": 
+        apply_hatch2(g, patch_legend=False, hatch_list=["", "...", "///", "...", "///"])
+        bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
+    if name == "ushell_run": 
+        apply_hatch2(g, patch_legend=False, hatch_list=["..", "//"])
+        bar_colors(g, [col_ushell, col_ushellmpk, palette[4], palette[5]])
 
     FONT_SIZE = 9
     g.ax.annotate(
@@ -435,6 +447,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
 
     # df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
+    # sns.set(font_scale=1.1)
     width = 2.8
     aspect = 1
     g = catplot(
@@ -447,13 +460,16 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
         height=width/aspect,
         aspect=aspect,
-        palette=palette,
+        palette=[col_base, col_base, col_ushell, col_ushell],
     )
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
     hatches = ["//", "..", "//", ".."]
     apply_hatch(g, patch_legend=True, hatch_list=hatches)
+    annotate_bar_values_kB(g)
+    g._legend.set_title("")
+    g.ax.set_xlim(0, 2500000)
 
     FONT_SIZE = 9
     g.ax.annotate(
@@ -532,7 +548,7 @@ def sort_row(val: pd.Series) -> Any:
     return natsort_keygen()(val.apply(lambda v: UNIT_FINDER.sub(unit_replacer, v)))
 
 
-def bar_colors(graph: Any, df: pd.Series, num_colors: int) -> None:
+def bar_colors_rainbow(graph: Any, df: pd.Series, num_colors: int) -> None:
     colors = sns.color_palette(n_colors=num_colors)
     groups = 0
     last_group = df[0].iloc[0]
@@ -541,6 +557,11 @@ def bar_colors(graph: Any, df: pd.Series, num_colors: int) -> None:
             last_group = df[i].iloc[0]
             groups += 1
         patch.set_facecolor(colors[groups])
+
+
+def bar_colors(graph: Any, colors) -> None:
+    for i, patch in enumerate(graph.axes[0][0].patches):
+        patch.set_facecolor(colors[i%len(colors)])
 
 
 def phoronix(df: pd.DataFrame) -> Any:
@@ -617,7 +638,7 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
         aspect=1.1,
         palette=palette,
         legend=False,
-        row="app",
+        # row="app",
         # sharex=True,
         # sharey=False,
         # facet_kws=dict({"gridspec_kws": {"height_ratios": [directs, files]}}),
@@ -677,7 +698,8 @@ def redis(df: pd.DataFrame, what: str) -> Any:
         aspect=1.5,
         palette=palette,
         legend=True,
-        row="app",
+        # row="app",
+        capsize=0.1,
         # fontsize=FONT_SIZE,
         # sharex=True,
         # sharey=False,
@@ -691,6 +713,7 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     # plot.set_barplot_height(g.ax, barheight)
     annotate_bar_values_M2(g)
     g.despine()
+    g._legend.set_title("")
 
     # change_width(g.ax, 3.3)
 
@@ -736,7 +759,7 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
         aspect=0.9,
         palette=palette,
         legend=False,
-        row="app",
+        # row="app",
         # sharex=True,
         # sharey=False,
         # facet_kws=dict({"gridspec_kws": {"height_ratios": [directs, files]}}),
