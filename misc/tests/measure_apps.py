@@ -475,8 +475,9 @@ def ushell_run(
         print(f"skip {name}")
         return
 
-    def experiment(loadable: str) -> List[float]:
+    def experiment(loadable: str, exec_args: str = "") -> List[float]:
         ushell = s.socket(s.AF_UNIX)
+        cmdline = f"{loadable} {exec_args}"
 
         # with util.testbench_console(helpers) as vm:
         with TemporaryDirectory() as tempdir_:
@@ -505,8 +506,8 @@ def ushell_run(
                 assertline(ushell, "> ")
                 time.sleep(0.5)
 
-                value = run_bin(ushell, "> ", run=loadable, load=None)
-                value_cached = run_bin(ushell, "> ", run=loadable, load=None)
+                value = run_bin(ushell, "> ", run=cmdline, load=None)
+                value_cached = run_bin(ushell, "> ", run=cmdline, load=None)
                 print("sample:", value)
                 print("sample (cached):", value_cached)
 
@@ -515,7 +516,7 @@ def ushell_run(
             ushell.close()
             return [value, value_cached]
 
-    samples = sample(lambda: experiment("hello"))
+    samples = sample(lambda: experiment("set_count_func", exec_args = "3"))
     run_ = []
     run_cached = []
     for i in samples:
