@@ -79,7 +79,7 @@
         };
         # app x shell x fs
         packages = builtins.listToAttrs ( pkgs.lib.flatten (
-          pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" "sqlite3_backup" ] (app:
           pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
           #pkgs.lib.forEach [ "initrd" "9p" ] (bootfs:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
@@ -94,7 +94,7 @@
         )) //
         # (app x shell) with lto # TODO this should also include mpk
         builtins.listToAttrs ( pkgs.lib.flatten (
-          pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" "sqlite3_backup" ] (app:
           pkgs.lib.forEach [ "noshell" "ushell" ] (shell:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}-lto" (
@@ -127,16 +127,6 @@
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.noshell.lto";
-          };
-          uk-sqlite3_backup-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
-            inherit pkgs self-stable buildDeps;
-            app = "sqlite3_backup";
-            config = "config.eval.ushell";
-          };
-          uk-sqlite3_backup-ushellmpk = pkgs.callPackage ./misc/nix/uk-app.nix { 
-            inherit pkgs self-stable buildDeps;
-            app = "sqlite3_backup";
-            config = "config.eval.ushellmpk";
           };
           nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix { 
             inherit pkgs nixos-generators; 

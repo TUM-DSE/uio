@@ -36,6 +36,24 @@ def uk_build(name: str) -> Path:
     return Path(out)
 
 
+def uk_sqlite3_backup(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
+    flake_name = f"uk-sqlite3_backup-{shell}-{bootfs}"
+    if lto: flake_name += "-lto"
+    build = uk_build(f".#{flake_name}")
+    kernel = build / "sqlite3_backup_kvm-x86_64"
+    initrd = build / "fs0.cpio"
+    return UkVmSpec(
+        flake_name=flake_name,
+        kernel=kernel,
+        app_cmdline="",
+        netbridge=True,
+        ushell_devices=True,
+        initrd=initrd,
+        rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs1",
+    )
+
+
 def uk_sqlite(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
     flake_name = f"uk-sqlite_benchmark-{shell}-{bootfs}"
     if lto: flake_name += "-lto"

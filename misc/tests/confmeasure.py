@@ -38,6 +38,10 @@ class Helpers:
         return nix.busybox_image()
 
     @staticmethod
+    def uk_sqlite3_backup(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
+        return nix.uk_sqlite(shell, bootfs)
+    
+    @staticmethod
     def uk_sqlite(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
         return nix.uk_sqlite(shell, bootfs)
 
