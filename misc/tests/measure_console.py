@@ -12,6 +12,7 @@ import signal
 import socket as s
 import select
 from tqdm import tqdm
+import subprocess
 
 
 # overwrite the number of samples to take to a minimum
@@ -148,7 +149,6 @@ def echo_newline_tty(ptmfd: int, prompt: str) -> float:
     time.sleep(0.5)
     return sw
 
-import subprocess
 def nginx_load(
     host_port, length: str = "10m", connections: int = 30, threads: int = 14
 ) -> subprocess.Popen:

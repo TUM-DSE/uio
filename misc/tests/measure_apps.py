@@ -5,13 +5,8 @@ from pylib import unwrap, unsafe_cast
 from procs import run
 import root
 
-from typing import List, Any, Optional, Callable, Generator, Iterator, Tuple, TypeVar
+from typing import List, Any, Optional, Callable, Iterator, Tuple
 import time
-import pty
-import os
-import sys
-import termios
-import signal
 import socket as s
 import select
 import re
@@ -19,6 +14,9 @@ from tqdm import tqdm
 from tempfile import TemporaryDirectory
 from pathlib import Path
 import numpy as np
+import threading
+from contextlib import contextmanager
+import shutil
 
 
 # overwrite the number of samples to take to a minimum
@@ -306,9 +304,6 @@ def sqlite_ushell(
     util.write_stats(STATS_PATH, stats)
 
 
-import threading
-
-
 def nginx_ushell(
     helpers: confmeasure.Helpers,
     stats: Any,
@@ -373,10 +368,6 @@ def nginx_ushell(
 
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
-
-
-from contextlib import contextmanager
-import shutil
 
 
 @contextmanager
