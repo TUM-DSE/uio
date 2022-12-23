@@ -50,6 +50,7 @@ ls ./console.pdf
 rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
 python3.9 ./misc/tests/graph.py misc/tests/measurements/app-latest.tsv
+ls misc/tests/measurements/app-mean-latest.tsv
 ls ./redis.pdf ./sqlite.pdf ./nginx.pdf
 
 rm -r ./misc/tests/measurements/image-stats.json

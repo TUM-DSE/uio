@@ -18,6 +18,7 @@ import re
 from tqdm import tqdm
 from tempfile import TemporaryDirectory
 from pathlib import Path
+import numpy as np
 
 
 # overwrite the number of samples to take to a minimum
@@ -526,6 +527,62 @@ def ushell_run(
     util.write_stats(STATS_PATH, stats)
 
 
+def calculate_average_overhead(stats):
+    def overhead(baseline, new) -> float:
+        """
+        new = baseline - overhead * baseline
+        new = baseline (1 - overhead)
+        =>
+        overhead = (baseline - new) / baseline
+        """
+        return (np.mean(baseline) - np.mean(new)) / np.mean(baseline)
+    ushell = [
+        overhead(stats['nginx_noshell_initrd_nohuman'], 
+                 stats['nginx_ushell_initrd_nohuman']),
+        np.mean([
+            overhead(stats['redis_noshell_initrd_nohuman-get'], 
+                     stats['redis_ushell_initrd_nohuman-get']),
+            overhead(stats['redis_noshell_initrd_nohuman-set'], 
+                     stats['redis_ushell_initrd_nohuman-set'])
+            ]),
+        overhead(stats['sqlite_noshell_initrd_nohuman'], 
+                 stats['sqlite_ushell_initrd_nohuman']),
+        ]
+    ushellmpk = [
+        overhead(stats['nginx_noshell_initrd_nohuman'], 
+                 stats['nginx_ushellmpk_initrd_nohuman']),
+        np.mean([
+            overhead(stats['redis_noshell_initrd_nohuman-get'], 
+                     stats['redis_ushellmpk_initrd_nohuman-get']),
+            overhead(stats['redis_noshell_initrd_nohuman-set'], 
+                     stats['redis_ushellmpk_initrd_nohuman-set'])
+            ]),
+        overhead(stats['sqlite_noshell_initrd_nohuman'], 
+                 stats['sqlite_ushellmpk_initrd_nohuman']),
+        ]
+    print("Ushell overhead:")
+    print(ushell)
+    print(f"mean: {np.mean(ushell)}")
+    print("Ushellmpk overhead:")
+    print(ushellmpk)
+    print(f"mean: {np.mean(ushellmpk)}")
+    stddev = np.mean([
+        np.std(stats['nginx_noshell_initrd_nohuman']) / np.mean(stats['nginx_noshell_initrd_nohuman']),
+        np.mean([
+            np.std(stats['redis_noshell_initrd_nohuman-get']) / np.mean(stats['redis_noshell_initrd_nohuman-get']),
+            np.std(stats['redis_noshell_initrd_nohuman-set']) / np.mean(stats['redis_noshell_initrd_nohuman-set']),
+            ]),
+        np.std(stats['sqlite_noshell_initrd_nohuman']) / np.mean(stats['sqlite_noshell_initrd_nohuman']),
+        ])
+    print(f"mean stddev of baselines to estimate confidence in overhead values: {stddev}")
+
+    return {
+        "ushell_overhead": [np.mean(ushell)],
+        "ushellmpk_overhead": [np.mean(ushellmpk)],
+        "baseline_unikraft_stddev": [stddev]
+        }
+
+
 def main() -> None:
     """
     not quick: ~70 min
@@ -571,6 +628,8 @@ def main() -> None:
     # nginx_qemu_9p(helpers, stats)  # 5x 75s
 
     util.export_fio("app", stats)
+    means = calculate_average_overhead(stats)
+    util.export_fio("app-mean", means)
 
 
 if __name__ == "__main__":
