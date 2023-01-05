@@ -39,8 +39,8 @@ col_ushellmpk = palette[2]
 
 hatches = ["", "..", "//"]
 barheight = 0.5
-app_height = 2.0
-sysname = "uShell"
+app_height = 1.8
+sysname = "ᴜSʜᴇʟʟ"
 
 ROW_ALIASES.update(
     {
@@ -92,11 +92,11 @@ ROW_ALIASES.update(
 
 COLUMN_ALIASES.update(
     {
-        "ushell-console-seconds": "latency [ms]",
-        "ushell-init-seconds": "time [ms]",
-        "ushell_run-seconds": "time [ms]",
-        "redis-requests": "requests/s",
-        "nginx-requests": "requests/s",
+        "ushell-console-seconds": "latency [us]",
+        "ushell-init-seconds": "time [us]",
+        "ushell_run-seconds": "time [us]",
+        "redis-requests": "throughput [M req/s]",
+        "nginx-requests": "throughput [K req/s]",
         "sqlite-seconds": "time [s]",
         "image-size": "size [kB]",
         # "ltoshell": "Variant",
@@ -107,9 +107,10 @@ FORMATTER.update(
     {
         "iops": magnitude_formatter(3),
         "io_throughput": magnitude_formatter(6),
-        "useconds": magnitude_formatter(-3),
+        "useconds": magnitude_formatter(-6),
         "kB": magnitude_formatter(3),
         "krps": magnitude_formatter(3, offsetstring=True),
+        "mrps": magnitude_formatter(6, offsetstring=True),
     }
 )
 
@@ -354,12 +355,13 @@ def annotate_bar_values_s(g: Any):
 def annotate_bar_values_s2(g: Any):
     for c in g.ax.containers:
         labels = [f'{(v.get_height()):.2f}s' for v in c]
-        g.ax.bar_label(c, labels=labels, label_type='edge', padding=3)
+        g.ax.bar_label(c, labels=labels, label_type='edge',
+                       padding=3, fontsize=5)
 
 def annotate_bar_values_us(g: Any):
     for c in g.ax.containers:
         labels = [f'   {(v.get_width()*1000*1000):.1f}us' for v in c]
-        g.ax.bar_label(c, labels=labels, label_type='edge')
+        g.ax.bar_label(c, labels=labels, label_type='edge', fontsize=7)
 
 def annotate_bar_values_k(g: Any):
     for c in g.ax.containers:
@@ -368,13 +370,14 @@ def annotate_bar_values_k(g: Any):
 
 def annotate_bar_values_kB(g: Any):
     for c in g.ax.containers:
-        labels = [f'   {(v.get_width()/1024/1024):.2f}MB' for v in c]
-        g.ax.bar_label(c, labels=labels, label_type='edge')
+        labels = [f' {(v.get_width()/1024/1024):.2f}MB' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge', fontsize=7)
 
 def annotate_bar_values_k2(g: Any):
     for c in g.ax.containers:
         labels = [f'{(v.get_height()/1000):.1f}k' for v in c]
-        g.ax.bar_label(c, labels=labels, label_type='edge', padding=3)
+        g.ax.bar_label(c, labels=labels, label_type='edge',
+                       padding=3, fontsize=5)
 
 def annotate_bar_values_M(g: Any):
     for c in g.ax.containers:
@@ -384,14 +387,14 @@ def annotate_bar_values_M(g: Any):
 def annotate_bar_values_M2(g: Any):
     for c in g.ax.containers:
         labels = [f'{(v.get_height()/1000/1000):.2f}M' for v in c]
-        g.ax.bar_label(c, labels=labels, label_type='edge', padding=3)
+        g.ax.bar_label(c, labels=labels, label_type='edge', padding=3, fontsize=5)
 
 def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] = []) -> Any:
     if len(names) == 0: names = [name]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"{name}-seconds")
     df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
-    width = 3.5
+    width = 3.3
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
@@ -408,19 +411,22 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
     annotate_bar_values_us(g)
+    xytext = (-100,-27)
     if name == "ushell-console": 
         apply_hatch2(g, patch_legend=False, hatch_list=["", "...", "///", "...", "///"])
         bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
     if name == "ushell_run": 
         apply_hatch2(g, patch_legend=False, hatch_list=["..", "//"])
         bar_colors(g, [col_ushell, col_ushellmpk, palette[4], palette[5]])
+        xytext = (-60,-27)
 
-    FONT_SIZE = 9
+    FONT_SIZE = 9 
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
         xy=(0, 0),
-        xytext=(1, -30),
+        xytext=xytext,
+        #xytext=(-100, -27),
         fontsize=FONT_SIZE,
         color="navy",
         weight="bold",
@@ -428,8 +434,10 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     g.ax.annotate(
         "",
         xycoords="axes points",
-        xy=(-15, -27),
-        xytext=(0, -27),
+        xy=tuple(x+y for x,y in zip(xytext, (-15,2))),
+        xytext=tuple(x+y for x,y in zip(xytext, (0,2))),
+        #xy=(-115, -25),
+        #xytext=(-100, -25),
         fontsize=FONT_SIZE,
         arrowprops=dict(arrowstyle="-|>", color="navy"),
     )
@@ -448,8 +456,9 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     # df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
     # sns.set(font_scale=1.1)
-    width = 2.8
-    aspect = 1
+    # width = 2.8
+    width = 3.3
+    aspect = 1.2
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("app"),
@@ -469,14 +478,16 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     apply_hatch(g, patch_legend=True, hatch_list=hatches)
     annotate_bar_values_kB(g)
     g._legend.set_title("")
-    g.ax.set_xlim(0, 2500000)
+    sns.move_legend(g, "upper right", bbox_to_anchor=(0.77, 1.01), labelspacing=.2)
+    # g.ax.set_xlim(0, 2500000)
+    g.ax.set_xlim(0, 2800000)
 
     FONT_SIZE = 9
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
         xy=(0, 0),
-        xytext=(1, -30),
+        xytext=(-20, -27),
         fontsize=FONT_SIZE,
         color="navy",
         weight="bold",
@@ -484,8 +495,8 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     g.ax.annotate(
         "",
         xycoords="axes points",
-        xy=(-15, -27),
-        xytext=(0, -27),
+        xy=(-20-15, -25),
+        xytext=(-20, -25),
         fontsize=FONT_SIZE,
         arrowprops=dict(arrowstyle="-|>", color="navy"),
     )
@@ -624,8 +635,8 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
     df = pd.concat([ df[df["system"] == n] for n in names ])
     df = sort(df, ["nginx_noshell_initrd_nohuman", "nginx_ushell_initrd_nohuman"])
 
-    width = 3.3
-    aspect = 2.0
+    width = (7/4)+0.2
+    aspect = width/app_height
     g = catplot(
         data=apply_aliases(df),
         x=column_alias("system"),
@@ -635,7 +646,8 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
         height=app_height,
-        aspect=1.1,
+        aspect=aspect,
+        # aspect=1.1,
         palette=palette,
         legend=False,
         # row="app",
@@ -648,29 +660,29 @@ def nginx(df: pd.DataFrame, what: str) -> Any:
     # plot.set_barplot_height(g.ax, barheight)
     annotate_bar_values_k2(g)
     g.despine()
-    g.set(xticklabels=[])
+    g.set(xticklabels=[], xlabel="")
     apply_hatch2(g, patch_legend=False, hatch_list=hatches)
-    # format(g.ax.yaxis, "krps")
+    format(g.ax.yaxis, "krps")
 
     FONT_SIZE = 9
     g.ax.annotate(
-        "Higher is better",
+        "Higher is better ↑",
         xycoords="axes points",
+        # xy=(0, 0),
         xy=(0, 0),
-        xytext=(-70, -30),
+        xytext=(-35, -15),
         fontsize=FONT_SIZE,
-        rotation=90,
         color="navy",
         weight="bold",
     )
-    g.ax.annotate(
-        "",
-        xycoords="axes points",
-        xy=(-0, -27),
-        xytext=(-15, -27),
-        fontsize=FONT_SIZE,
-        arrowprops=dict(arrowstyle="-|>", color="navy"),
-    )
+    # g.ax.annotate(
+    #     "",
+    #     xycoords="axes points",
+    #     xy=(-20, 0),
+    #     xytext=(-20, -20),
+    #     fontsize=FONT_SIZE,
+    #     arrowprops=dict(arrowstyle="-|>", color="navy"),
+    # )
 
     return g
 
@@ -684,8 +696,10 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     # default font size seems to be 9, scaling it to around 10 crashes seaborn though
     # sns.set(font_scale=1.11)
     
-    width = 2.5
-    aspect = 1.5
+    # width = 2.5
+    # aspect = 1.5
+    width = ((7/4)*2)*0.7
+    aspect = width/app_height
     g = catplot(
         data=apply_aliases(df),
         x=column_alias("direction"),
@@ -695,7 +709,7 @@ def redis(df: pd.DataFrame, what: str) -> Any:
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
         height=app_height,
-        aspect=1.5,
+        aspect=aspect,
         palette=palette,
         legend=True,
         # row="app",
@@ -714,27 +728,30 @@ def redis(df: pd.DataFrame, what: str) -> Any:
     annotate_bar_values_M2(g)
     g.despine()
     g._legend.set_title("")
+    g.ax.set_xlabel("")
+    format(g.ax.yaxis, "mrps")
 
     # change_width(g.ax, 3.3)
 
     FONT_SIZE = 9
     g.ax.annotate(
-        "Higher is better",
+        "Higher is better ↑",
         xycoords="axes points",
         xy=(0, 0),
-        xytext=(-30, -30),
+        # xytext=(10, -15),
+        xytext=(100, -15),
         fontsize=FONT_SIZE,
         color="navy",
         weight="bold",
     )
-    g.ax.annotate(
-        "",
-        xycoords="axes points",
-        xy=(70, -27),
-        xytext=(55, -27),
-        fontsize=FONT_SIZE,
-        arrowprops=dict(arrowstyle="-|>", color="navy"),
-    )
+    # g.ax.annotate(
+    #     "",
+    #     xycoords="axes points",
+    #     xy=(70, -27),
+    #     xytext=(55, -27),
+    #     fontsize=FONT_SIZE,
+    #     arrowprops=dict(arrowstyle="-|>", color="navy"),
+    # )
 
     return g
 
@@ -745,8 +762,10 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
     df = df[df["rootfs"] == "initrd"][df["app"] == what]
     df = sort_baseline_first(df, "sqlite_noshell_initrd_nohuman")
 
-    width = 3.3
-    aspect = 2.9
+    # width = 3.3
+    # aspect = 2.9
+    width = (7/4)-0.2 # give some width to a nginx graph
+    aspect = width/app_height
     g = catplot(
         data=apply_aliases(df),
         x=column_alias("system"),
@@ -756,7 +775,7 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
         kind="bar",
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
         height=app_height,
-        aspect=0.9,
+        aspect=aspect,
         palette=palette,
         legend=False,
         # row="app",
@@ -768,27 +787,27 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
     annotate_bar_values_s2(g)
     g.despine()
     # plot.set_barplot_height(g.ax, barheight)
-    g.set(xticklabels=[])
+    g.set(xticklabels=[], xlabel="")
     apply_hatch2(g, patch_legend=False, hatch_list=hatches)
 
     FONT_SIZE = 9
     g.ax.annotate(
-        "Lower is better",
+        "Lower is better ↓",
         xycoords="axes points",
         xy=(0, 0),
-        xytext=(1, -30),
+        xytext=(-30, -15),
         fontsize=FONT_SIZE,
         color="navy",
         weight="bold",
     )
-    g.ax.annotate(
-        "",
-        xycoords="axes points",
-        xy=(-15, -27),
-        xytext=(0, -27),
-        fontsize=FONT_SIZE,
-        arrowprops=dict(arrowstyle="-|>", color="navy"),
-    )
+    # g.ax.annotate(
+    #     "",
+    #     xycoords="axes points",
+    #     xy=(-15, -27),
+    #     xytext=(0, -27),
+    #     fontsize=FONT_SIZE,
+    #     arrowprops=dict(arrowstyle="-|>", color="navy"),
+    # )
 
     return g
 
