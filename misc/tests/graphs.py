@@ -835,11 +835,8 @@ def app(df: pd.DataFrame) -> Any:
 
     width = 7 # \textwidth is 7 inch
     height = 1.8
-    nginx_width = 7/4
-    sqlite_width = 7/4
-    redis_width = 7/2
 
-    fig, axs = plt.subplots(ncols=3, gridspec_kw={'width_ratios': [1, 1, 2.5]})
+    fig, axs = plt.subplots(ncols=3, gridspec_kw={'width_ratios': [1, 1, 2]})
     fig.set_size_inches(width, height)
 
     def plot_nginx(df, ax, what="nginx", fontsize=7):
@@ -870,6 +867,7 @@ def app(df: pd.DataFrame) -> Any:
         g.set(xticks=[], xticklabels=[], xlabel="(a) Nginx")
         g.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold",
                     x = 0.40, y=1, pad=10)
+        change_width(g, 0.8)
         return g
 
     def plot_sqlite(df, ax, what="sqlite", fontsize=7):
@@ -897,6 +895,7 @@ def app(df: pd.DataFrame) -> Any:
         g.set_title("Lower is better ↓", fontsize=9, color="navy", weight="bold",
                     x = 0.45, y=1, pad=10)
         apply_hatch_ax(ax, patch_legend=True, hatch_list=hatches)
+        change_width(g, 0.8)
 
     def plot_redis(df, ax, what="redis", fontsize=7):
         df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="redis-requests")
@@ -914,21 +913,29 @@ def app(df: pd.DataFrame) -> Any:
             palette=palette,
             edgecolor="k",
             errcolor="black",
-            errwidth=1,
-            capsize=0.2,
-            # capsize=0.1,
+            errwidth=1.0,
+            # capsize=0.2,
+            capsize=0.05,
         )
         annotate_bar_values_M2_ax(g, fontsize=fontsize)
         sns.despine(ax=ax)
         hatches = ["", "", "..", "..", "//", "//"]
+        bar_width = 0.21
         for idx, bar in enumerate(g.patches):
             bar.set_hatch(hatches[idx%len(hatches)])
+
+        change_width(g, bar_width)
+        # reduce space between "get" and "set"
+        # for idx, bar in enumerate(g.patches):
+        #     if idx % 2 != 0:
+        #         bar.set_x(bar.get_x() - 0.1)
+        g.margins(x=0.001)
         g.legend(frameon=False) # (re-)draw legend with hatches
         g.set_xlabel("(c) Redis")
         g.tick_params(axis='x', length=0) # remove ticks
         g.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold", pad=10)
         format(ax.yaxis, "mrps")
-        sns.move_legend(g, "center left", bbox_to_anchor=(0.95, 0.5))
+        sns.move_legend(g, "center left", bbox_to_anchor=(1.00, 0.5))
 
     fs = 6 # font size of the valeus top of the bars
            # the size of other figures is 7, but we don't have enough space ...
