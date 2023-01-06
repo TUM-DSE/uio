@@ -923,7 +923,7 @@ def app(df: pd.DataFrame) -> Any:
         for idx, bar in enumerate(g.patches):
             bar.set_hatch(hatches[idx%len(hatches)])
 
-        bar_width = 0.21
+        bar_width = 0.22
         change_width(g, bar_width)
         # reduce space between "get" and "set"
         # for idx, bar in enumerate(g.patches):
