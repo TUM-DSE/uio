@@ -79,6 +79,9 @@ def catplot(**kwargs: Any) -> Any:
     plt.subplots_adjust(top=0.98)
     return g
 
+def apply_hatch_ax(ax: Any, patch_legend: bool = False, hatch_list = ["", "///", "---", "\\"]) -> None:
+    for idx, bar in enumerate(ax.containers[0]):
+        bar.set_hatch(hatch_list[idx%len(hatch_list)])
 
 def apply_hatch2(g: Any, patch_legend: bool = False, hatch_list = ["", "///", "---", "\\"]) -> None:
     for idx, bar in enumerate(g.ax.containers[0]):

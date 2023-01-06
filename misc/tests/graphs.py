@@ -17,11 +17,13 @@ from plot import (
     sns,
     PAPER_MODE,
     plt,
+    mpl,
     format,
     magnitude_formatter,
     change_width,
     apply_hatch,
-    apply_hatch2
+    apply_hatch2,
+    apply_hatch_ax,
 )
 from plot import ROW_ALIASES, COLUMN_ALIASES, FORMATTER
 
@@ -352,6 +354,12 @@ def annotate_bar_values_s(g: Any):
         labels = [f'   {(v.get_width()):.2f}s' for v in c]
         g.ax.bar_label(c, labels=labels, label_type='edge')
 
+def annotate_bar_values_s2_ax(ax: Any, fontsize=7):
+    for c in ax.containers:
+        labels = [f'{(v.get_height()):.2f}s' for v in c]
+        ax.bar_label(c, labels=labels, label_type='edge',
+                       padding=3, fontsize=fontsize)
+
 def annotate_bar_values_s2(g: Any):
     for c in g.ax.containers:
         labels = [f'{(v.get_height()):.2f}s' for v in c]
@@ -373,6 +381,12 @@ def annotate_bar_values_kB(g: Any):
         labels = [f' {(v.get_width()/1024/1024):.2f}MB' for v in c]
         g.ax.bar_label(c, labels=labels, label_type='edge', fontsize=7)
 
+def annotate_bar_values_k_ax(ax: Any, fontsize=7):
+    for c in ax.containers:
+        labels = [f'{(v.get_height()/1000):.1f}k' for v in c]
+        ax.bar_label(c, labels=labels, label_type='edge',
+                       padding=3, fontsize=fontsize)
+
 def annotate_bar_values_k2(g: Any):
     for c in g.ax.containers:
         labels = [f'{(v.get_height()/1000):.1f}k' for v in c]
@@ -383,6 +397,12 @@ def annotate_bar_values_M(g: Any):
     for c in g.ax.containers:
         labels = [f'   {(v.get_width()/1000/1000):.2f}M' for v in c]
         g.ax.bar_label(c, labels=labels, label_type='edge')
+
+def annotate_bar_values_M2_ax(ax: Any, fontsize=7):
+    for c in ax.containers:
+        labels = [f'{(v.get_height()/1000/1000):.2f}M' for v in c]
+        ax.bar_label(c, labels=labels, label_type='edge',
+                       padding=3, fontsize=fontsize)
 
 def annotate_bar_values_M2(g: Any):
     for c in g.ax.containers:
@@ -738,7 +758,6 @@ def redis(df: pd.DataFrame, what: str) -> Any:
         "Higher is better ↑",
         xycoords="axes points",
         xy=(0, 0),
-        # xytext=(10, -15),
         xytext=(100, -15),
         fontsize=FONT_SIZE,
         color="navy",
@@ -810,6 +829,124 @@ def sqlite(df: pd.DataFrame, what: str) -> Any:
     # )
 
     return g
+
+
+def app(df: pd.DataFrame) -> Any:
+
+    width = 7 # \textwidth is 7 inch
+    height = 1.8
+    nginx_width = 7/4
+    sqlite_width = 7/4
+    redis_width = 7/2
+
+    fig, axs = plt.subplots(ncols=3, gridspec_kw={'width_ratios': [1, 1, 2.5]})
+    fig.set_size_inches(width, height)
+
+    def plot_nginx(df, ax, what="nginx", fontsize=7):
+        df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="nginx-requests")
+        df = parse_app_system(df)
+        df = df[df["rootfs"] == "initrd"][df["app"] == what]
+        names = [ "nginx_noshell_initrd_nohuman", "nginx_ushell_initrd_nohuman", "nginx_ushellmpk_initrd_nohuman"]
+        df = pd.concat([ df[df["system"] == n] for n in names ])
+        df = sort(df, ["nginx_noshell_initrd_nohuman", "nginx_ushell_initrd_nohuman"])
+        g = sns.barplot(
+            ax=ax,
+            data=apply_aliases(df),
+            x=column_alias("system"),
+            y=column_alias("nginx-requests"),
+            ci="sd",
+            palette=palette,
+            edgecolor="k",
+            errcolor="black",
+            errwidth=1,
+            capsize=0.2,
+            # height=height,
+            # aspect=nginx_width/height,
+        )
+        annotate_bar_values_k_ax(ax, fontsize)
+        sns.despine(ax=ax)
+        apply_hatch_ax(ax, patch_legend=False, hatch_list=hatches)
+        format(ax.yaxis, "krps")
+        g.set(xticks=[], xticklabels=[], xlabel="(a) Nginx")
+        g.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold",
+                    x = 0.40, y=1, pad=10)
+        return g
+
+    def plot_sqlite(df, ax, what="sqlite", fontsize=7):
+        df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="sqlite-seconds")
+        df = parse_app_system(df)
+        df = df[df["rootfs"] == "initrd"][df["app"] == what]
+        df = sort_baseline_first(df, "sqlite_noshell_initrd_nohuman")
+
+        g = sns.barplot(
+            ax=ax,
+            data=apply_aliases(df),
+            x=column_alias("system"),
+            y=column_alias("sqlite-seconds"),
+            ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
+            palette=palette,
+            edgecolor="k",
+            errcolor="black",
+            errwidth=1,
+            capsize=0.2,
+        )
+
+        annotate_bar_values_s2_ax(g, fontsize)
+        sns.despine(ax=ax)
+        g.set(xticks=[], xticklabels=[], xlabel="(b) SQLite")
+        g.set_title("Lower is better ↓", fontsize=9, color="navy", weight="bold",
+                    x = 0.45, y=1, pad=10)
+        apply_hatch_ax(ax, patch_legend=True, hatch_list=hatches)
+
+    def plot_redis(df, ax, what="redis", fontsize=7):
+        df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="redis-requests")
+        df = parse_app_system(df)
+        df = df[df["rootfs"] == "initrd"][df["app"] == what]
+        df = sort_baseline_first(df, "redis_noshell_initrd_nohuman")
+
+        g = sns.barplot(
+            ax=ax,
+            data=apply_aliases(df),
+            x=column_alias("direction"),
+            y=column_alias("redis-requests"),
+            hue=column_alias("system"),
+            ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
+            palette=palette,
+            edgecolor="k",
+            errcolor="black",
+            errwidth=1,
+            capsize=0.2,
+            # capsize=0.1,
+        )
+        annotate_bar_values_M2_ax(g, fontsize=fontsize)
+        sns.despine(ax=ax)
+        hatches = ["", "", "..", "..", "//", "//"]
+        for idx, bar in enumerate(g.patches):
+            bar.set_hatch(hatches[idx%len(hatches)])
+        g.legend(frameon=False) # (re-)draw legend with hatches
+        g.set_xlabel("(c) Redis")
+        g.tick_params(axis='x', length=0) # remove ticks
+        g.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold", pad=10)
+        format(ax.yaxis, "mrps")
+        sns.move_legend(g, "center left", bbox_to_anchor=(0.95, 0.5))
+
+    fs = 6 # font size of the valeus top of the bars
+           # the size of other figures is 7, but we don't have enough space ...
+    plot_nginx(df, axs[0], fontsize=fs)
+    plot_sqlite(df, axs[1], fontsize=fs)
+    plot_redis(df, axs[2], fontsize=fs)
+    fig.tight_layout()
+    fig.subplots_adjust(wspace=0.5)
+
+    # we are using legend generated by plot_redis()
+    # p1 = mpl.patches.Patch(facecolor=palette[0], hatch=hatches[0], label='Unikraft')
+    # p2 = mpl.patches.Patch(facecolor=palette[1], hatch=hatches[1],
+    #                        label=f'{sysname}')
+    # p3 = mpl.patches.Patch(facecolor=palette[2], hatch=hatches[2],
+    #                        label=f'isolated-{sysname}')
+    # fig.legend(handles=[p1, p2, p3])
+
+    return fig
 
 def fio_overhead(df: pd.DataFrame, what: str, value_name: str) -> Any:
     df = df[df["benchmark"] == what]
@@ -910,6 +1047,7 @@ def main() -> None:
             graphs.append(("sqlite", sqlite(df, "sqlite")))
             graphs.append(("redis", redis(df, "redis")))
             graphs.append(("run", console(df, "ushell_run", aspect = 2.3, names=["ushell_run", "ushellmpk_run", "ushell-run-cached", "ushellmpk-run-cached"])))
+            graphs.append(("app", app(df)))
         elif name.startswith("console"):
             graphs.append(("console", console(df, "ushell-console", aspect = 1.8, names=["qemu_ssh_console", "ushell-console", "ushellmpk-console", "ushell-console-nginx", "ushellmpk-console-nginx"])))
             graphs.append(("init", console(df, "ushell-init")))
