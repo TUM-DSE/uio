@@ -49,8 +49,8 @@ ROW_ALIASES.update(
         "system": {
             "ushell-console": f"{sysname}",
             "ushellmpk-console": f"isolated-{sysname}",
-            "ushell-console-nginx": f"{sysname} + nginx load",
-            "ushellmpk-console-nginx": f"isolated-{sysname} + nginx load",
+            "ushell-console-nginx": f"{sysname} + Nginx load",
+            "ushellmpk-console-nginx": f"isolated-{sysname} + Nginx load",
             "qemu_ssh_console": "linux + ssh",
             "ushell-init": "wo/ isolation",
             "redis_ushell_initrd_nohuman": f"{sysname}",
@@ -58,22 +58,22 @@ ROW_ALIASES.update(
             "redis_noshell_initrd_nohuman": "Unikraft",
             "sqlite_ushell_initrd_nohuman": f"{sysname}",
             "sqlite_ushellmpk_initrd_nohuman": f"isolated-{sysname}",
-            "sqlite_noshell_initrd_nohuman": "SQlite-Unikraft",
+            "sqlite_noshell_initrd_nohuman": "SQLite-Unikraft",
             "nginx_ushell_initrd_nohuman": f"{sysname}",
             "nginx_ushellmpk_initrd_nohuman": f"isolated-{sysname}",
             "nginx_noshell_initrd_nohuman": "Nginx-Unikraft",
             "nginx_ushell_initrd_lshuman": f"{sysname} interaction",
             "nginx_ushellmpk_initrd_lshuman": f"isolated-{sysname} interaction",
             "ushell_run": f"{sysname}",
-            "ushellmpk_run": "isolated",
+            "ushellmpk_run": f"isolated-{sysname}",
             "ushell-run-cached": "cached",
             "ushellmpk-run-cached": "cached + isolated",
             "uk-nginx-noshell-initrd": "Nginx",
             "uk-nginx-ushell-initrd": f"Nginx {sysname}",
             "uk-redis-noshell-initrd": "Redis",
             "uk-redis-ushell-initrd": f"Redis {sysname}",
-            "uk-sqlite_benchmark-noshell-initrd": "SQlite",
-            "uk-sqlite_benchmark-ushell-initrd": f"SQlite {sysname}",
+            "uk-sqlite_benchmark-noshell-initrd": "SQLite",
+            "uk-sqlite_benchmark-ushell-initrd": f"SQLite {sysname}",
         },
         "ltoshell": {
             "noshell": "Unikraft",
@@ -366,9 +366,13 @@ def annotate_bar_values_s2(g: Any):
         g.ax.bar_label(c, labels=labels, label_type='edge',
                        padding=3, fontsize=5)
 
-def annotate_bar_values_us(g: Any):
-    for c in g.ax.containers:
-        labels = [f'   {(v.get_width()*1000*1000):.1f}us' for v in c]
+def annotate_bar_values_us(g: Any, offsets=None):
+    for i, c in enumerate(g.ax.containers):
+        if offsets is None:
+            space = [' '*3]*len(c)
+        else:
+            space = [' '*s for s in offsets]
+        labels = [f'{s}{(v.get_width()*1000*1000):.1f}us' for s,v in zip(space, c)]
         g.ax.bar_label(c, labels=labels, label_type='edge', fontsize=7)
 
 def annotate_bar_values_k(g: Any):
@@ -430,7 +434,8 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
-    annotate_bar_values_us(g)
+    offsets = [6, 3, 3, 3, 3]
+    annotate_bar_values_us(g, offsets)
     xytext = (-100,-27)
     if name == "ushell-console": 
         apply_hatch2(g, patch_legend=False, hatch_list=["", "...", "///", "...", "///"])
@@ -464,6 +469,7 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
 
     g.despine()
     format(g.ax.xaxis, "useconds")
+    g.tight_layout()
     return g
 
 
@@ -494,6 +500,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
+    g.ax.set_yticklabels(["count", "Nginx", "Redis", "SQLite"])
     hatches = ["//", "..", "//", ".."]
     apply_hatch(g, patch_legend=True, hatch_list=hatches)
     annotate_bar_values_kB(g)
