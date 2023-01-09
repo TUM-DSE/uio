@@ -39,7 +39,8 @@ col_base = palette[0]
 col_ushell = palette[1]
 col_ushellmpk = palette[2]
 
-hatches = ["", "..", "//"]
+# hatches = ["", "..", "//"]
+hatches = ["", "..", "**"]
 barheight = 0.5
 app_height = 1.8
 sysname = "ᴜSʜᴇʟʟ"
@@ -437,12 +438,18 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     offsets = [6, 3, 3, 3, 3]
     annotate_bar_values_us(g, offsets)
     xytext = (-100,-27)
+    # hatch_list_console = ["", "...", "///", "...", "///"]
+    # hatch_list_run = ["", "...", "///", "...", "///"]
+    hatch_list_console = ["", "...", "**", "\\\\...", "\\\\**"]
+    hatch_list_run = ["...", "**", "/...", "/**"]
     if name == "ushell-console": 
-        apply_hatch2(g, patch_legend=False, hatch_list=["", "...", "///", "...", "///"])
+        apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_console)
         bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
+        # bar_colors(g, [col_base, col_ushell, col_ushellmpk, palette[6], palette[6]])
     if name == "ushell_run": 
-        apply_hatch2(g, patch_legend=False, hatch_list=["..", "//"])
-        bar_colors(g, [col_ushell, col_ushellmpk, palette[4], palette[5]])
+        apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_run)
+        # bar_colors(g, [col_ushell, col_ushellmpk, palette[4], palette[5]])
+        bar_colors(g, [col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
         xytext = (-60,-27)
 
     FONT_SIZE = 9 
@@ -501,7 +508,8 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
     g.ax.set_yticklabels(["count", "Nginx", "Redis", "SQLite"])
-    hatches = ["//", "..", "//", ".."]
+    # hatches = ["//", "..", "//|", "..|"]
+    hatches = ["", "|", "..", "..|"]
     apply_hatch(g, patch_legend=True, hatch_list=hatches)
     annotate_bar_values_kB(g)
     g._legend.set_title("")
@@ -881,7 +889,7 @@ def app(df: pd.DataFrame) -> Any:
         )
         annotate_bar_values_M2_ax(g, fontsize=fontsize)
         sns.despine(ax=ax)
-        hatches = ["", "", "..", "..", "//", "//"]
+        hatches = ["", "", "..", "..", "**", "**"]
         for idx, bar in enumerate(g.patches):
             bar.set_hatch(hatches[idx%len(hatches)])
 
