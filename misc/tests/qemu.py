@@ -456,10 +456,12 @@ def spawn_qemu(
             ushell_socket = (
                 Path(tempdir).joinpath("ushell.sock") if image.ushell_devices else None
             )
+            # build qemu command for unikraft VM
             cmd += uk_qemu_command(
                 image, qmp_socket, ushell_socket, cpu_pinning=cpu_pinning
             )
         elif isinstance(image, NixosVmSpec):
+            # build qemu command for nixos VMs
             cmd += nixos_qemu_command(image, qmp_socket)
         else:
             raise Exception("unreachable")
