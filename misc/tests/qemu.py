@@ -304,57 +304,6 @@ class QemuVm:
         return self.qmp_session.send(cmd, args)
 
 
-def qemu_command_unreachable(
-    image: VmImage, qmp_socket: Path, ssh_port: int = 0
-) -> List:
-    """
-    @image VM image to boot
-    @qmp_socket unixsocket path of the QEMU qmp control socket
-    @ssh_port host port bound to vm guest port (0 means dynamic port)
-    """
-    params = " ".join(image.kernel_params)
-    return [
-        "qemu-system-x86_64",
-        "-enable-kvm",
-        "-name",
-        "test-os",
-        "-m",
-        "512",
-        "-drive",
-        f"id=drive1,file={image.squashfs},readonly=on,media=cdrom,format=raw,if=none",
-        "-device",
-        "virtio-blk-pci,drive=drive1,bootindex=1",
-        "-kernel",
-        f"{image.kernel}/bzImage",
-        "-initrd",
-        str(image.initial_ramdisk),
-        "-nographic",
-        "-serial",
-        "null",
-        "-device",
-        "virtio-serial",
-        "-chardev",
-        "stdio,mux=on,id=char0,signal=off",
-        "-mon",
-        "chardev=char0,mode=readline",
-        "-device",
-        "virtconsole,chardev=char0,nr=0",
-        "-append",
-        f"console=hvc0 {params} quiet panic=-1",
-        "-netdev",
-        f"user,id=n1,hostfwd=tcp:127.0.0.1:{ssh_port}-:22",
-        "-device",
-        "virtio-net-pci,netdev=n1",
-        "-virtfs",
-        f"local,path={PROJECT_ROOT},security_model=none,mount_tag=vmsh",
-        "-qmp",
-        f"unix:{str(qmp_socket)},server,nowait",
-        "-no-reboot",
-        "-device",
-        "virtio-rng-pci",
-    ]
-
-
 def uk_qemu_command(
     spec: UkVmSpec,
     qmp_socket: Path,

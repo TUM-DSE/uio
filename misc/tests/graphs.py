@@ -538,18 +538,18 @@ def compute_ratio(x: pd.DataFrame) -> pd.Series:
     scale = x.scale.iloc[0]
     native = x.value.iloc[0]
     if len(x.value) == 2:
-        vmsh = x.value.iloc[1]
+        l = x.value.iloc[1]
     else:
         print(f"WARNING: found only values for {title} for {x.identifier.iloc[0]}")
         # FIXME
         import math
 
-        vmsh = math.nan
+        l = math.nan
     if x.proportion.iloc[0] == "LIB":
-        diff = vmsh / native
+        diff = l / native
         proportion = "lower is better"
     else:
-        diff = native / vmsh
+        diff = native / l
         proportion = "higher is better"
 
     result = dict(
@@ -558,7 +558,7 @@ def compute_ratio(x: pd.DataFrame) -> pd.Series:
         benchmark_group=x.benchmark_name,
         diff=diff,
         native=native,
-        vmsh=vmsh,
+        we=l,
         scale=scale,
         proportion=proportion,
     )
@@ -600,51 +600,6 @@ def bar_colors_rainbow(graph: Any, df: pd.Series, num_colors: int) -> None:
 def bar_colors(graph: Any, colors) -> None:
     for i, patch in enumerate(graph.axes[0][0].patches):
         patch.set_facecolor(colors[i%len(colors)])
-
-
-def phoronix(df: pd.DataFrame) -> Any:
-    df = df[df["identifier"].isin(["vmsh-blk", "qemu-blk"])]
-    groups = len(df.benchmark_name.unique())
-    # same benchmark with different units
-    df = df[~((df.benchmark_name.str.startswith("pts/fio")) & (df.scale == "MB/s"))]
-    df = df.sort_values(by=["benchmark_id", "identifier"], key=sort_row)
-    df = df.groupby("benchmark_id").apply(compute_ratio).reset_index()
-    df = df.sort_values(by=["benchmark_id"], key=sort_row)
-    g = catplot(
-        data=apply_aliases(df),
-        y=column_alias("benchmark_id"),
-        x=column_alias("diff"),
-        kind="bar",
-        palette=None,
-    )
-    bar_colors(g, df.benchmark_group, groups)
-    g.ax.set_xlabel("")
-    g.ax.set_ylabel("")
-    FONT_SIZE = 9
-    g.ax.annotate(
-        "Lower is better",
-        xycoords="axes fraction",
-        xy=(0, 0),
-        xytext=(0.1, -0.08),
-        fontsize=FONT_SIZE,
-        color="navy",
-        weight="bold",
-    )
-    g.ax.annotate(
-        "",
-        xycoords="axes fraction",
-        xy=(0.0, -0.07),
-        xytext=(0.1, -0.07),
-        fontsize=FONT_SIZE,
-        arrowprops=dict(arrowstyle="-|>", color="navy"),
-    )
-    g.ax.axvline(x=1, color="gray", linestyle=":")
-    g.ax.annotate(
-        "baseline",
-        xy=(1.1, -0.2),
-        fontsize=FONT_SIZE,
-    )
-    return g
 
 
 def sort_baseline_first(df: pd.DataFrame, baseline_system: str) -> pd.DataFrame:
