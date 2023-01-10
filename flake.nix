@@ -9,7 +9,7 @@
     };
 
     self-stable = {
-      url = "git+ssh://git@github.com/mmisono/unikraft-development?ref=dev/peter&submodules=1";
+      url = "git+ssh://git@github.com/mmisono/unikraft-development?ref=atc23&submodules=1";
       #url = "path:/scratch/okelmann/unikraft-development"; # use this for local development
       #url = "path:./"; # this wont include submodules. Nix bug?
       flake = false; # we dont want the flake but just the sources
