@@ -16,7 +16,7 @@ import subprocess
 
 
 # overwrite the number of samples to take to a minimum
-QUICK = True
+QUICK = False
 
 
 SIZE = 30

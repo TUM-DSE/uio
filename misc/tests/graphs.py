@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from root import MEASURE_RESULTS
+
 import pandas as pd
 import re
 import sys
@@ -1039,7 +1041,7 @@ def main() -> None:
     for prefix, graph in graphs:
         fname = f"{prefix}{out_format}"
         print(f"write {fname}")
-        graph.savefig(fname, bbox_inches='tight')
+        graph.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
 
 
 if __name__ == "__main__":

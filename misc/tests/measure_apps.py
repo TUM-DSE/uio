@@ -20,7 +20,7 @@ import shutil
 
 
 # overwrite the number of samples to take to a minimum
-QUICK = True
+QUICK = False
 
 
 DURATION = "1m"

@@ -47,19 +47,18 @@ Now we run the actual tests:
 ```bash
 rm -r ./misc/tests/measurements/console-stats.json
 sudo python3.9 ./misc/tests/measure_console.py
-python3.9 ./misc/tests/graph.py misc/tests/measurements/console-latest.tsv
-ls ./console.pdf
+python3.9 ./misc/tests/graph.py ./misc/tests/measurements/console-latest.tsv
+ls ./misc/tests/measurements/console.pdf
 
 rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
-python3.9 ./misc/tests/graph.py misc/tests/measurements/app-latest.tsv
-ls misc/tests/measurements/app-mean-latest.tsv
-ls ./redis.pdf ./sqlite.pdf ./nginx.pdf
+python3.9 ./misc/tests/graph.py ./misc/tests/measurements/app-latest.tsv
+ls ./misc/tests/measurements/app.pdf
 
 rm -r ./misc/tests/measurements/image-stats.json
 sudo python3.9 ./misc/tests/measure_image.py
-python3.9 ./misc/tests/graph.py misc/tests/measurements/image-latest.tsv
-ls ./images.pdf
+python3.9 ./misc/tests/graph.py ./misc/tests/measurements/image-latest.tsv
+ls ./misc/tests/measurements/images.pdf
 ```
 
 Each test follows some steps:
