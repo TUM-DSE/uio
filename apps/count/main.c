@@ -8,6 +8,7 @@ int count;
  * This function is also used in unikraft/lib/ushell/ushell.c
  * as an example of creating ushell's built-in command.
  */
+__attribute__ ((section (".text.keep")))
 void set_count(int c)
 {
 	count = c;
