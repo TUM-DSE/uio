@@ -18,7 +18,6 @@ sys.path.append(str(TEST_ROOT.parent))
 NOW = datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # passed to numactl, starts with 0
-CORES_VMSH = "1-3"
 CORES_QEMU = "4"
 CORES_VCPU1 = "5"
 CORES_BENCHMARK = "6,7"
@@ -38,6 +37,10 @@ class Helpers:
         return nix.busybox_image()
 
     @staticmethod
+    def uk_sqlite3_backup(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
+        return nix.uk_sqlite(shell, bootfs)
+    
+    @staticmethod
     def uk_sqlite(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
         return nix.uk_sqlite(shell, bootfs)
 
@@ -50,7 +53,7 @@ class Helpers:
         return nix.uk_nginx(shell, bootfs)
 
     @staticmethod
-    def uk_count() -> UkVmSpec:
+    def uk_count(shell: str = "ushell") -> UkVmSpec:
         return nix.uk_count()
 
     @staticmethod
@@ -58,22 +61,6 @@ class Helpers:
     def nixos_nginx() -> Iterator[NixosVmSpec]:
         with nix.nixos_nginx() as a:
             yield a
-
-    # @staticmethod
-    # def spawn_vmsh_command(
-    # args: List[str], cargo_executable: str = "vmsh"
-    # ) -> VmshPopen:
-    # return spawn_vmsh_command(
-    # args, cargo_executable, target="release", pin_cores=CORES_VMSH
-    # )
-
-    # @staticmethod
-    # def run_vmsh_command(args: List[str], cargo_executable: str = "vmsh") -> VmshPopen:
-    # proc = spawn_vmsh_command(
-    # args, cargo_executable, target="release", pin_cores=CORES_VMSH
-    # )
-    # assert proc.wait() == 0
-    # return proc
 
     @staticmethod
     def spawn_qemu(

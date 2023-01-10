@@ -11,8 +11,9 @@ mpl.use("Agg")
 mpl.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
 mpl.rcParams["pdf.fonttype"] = 42
 mpl.rcParams["ps.fonttype"] = 42
+mpl.rcParams["font.family"] = "libertine"
 
-sns.set(rc={"figure.figsize": (5, 5)})
+#sns.set(rc={"figure.figsize": (5, 5)})
 sns.set_style("whitegrid")
 sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 sns.set_context("paper", rc={"font.size": 5, "axes.titlesize": 5, "axes.labelsize": 8})
@@ -78,6 +79,14 @@ def catplot(**kwargs: Any) -> Any:
     plt.subplots_adjust(top=0.98)
     return g
 
+def apply_hatch_ax(ax: Any, patch_legend: bool = False, hatch_list = ["", "///", "---", "\\"]) -> None:
+    for idx, bar in enumerate(ax.containers[0]):
+        bar.set_hatch(hatch_list[idx%len(hatch_list)])
+
+def apply_hatch2(g: Any, patch_legend: bool = False, hatch_list = ["", "///", "---", "\\"]) -> None:
+    for idx, bar in enumerate(g.ax.containers[0]):
+        bar.set_hatch(hatch_list[idx%len(hatch_list)])
+
 
 def apply_hatch(g: Any, patch_legend: bool = False, hatch_list = ["", "///", "---", "\\"]) -> None:
     for bars, hatch in zip(g.ax.containers, hatch_list):
@@ -87,10 +96,17 @@ def apply_hatch(g: Any, patch_legend: bool = False, hatch_list = ["", "///", "--
     if patch_legend:
         legends = g._legend.get_children()[0].get_children()[1].get_children()[0].get_children()
         for idx, legend in enumerate(legends):
-            hatch = hatch_list[idx%len(legends)]
+            hatch = hatch_list[idx%len(legends)%len(hatch_list)]
             legend.get_children()[0].get_children()[0].set_hatch(f"{hatch}{hatch}")
 
 
+def rescale_barplot_height(ax: Any, factor: float = 0.6) -> None:
+    for bar in ax.patches:
+        y = bar.get_y()
+        new_height = bar.get_height() * factor
+        center = y + bar.get_height() / 2.0
+        bar.set_height(new_height)
+        bar.set_y(center - new_height / 2.0)
 
 def rescale_barplot_width(ax: Any, factor: float = 0.6) -> None:
     for bar in ax.patches:
@@ -99,6 +115,13 @@ def rescale_barplot_width(ax: Any, factor: float = 0.6) -> None:
         center = x + bar.get_width() / 2.0
         bar.set_width(new_width)
         bar.set_x(center - new_width / 2.0)
+
+def set_barplot_height(ax: Any, height: float) -> None:
+    for bar in ax.patches:
+        y = bar.get_y()
+        center = y + bar.get_height() / 2.0
+        bar.set_height(height)
+        bar.set_y(center - height / 2.0)
 
 def set_barplot_width(ax: Any, width: float) -> None:
     for bar in ax.patches:
@@ -119,11 +142,11 @@ def apply_aliases(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(index=str, columns=COLUMN_ALIASES)
 
 
-def magnitude_formatter(orderOfMagnitude: int) -> mpl.ticker.Formatter:
+def magnitude_formatter(orderOfMagnitude: int, offsetstring: bool = False) -> mpl.ticker.Formatter:
     fac = pow(10, orderOfMagnitude)
     ff = mpl.ticker.FuncFormatter(lambda val, pos: f"{val/fac:g}")
     # ff.set_offset_string(f"1e{orderOfMagnitude}")
-    ff.set_offset_string("")
+    if not offsetstring: ff.set_offset_string("")
     return ff
 
 

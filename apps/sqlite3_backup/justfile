@@ -42,8 +42,15 @@ test:
 attach:
     sudo socat /tmp/port0 -
 
+compile_cmd_wmpk target:
+    gcc -DHAS_MPK -I../common/include -fPIC -c -o fs1/{{target}}_wmpk fs1/{{target}}.c
+
 compile_cmd target:
-    gcc -fPIC -c -o fs1/{{target}} fs1/{{target}}.c
+    gcc -I../common/include -fPIC -c -o fs1/{{target}} fs1/{{target}}.c
+
+compile_progs_wmpk:
+    @just compile_cmd_wmpk 'call_backup'
+    @just compile_cmd_wmpk 'generate_table'
 
 compile_progs:
     @just compile_cmd 'call_backup'

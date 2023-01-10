@@ -5,19 +5,18 @@ from pylib import unwrap, unsafe_cast
 from procs import run
 import root
 
-from typing import List, Any, Optional, Callable, Generator, Iterator, Tuple, TypeVar
+from typing import List, Any, Optional, Callable, Iterator, Tuple
 import time
-import pty
-import os
-import sys
-import termios
-import signal
 import socket as s
 import select
 import re
 from tqdm import tqdm
 from tempfile import TemporaryDirectory
 from pathlib import Path
+import numpy as np
+import threading
+from contextlib import contextmanager
+import shutil
 
 
 # overwrite the number of samples to take to a minimum
@@ -305,9 +304,6 @@ def sqlite_ushell(
     util.write_stats(STATS_PATH, stats)
 
 
-import threading
-
-
 def nginx_ushell(
     helpers: confmeasure.Helpers,
     stats: Any,
@@ -372,10 +368,6 @@ def nginx_ushell(
 
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
-
-
-from contextlib import contextmanager
-import shutil
 
 
 @contextmanager
@@ -463,23 +455,25 @@ def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
 def ushell_run(
     helpers: confmeasure.Helpers,
     stats: Any,
+    shell: str = "ushell"
 ) -> None:
     """
     per sample:
     """
-    name = f"ushell_run"
-    name2 = "ushell-run-cached"
+    name = f"{shell}_run"
+    name2 = f"{shell}-run-cached"
     if name in stats.keys() and name2 in stats.keys():
         print(f"skip {name}")
         return
 
-    def experiment(loadable: str) -> List[float]:
+    def experiment(loadable: str, exec_args: str = "") -> List[float]:
         ushell = s.socket(s.AF_UNIX)
+        cmdline = f"{loadable} {exec_args}"
 
         # with util.testbench_console(helpers) as vm:
         with TemporaryDirectory() as tempdir_:
             log = Path(tempdir_) / "qemu.log"
-            vm_spec = helpers.uk_count()
+            vm_spec = helpers.uk_count(shell=shell)
             with helpers.spawn_qemu(vm_spec, log=log) as vm:
                 # if vm_spec.fs1_9p is not None:
                     # raise Exception("unwrap failed")
@@ -498,18 +492,22 @@ def ushell_run(
                 time.sleep(5) # guest network stack is up, but also wait for application to start
                 # time.sleep(2) # for the count app we dont really have a way to check if it is online
 
-                value = run_bin(ushell, "> ", run=loadable, load="symbol.txt")
-                value_cached = run_bin(ushell, "> ", run=loadable, load="symbol.txt")
+                # load has huge variances (0.009-0.000,09s). Thus we exclude it from measurements.
+                sendall(ushell, f"load {bin_syms}")
+                assertline(ushell, "> ")
+                time.sleep(0.5)
+
+                value = run_bin(ushell, "> ", run=cmdline, load=None)
+                value_cached = run_bin(ushell, "> ", run=cmdline, load=None)
                 print("sample:", value)
                 print("sample (cached):", value_cached)
-
 
                 # return values
                 # vm.wait_for_death()
             ushell.close()
             return [value, value_cached]
 
-    samples = sample(lambda: experiment("hello"))
+    samples = sample(lambda: experiment("set_count_func", exec_args = "3"))
     run_ = []
     run_cached = []
     for i in samples:
@@ -521,67 +519,60 @@ def ushell_run(
     util.write_stats(STATS_PATH, stats)
 
 
-def set_console_raw() -> None:
-    fd = sys.stdin.fileno()
-    new = termios.tcgetattr(fd)
-    new[3] = new[3] & ~termios.ECHO
-    termios.tcsetattr(fd, termios.TCSADRAIN, new)
+def calculate_average_overhead(stats):
+    def overhead(baseline, new) -> float:
+        """
+        new = baseline - overhead * baseline
+        new = baseline (1 - overhead)
+        =>
+        overhead = (baseline - new) / baseline
+        """
+        return (np.mean(baseline) - np.mean(new)) / np.mean(baseline)
+    ushell = [
+        overhead(stats['nginx_noshell_initrd_nohuman'], 
+                 stats['nginx_ushell_initrd_nohuman']),
+        np.mean([
+            overhead(stats['redis_noshell_initrd_nohuman-get'], 
+                     stats['redis_ushell_initrd_nohuman-get']),
+            overhead(stats['redis_noshell_initrd_nohuman-set'], 
+                     stats['redis_ushell_initrd_nohuman-set'])
+            ]),
+        overhead(stats['sqlite_noshell_initrd_nohuman'], 
+                 stats['sqlite_ushell_initrd_nohuman']),
+        ]
+    ushellmpk = [
+        overhead(stats['nginx_noshell_initrd_nohuman'], 
+                 stats['nginx_ushellmpk_initrd_nohuman']),
+        np.mean([
+            overhead(stats['redis_noshell_initrd_nohuman-get'], 
+                     stats['redis_ushellmpk_initrd_nohuman-get']),
+            overhead(stats['redis_noshell_initrd_nohuman-set'], 
+                     stats['redis_ushellmpk_initrd_nohuman-set'])
+            ]),
+        overhead(stats['sqlite_noshell_initrd_nohuman'], 
+                 stats['sqlite_ushellmpk_initrd_nohuman']),
+        ]
+    print("Ushell overhead:")
+    print(ushell)
+    print(f"mean: {np.mean(ushell)}")
+    print("Ushellmpk overhead:")
+    print(ushellmpk)
+    print(f"mean: {np.mean(ushellmpk)}")
+    stddev = np.mean([
+        np.std(stats['nginx_noshell_initrd_nohuman']) / np.mean(stats['nginx_noshell_initrd_nohuman']),
+        np.mean([
+            np.std(stats['redis_noshell_initrd_nohuman-get']) / np.mean(stats['redis_noshell_initrd_nohuman-get']),
+            np.std(stats['redis_noshell_initrd_nohuman-set']) / np.mean(stats['redis_noshell_initrd_nohuman-set']),
+            ]),
+        np.std(stats['sqlite_noshell_initrd_nohuman']) / np.mean(stats['sqlite_noshell_initrd_nohuman']),
+        ])
+    print(f"mean stddev of baselines to estimate confidence in overhead values: {stddev}")
 
-
-def native(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "native"
-    if name in stats.keys():
-        print(f"skip {name}")
-        return
-    (pid, ptsfd) = pty.fork()
-
-    if pid == 0:
-        # normalize prompt by removing bash version number
-        os.environ["PS1"] = "$ "
-        set_console_raw()
-        os.execlp("/bin/sh", "/bin/sh")
-
-    assert expect(ptsfd, 2, "$")
-    samples = sample(
-        lambda: echo(
-            ptsfd,
-            "$",
-        )
-    )
-    print("samples:", samples)
-    os.kill(pid, signal.SIGKILL)
-    os.waitpid(pid, 0)
-
-    os.close(ptsfd)
-
-    stats[name] = samples
-    util.write_stats(STATS_PATH, stats)
-
-
-def ssh(helpers: confmeasure.Helpers, stats: Any) -> None:
-    name = "ssh"
-    if name in stats.keys():
-        print(f"skip {name}")
-        return
-    (ptmfd, ptsfd) = pty.openpty()
-    (ptmfd_stub, ptsfd_stub) = pty.openpty()
-    pts_stub = os.readlink(f"/proc/self/fd/{ptsfd_stub}")
-    os.close(ptsfd_stub)
-    with util.testbench_console(helpers, pts_stub, guest_cmd=["/bin/ls"]) as vm:
-        # breakpoint()
-        sh = vm.ssh_Popen(stdin=ptsfd, stdout=ptsfd, stderr=ptsfd)
-        assert expect(ptmfd, 2, "~]$")
-        samples = sample(lambda: echo(ptmfd, "~]$"))
-        sh.kill()
-        sh.wait()
-        print("samples:", samples)
-
-    os.close(ptmfd_stub)
-    os.close(ptsfd)
-    os.close(ptmfd)
-
-    stats[name] = samples
-    util.write_stats(STATS_PATH, stats)
+    return {
+        "ushell_overhead": [np.mean(ushell)],
+        "ushellmpk_overhead": [np.mean(ushellmpk)],
+        "baseline_unikraft_stddev": [stddev]
+        }
 
 
 def main() -> None:
@@ -597,31 +588,40 @@ def main() -> None:
     stats = util.read_stats(STATS_PATH)
 
     def with_all_configs(f):
-        for shell in ["ushell", "noshell"]:
-            for bootfs in ["initrd", "9p"]:
+        for shell in ["ushell", "noshell", "ushellmpk"]:
+            # for bootfs in ["initrd", "9p"]:
+            for bootfs in ["initrd"]:
                 print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs})\n")
                 f(helpers, stats, shell=shell, bootfs=bootfs)
 
 
-    print("\nmeasure performance when running external apps\n")
-    ushell_run(helpers, stats)
+    print("\nmeasure performance when running external ushell apps\n")
+    ushell_run(helpers, stats, shell = "ushell")
+    print("\nmeasure performance when running external ushellmpk apps\n")
+    ushell_run(helpers, stats, shell = "ushellmpk")
 
     with_all_configs(sqlite_ushell)  # 2x5x 150s + 2x5x 4s
     with_all_configs(redis_ushell)  # 4x5x 4s
     with_all_configs(nginx_ushell)  # 4x5x 65s
-    # 2x5x 65s
+    # 5x 65s
     print("\nmeasure performance for nginx ushell with initrd and human interaction\n")
     nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman")
-    print("\nmeasure performance for nginx ushell with 9p and human interaction\n")
-    nginx_ushell(helpers, stats, shell="ushell", bootfs="9p", human="lshuman")
+    # 5x 65s
+    print("\nmeasure performance for nginx ushellmpk with initrd and human interaction\n")
+    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", human="lshuman")
+    # 5x 65s
+    # print("\nmeasure performance for nginx ushell with 9p and human interaction\n")
+    # nginx_ushell(helpers, stats, shell="ushell", bootfs="9p", human="lshuman")
 
     print("\nmeasure performance for nginx native\n")
     nginx_native(helpers, stats)  # 5x 65s
 
-    print("\nmeasure performance for nginx qemu with 9p\n")
-    nginx_qemu_9p(helpers, stats)  # 5x 75s
+    # print("\nmeasure performance for nginx qemu with 9p\n")
+    # nginx_qemu_9p(helpers, stats)  # 5x 75s
 
     util.export_fio("app", stats)
+    means = calculate_average_overhead(stats)
+    util.export_fio("app-mean", means)
 
 
 if __name__ == "__main__":

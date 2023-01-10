@@ -36,8 +36,27 @@ def uk_build(name: str) -> Path:
     return Path(out)
 
 
-def uk_sqlite(shell: str, bootfs: str) -> UkVmSpec:
+def uk_sqlite3_backup(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
+    flake_name = f"uk-sqlite3_backup-{shell}-{bootfs}"
+    if lto: flake_name += "-lto"
+    build = uk_build(f".#{flake_name}")
+    kernel = build / "sqlite3_backup_kvm-x86_64"
+    initrd = build / "fs0.cpio"
+    return UkVmSpec(
+        flake_name=flake_name,
+        kernel=kernel,
+        app_cmdline="",
+        netbridge=True,
+        ushell_devices=True,
+        initrd=initrd,
+        rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
+        fs1_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs1",
+    )
+
+
+def uk_sqlite(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
     flake_name = f"uk-sqlite_benchmark-{shell}-{bootfs}"
+    if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite_benchmark_kvm-x86_64"
     initrd = build / "fs0.cpio"
@@ -53,8 +72,9 @@ def uk_sqlite(shell: str, bootfs: str) -> UkVmSpec:
     )
 
 
-def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
+def uk_redis(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
     flake_name = f"uk-redis-{shell}-{bootfs}"
+    if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "redis_kvm-x86_64"
     initrd = build / "fs0.cpio"
@@ -70,8 +90,9 @@ def uk_redis(shell: str, bootfs: str) -> UkVmSpec:
     )
 
 
-def uk_nginx(shell: str, bootfs: str) -> UkVmSpec:
+def uk_nginx(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
     flake_name = f"uk-nginx-{shell}-{bootfs}"
+    if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "nginx_kvm-x86_64"
     initrd = build / "fs0.cpio"
@@ -87,8 +108,9 @@ def uk_nginx(shell: str, bootfs: str) -> UkVmSpec:
     )
 
 
-def uk_count(shell: str = "ushell") -> UkVmSpec:
+def uk_count(shell: str = "ushell", lto: bool = False) -> UkVmSpec:
     flake_name = f"uk-count-{shell}"
+    if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "count_kvm-x86_64"
     initrd = build / "fs0.cpio"
