@@ -18,6 +18,7 @@ just gen_sym_txt
 ```
 just attach
 > load symbol.txt
+```
 
 - List directories
 ```
