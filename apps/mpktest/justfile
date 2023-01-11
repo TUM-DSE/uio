@@ -1,0 +1,32 @@
+# vim: set ft=make et :
+
+default:
+    @just --choose
+
+run:
+    sudo taskset -c 0 qemu-system-x86_64 \
+        -cpu host \
+        -enable-kvm \
+        -m 500M \
+        -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
+        -device virtio-serial \
+        -device virtconsole,chardev=char0,id=ushell,nr=0 \
+        -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
+        -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
+        -kernel build/mpktest_kvm-x86_64 -nographic
+
+attach:
+    sudo socat /tmp/port0 -
+
+gen_sym_txt:
+    nm ./build/mpktest_kvm-x86_64.dbg | cut -d ' ' -f1,3 > ./fs0/symbol.txt
+
+compile_cmd target:
+    gcc -I../common/include -DHAS_MPK -fPIC -c -o fs0/{{target}} fs0/{{target}}.c
+
+compile_progs:
+    @just compile_cmd 'empty'
+    @just compile_cmd 'write'
+    @just compile_cmd 'write_with_wrapper'
+    @just compile_cmd 'call'
+    @just compile_cmd 'call_with_wrapper'
