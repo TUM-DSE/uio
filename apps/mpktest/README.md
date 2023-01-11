@@ -11,6 +11,7 @@ just run
 - These commands should succeed
 ```
 just attach
+> load symbol.txt
 > test_var_read
 > test_var_write_wrapper
 > test_call_wrapper
@@ -20,6 +21,8 @@ just attach
 
 - These commands should fail
 ```
+just attach
+> load symbol.txt
 > test_var_write
 > test_call
 > run write
