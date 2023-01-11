@@ -24,7 +24,7 @@ def image_size(helpers: confmeasure.Helpers, stats: Any, vmspec: nix.UkVmSpec) -
 
 def main() -> None:
     """
-    not quick: 5 * fio_suite(5min) + 2 * sample(5min) = 35min
+    not quick: takes a few seconds
     """
     util.check_intel_turbo()
     util.check_hyperthreading()
@@ -33,6 +33,8 @@ def main() -> None:
     helpers = confmeasure.Helpers()
 
     stats = util.read_stats(STATS_PATH)
+
+    print("measure size of different unikraft images (takes a few seconds, if all images are already built)")
 
     image_size(helpers, stats, nix.uk_count("noshell"))
     image_size(helpers, stats, nix.uk_count("ushell"))

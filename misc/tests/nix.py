@@ -24,7 +24,7 @@ def nix_build(what: str) -> Any:
         ["nix", "build", "--out-link", str(link_name), "--json", what],
         text=True,
         stdout=subprocess.PIPE,
-        check=True,
+        # check=True,
         cwd=PROJECT_ROOT,
     )
     return json.loads(result.stdout)
@@ -198,7 +198,7 @@ def notos_image_custom_kernel(nix: str = NOTOS_IMAGE) -> VmImage:
     return image
 
 def build_all():
-    print("Building all nix (flake) packages in this repository.")
+    print("Building all nix (flake) packages in this repository. (~9mins @ 8 cores if uncached)")
     result = subprocess.run(
         ["nix", "flake", "show", "--json"],
         text=True,

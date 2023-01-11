@@ -577,7 +577,7 @@ def calculate_average_overhead(stats):
 
 def main() -> None:
     """
-    not quick: ~70 min
+    not quick: ~42min
     """
     util.check_intel_turbo()
     util.check_hyperthreading()
@@ -587,34 +587,35 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
-    def with_all_configs(f):
+    def with_all_configs(f, dur):
         for shell in ["ushell", "noshell", "ushellmpk"]:
             # for bootfs in ["initrd", "9p"]:
             for bootfs in ["initrd"]:
-                print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs})\n")
+                print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs}) (~{dur}sec each)\n")
                 f(helpers, stats, shell=shell, bootfs=bootfs)
 
 
-    print("\nmeasure performance when running external ushell apps\n")
-    ushell_run(helpers, stats, shell = "ushell")
-    print("\nmeasure performance when running external ushellmpk apps\n")
-    ushell_run(helpers, stats, shell = "ushellmpk")
+    print("\nmeasure performance when running external ushell apps (~8sec each)\n")
+    ushell_run(helpers, stats, shell = "ushell") # 10x 8s
+    print("\nmeasure performance when running external ushellmpk apps (~8sec each)\n")
+    ushell_run(helpers, stats, shell = "ushellmpk") # 10x 8s
 
-    with_all_configs(sqlite_ushell)  # 2x5x 150s + 2x5x 4s
-    with_all_configs(redis_ushell)  # 4x5x 4s
-    with_all_configs(nginx_ushell)  # 4x5x 65s
+    with_all_configs(sqlite_ushell, 8)  # 3x10x 8s
+    with_all_configs(redis_ushell, 4)  # 3x10x 4s
+    with_all_configs(nginx_ushell, 65)  # 3x10x 65s
+
     # 5x 65s
-    print("\nmeasure performance for nginx ushell with initrd and human interaction\n")
-    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman")
+    # print("\nmeasure performance for nginx ushell with initrd and human interaction\n")
+    # nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="lshuman")
     # 5x 65s
-    print("\nmeasure performance for nginx ushellmpk with initrd and human interaction\n")
-    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", human="lshuman")
+    # print("\nmeasure performance for nginx ushellmpk with initrd and human interaction\n")
+    # nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", human="lshuman")
     # 5x 65s
     # print("\nmeasure performance for nginx ushell with 9p and human interaction\n")
     # nginx_ushell(helpers, stats, shell="ushell", bootfs="9p", human="lshuman")
 
-    print("\nmeasure performance for nginx native\n")
-    nginx_native(helpers, stats)  # 5x 65s
+    # print("\nmeasure performance for nginx native\n")
+    # nginx_native(helpers, stats)  # 5x 65s
 
     # print("\nmeasure performance for nginx qemu with 9p\n")
     # nginx_qemu_9p(helpers, stats)  # 5x 75s

@@ -39,7 +39,7 @@ just setup_bridge
 popd
 
 # you can choose to build all the unikraft kernels in advance
-python3.9 ./misc/test/nix.py
+python3.9 ./misc/tests/nix.py
 ```
 
 Now we run the actual tests:
