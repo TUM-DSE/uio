@@ -478,10 +478,11 @@ def ushell_run(
                 # if vm_spec.fs1_9p is not None:
                     # raise Exception("unwrap failed")
                 bin_source = unwrap(vm_spec.fs1_9p) / f"{loadable}.c"
+                bin_include = unwrap(vm_spec.fs1_9p) / "../../common/include"
                 bin_out = unwrap(vm_spec.fs1_9p) / f"{loadable}"
                 bin_syms = unwrap(vm_spec.fs1_9p) / "symbol.txt"
                 # build the executable
-                run(["gcc", "-fPIC", "-c", "-o", str(bin_out), str(bin_source)])
+                run(["gcc", f"-I{bin_include}", "-DHAS_MPK", "-fPIC", "-c", "-o", str(bin_out), str(bin_source)])
                 # extract symbols
                 run(["sh", "-c", f"nm {unwrap(vm_spec.kernel)}.dbg | cut -d ' ' -f1,3 > {bin_syms}"])
 
