@@ -95,7 +95,7 @@
         # (app x shell) with lto # TODO this should also include mpk
         builtins.listToAttrs ( pkgs.lib.flatten (
           pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" "sqlite3_backup" ] (app:
-          pkgs.lib.forEach [ "noshell" "ushell" ] (shell:
+          pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}-lto" (
               pkgs.callPackage ./misc/nix/uk-app.nix { 
@@ -113,6 +113,11 @@
             app = "count";
             config = "config.eval.ushell";
           };
+          uk-count-ushellmpk = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushellmpk";
+          };
           uk-count-noshell = pkgs.callPackage ./misc/nix/uk-app.nix { 
             inherit pkgs self-stable buildDeps;
             app = "count";
@@ -122,6 +127,11 @@
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushell.lto";
+          };
+          uk-count-ushellmpk-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushellmpk.lto";
           };
           uk-count-noshell-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
             inherit pkgs self-stable buildDeps;
