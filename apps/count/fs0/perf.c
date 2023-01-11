@@ -1,3 +1,5 @@
+#include "unicall_wrapper.h"
+
 extern void ushell_puts(char *);
 extern unsigned int sleep(unsigned);
 #define __printf(fmt, args) __attribute__((format(printf, (fmt), (args))))
@@ -135,7 +137,7 @@ __attribute__((section(".text"))) int main()
 	char buf[128] = {};
 
 	if (!check_pmc()) {
-		ushell_puts(msg1);
+		unikraft_call_wrapper(ushell_puts, msg1);
 		return 0;
 	}
 
@@ -144,11 +146,11 @@ __attribute__((section(".text"))) int main()
 	enable_llc_misses(1);
 
 	for (i = 0; i < 3; i++) {
-		sleep(1);
+		unikraft_call_wrapper(sleep, 1);
 		unsigned long c0 = rdpmc_ctr(0);
 		unsigned long c1 = rdpmc_ctr(1);
-		snprintf(buf, sizeof(buf), msg2, c0, c1);
-		ushell_puts(buf);
+		unikraft_call_wrapper(snprintf, buf, sizeof(buf), msg2, c0, c1);
+		unikraft_call_wrapper(ushell_puts, buf);
 	}
 
 	return 0;

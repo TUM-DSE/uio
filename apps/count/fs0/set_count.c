@@ -1,3 +1,5 @@
+#include "unicall_wrapper.h"
+
 extern int count;
 
 int atoi(char *str)
@@ -19,6 +21,7 @@ int main(int argc, char *argv[])
 	if (argc >= 2) {
 		c = atoi(argv[1]);
 	}
-	count = c;
+	// count = c;
+	unikraft_write_var(count, c);
 	return 0;
 }

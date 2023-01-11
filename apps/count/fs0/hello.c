@@ -1,3 +1,5 @@
+#include "unicall_wrapper.h"
+
 extern void ushell_puts(char *);
 
 // put the string in the .rodata section
@@ -9,6 +11,6 @@ char str[] = "hello ushell!\n";
 
 __attribute__((section(".text"))) int main()
 {
-	ushell_puts(str);
+	unikraft_call_wrapper(ushell_puts, str);
 	return 0;
 }

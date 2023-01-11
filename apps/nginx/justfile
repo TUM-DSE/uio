@@ -103,3 +103,17 @@ qemu-nixos-nginx:
 
 attach:
     sudo socat /tmp/port0 -
+
+wget:
+    wget 172.44.0.2:80
+
+compile_cmd target:
+    gcc -I../common/include -DHAS_MPK -fPIC -c -o fs1/{{target}} fs1/{{target}}.c
+
+compile_progs:
+    @just compile_cmd 'hello'
+    @just compile_cmd 'empty'
+    @just compile_cmd 'perf'
+
+gen_sym_txt:
+    nm {{APP}}.dbg | cut -d ' ' -f1,3 > ./fs1/symbol.txt

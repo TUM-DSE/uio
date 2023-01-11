@@ -1,9 +1,8 @@
-# Measurements / Evaluation
+# Evaluation
 
 This set of scripts runs the evaluation of this project (`measure_*.py`) and generates the plots from the results (`graph.py`)
 
 TODO add https://github.com/Mic92/vmsh/blob/main/tests/reproduce.py so that user only has to issue a single command to do everything
-
 
 ## Requirements
 
@@ -83,6 +82,22 @@ TSV files are handed to `graph.py` which plots and writes them into PDFs (such a
 - Figure 5, application performance: `measure_app.py` (`sqlite_shell`, `redis_shell`, `nginx_ushell`)
 - Figure 6, image sizes: `measure_image.py`
 
+## Robustness (MPK)
+See [apps/mpktest](../../apps/mpktest).
+
+## Use-cases
+
+### 1. Interactive debugigng shell
+See [apps/nginx](../../apps/nginx).
+
+### 2. Online re-configuration
+See [apps/nginx](../../apps/nginx).
+
+### 3. SQLite backup
+See [apps/sqlite3_backup](../../apps/sqlite3_backup).
+
+### 4. Performance monitoring with performance counters
+See [apps/count](../../apps/count) (`perf` program).
 
 ## Development
 
