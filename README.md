@@ -5,7 +5,7 @@
 (Tested on adelaide)
 
 ```shell
-git clone --recurse-submodules https://github.com/mmisono/unikraft-development
+git clone --recurse-submodules https://github.com/TUM-DSE/ushell
 cd unikraft-development
 direnv allow # (or nix develop)
 ```
@@ -30,3 +30,6 @@ just attach
 
 see [./misc/tests/README.md](./misc/tests/README.md)
 
+
+## ATC23 version
+see atc23 branch
