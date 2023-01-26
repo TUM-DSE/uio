@@ -133,7 +133,7 @@ def check_root():
 def check_cpu_isolation():
     with open("/sys/devices/system/cpu/isolated") as f:
         lines = f.readlines()
-        if len(f.readlines()) == 0:
+        if len(lines) == 0:
             print("Warn: seems like you dont isolate cpu cores for the benchmark: add isolcpus=4-7 to your kernel parameters.")
 
 def check_hyperthreading() -> None:

@@ -1,9 +1,8 @@
-# Measurements / Evaluation
+# Evaluation
 
 This set of scripts runs the evaluation of this project (`measure_*.py`) and generates the plots from the results (`graph.py`)
 
 TODO add https://github.com/Mic92/vmsh/blob/main/tests/reproduce.py so that user only has to issue a single command to do everything
-
 
 ## Requirements
 
@@ -39,7 +38,7 @@ just setup_bridge
 popd
 
 # you can choose to build all the unikraft kernels in advance
-python3.9 ./misc/test/nix.py
+python3.9 ./misc/tests/nix.py
 ```
 
 Now we run the actual tests:
@@ -47,19 +46,18 @@ Now we run the actual tests:
 ```bash
 rm -r ./misc/tests/measurements/console-stats.json
 sudo python3.9 ./misc/tests/measure_console.py
-python3.9 ./misc/tests/graph.py misc/tests/measurements/console-latest.tsv
-ls ./console.pdf
+python3.9 ./misc/tests/graph.py ./misc/tests/measurements/console-latest.tsv
+ls ./misc/tests/measurements/console.pdf
 
 rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
-python3.9 ./misc/tests/graph.py misc/tests/measurements/app-latest.tsv
-ls misc/tests/measurements/app-mean-latest.tsv
-ls ./redis.pdf ./sqlite.pdf ./nginx.pdf
+python3.9 ./misc/tests/graph.py ./misc/tests/measurements/app-latest.tsv
+ls ./misc/tests/measurements/app.pdf
 
 rm -r ./misc/tests/measurements/image-stats.json
 sudo python3.9 ./misc/tests/measure_image.py
-python3.9 ./misc/tests/graph.py misc/tests/measurements/image-latest.tsv
-ls ./images.pdf
+python3.9 ./misc/tests/graph.py ./misc/tests/measurements/image-latest.tsv
+ls ./misc/tests/measurements/images.pdf
 ```
 
 Each test follows some steps:
@@ -84,6 +82,22 @@ TSV files are handed to `graph.py` which plots and writes them into PDFs (such a
 - Figure 5, application performance: `measure_app.py` (`sqlite_shell`, `redis_shell`, `nginx_ushell`)
 - Figure 6, image sizes: `measure_image.py`
 
+## Robustness (MPK)
+See [apps/mpktest](../../apps/mpktest).
+
+## Use-cases
+
+### 1. Interactive debugigng shell
+See [apps/nginx](../../apps/nginx).
+
+### 2. Online re-configuration
+See [apps/nginx](../../apps/nginx).
+
+### 3. SQLite backup
+See [apps/sqlite3_backup](../../apps/sqlite3_backup).
+
+### 4. Performance monitoring with performance counters
+See [apps/count](../../apps/count) (`perf` program).
 
 ## Development
 

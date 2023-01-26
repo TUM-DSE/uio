@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from root import MEASURE_RESULTS
+
 import pandas as pd
 import re
 import sys
@@ -435,22 +437,24 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
-    offsets = [6, 3, 3, 3, 3]
-    annotate_bar_values_us(g, offsets)
     xytext = (-100,-27)
     # hatch_list_console = ["", "...", "///", "...", "///"]
     # hatch_list_run = ["", "...", "///", "...", "///"]
     hatch_list_console = ["", "...", "**", "\\\\...", "\\\\**"]
     hatch_list_run = ["...", "**", "/...", "/**"]
+    offsets = None
     if name == "ushell-console": 
+        offsets = [6, 3, 3, 3, 3]
         apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_console)
         bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
         # bar_colors(g, [col_base, col_ushell, col_ushellmpk, palette[6], palette[6]])
     if name == "ushell_run": 
+        offsets = [6, 3, 3, 7]
         apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_run)
         # bar_colors(g, [col_ushell, col_ushellmpk, palette[4], palette[5]])
         bar_colors(g, [col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
         xytext = (-60,-27)
+    annotate_bar_values_us(g, offsets)
 
     FONT_SIZE = 9 
     g.ax.annotate(
@@ -1039,7 +1043,7 @@ def main() -> None:
     for prefix, graph in graphs:
         fname = f"{prefix}{out_format}"
         print(f"write {fname}")
-        graph.savefig(fname, bbox_inches='tight')
+        graph.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
 
 
 if __name__ == "__main__":

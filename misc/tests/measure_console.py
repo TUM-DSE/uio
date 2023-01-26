@@ -16,7 +16,7 @@ import subprocess
 
 
 # overwrite the number of samples to take to a minimum
-QUICK = True
+QUICK = False
 
 
 SIZE = 30
@@ -381,7 +381,7 @@ def qemu_ssh(helpers: confmeasure.Helpers, stats: Any) -> None:
 
 def main() -> None:
     """
-    not quick: 5 * fio_suite(5min) + 2 * sample(5min) = 35min
+    not quick: 30x6x 4sec ~= 12min
     """
     util.check_intel_turbo()
     util.check_hyperthreading()
@@ -391,19 +391,19 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
-    print("\nmeasure performance for ushell console\n")
+    print("\nmeasure performance for ushell console (~4sec each)\n")
     ushell_console(helpers, stats)
-    print("\nmeasure performance for ushellmpk console\n")
+    print("\nmeasure performance for ushellmpk console (~4sec each)\n")
     ushell_console(helpers, stats, shell = "ushellmpk")
-    print("\nmeasure performance for ushell console with nignx load\n")
+    print("\nmeasure performance for ushell console with nignx load (~4sec each)\n")
     ushell_console_nginx(helpers, stats)
-    print("\nmeasure performance for ushellmpk console with nignx load\n")
+    print("\nmeasure performance for ushellmpk console with nignx load (~4sec each)\n")
     ushell_console_nginx(helpers, stats, shell = "ushellmpk")
-    # print("\nmeasure performance of ushell init\n")
-    # ushell_init(helpers, stats, do_reattach=False)
+    print("\nmeasure performance of ushell init (~4sec each)\n")
+    ushell_init(helpers, stats, do_reattach=False)
     # print("\nmeasure performance of ushell reattach\n")
     # ushell_init(helpers, stats, do_reattach=True)
-    print("\nmeasure performance of ssh console\n")
+    print("\nmeasure performance of ssh console (~4sec each)\n")
     qemu_ssh(helpers, stats)
 
     util.export_fio("console", stats)

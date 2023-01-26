@@ -36,7 +36,7 @@ attach:
     sudo socat /tmp/port0 -
 
 compile_cmd target:
-    gcc -fPIC -c -o fs0/{{target}} fs0/{{target}}.c
+    gcc -I../common/include -DHAS_MPK -fPIC -c -o fs0/{{target}} fs0/{{target}}.c
 
 compile_hello:
     @just compile_cmd 'hello'

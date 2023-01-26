@@ -57,7 +57,9 @@ static inline void wrmsr(unsigned int msr, __u32 lo, __u32 hi)
 
 static inline void wrmsrl(unsigned int msr, __u64 val)
 {
+	ushell_enable_write();
 	wrmsr(msr, (__u32)(val & 0xffffffffULL), (__u32)(val >> 32));
+	ushell_disable_write();
 }
 
 // CPUID.0AH: EAX[7:0] > 0

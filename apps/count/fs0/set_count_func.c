@@ -1,3 +1,5 @@
+#include "unicall_wrapper.h"
+
 extern void set_count(int);
 
 int atoi(char *str)
@@ -19,6 +21,6 @@ int main(int argc, char *argv[])
 	if (argc >= 2) {
 		c = atoi(argv[1]);
 	}
-	set_count(c);
+	unikraft_call_wrapper(set_count, c);
 	return 0;
 }

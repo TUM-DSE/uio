@@ -1,12 +1,12 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Unikraft/0.9.0~1cbdefd-custom Configuration
+# Unikraft/0.9.0~ff93f12 Configuration
 #
-CONFIG_UK_FULLVERSION="0.9.0~1cbdefd-custom"
+CONFIG_UK_FULLVERSION="0.9.0~ff93f12"
 CONFIG_UK_CODENAME="Hyperion"
 CONFIG_UK_ARCH="x86_64"
-CONFIG_UK_BASE="/home/masa/work/unikraft/development/unikraft"
-CONFIG_UK_APP="/home/masa/work/unikraft/development/apps/nginx"
+CONFIG_UK_BASE="/scratch/okelmann/unikraft-development/unikraft"
+CONFIG_UK_APP="/scratch/okelmann/unikraft-development/apps/nginx"
 CONFIG_UK_DEFNAME="nginx"
 
 #
@@ -162,7 +162,6 @@ CONFIG_LIBUKMPI_MBOX=y
 CONFIG_LIBUKNETDEV=y
 CONFIG_LIBUKNETDEV_MAXNBQUEUES=1
 CONFIG_LIBUKNETDEV_DISPATCHERTHREADS=y
-CONFIG_LIBPKU=y
 # CONFIG_LIBUKRING is not set
 # CONFIG_LIBUKRUST is not set
 CONFIG_LIBUKSCHED=y
@@ -337,6 +336,7 @@ CONFIG_LWIP_SOCKET_PPOLL=y
 CONFIG_LWIP_UDP_RECVMBOX_FACTOR=2
 CONFIG_LWIP_TCP_RECVMBOX_FACTOR=2
 # CONFIG_LWIP_DEBUG is not set
+CONFIG_LIBPKU=y
 # end of Library Configuration
 
 #
@@ -350,8 +350,8 @@ CONFIG_OPTIMIZE_PERF=y
 # Hint: Specify a CPU type to get most benefits from performance optimization
 #
 CONFIG_OPTIMIZE_NOOMITFP=y
-# CONFIG_OPTIMIZE_DEADELIM is not set
-# CONFIG_OPTIMIZE_LTO is not set
+CONFIG_OPTIMIZE_DEADELIM=y
+CONFIG_OPTIMIZE_LTO=y
 # CONFIG_DEBUG_SYMBOLS_LVL0 is not set
 # CONFIG_DEBUG_SYMBOLS_LVL1 is not set
 # CONFIG_DEBUG_SYMBOLS_LVL2 is not set

@@ -24,7 +24,7 @@ def image_size(helpers: confmeasure.Helpers, stats: Any, vmspec: nix.UkVmSpec) -
 
 def main() -> None:
     """
-    not quick: 5 * fio_suite(5min) + 2 * sample(5min) = 35min
+    not quick: takes a few seconds
     """
     util.check_intel_turbo()
     util.check_hyperthreading()
@@ -34,27 +34,29 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
+    print("measure size of different unikraft images (takes a few seconds, if all images are already built)")
+
     image_size(helpers, stats, nix.uk_count("noshell"))
-    image_size(helpers, stats, nix.uk_count("ushell"))
+    image_size(helpers, stats, nix.uk_count("ushellmpk"))
     image_size(helpers, stats, nix.uk_nginx("noshell", "initrd"))
-    image_size(helpers, stats, nix.uk_nginx("ushell", "initrd"))
+    image_size(helpers, stats, nix.uk_nginx("ushellmpk", "initrd"))
     image_size(helpers, stats, nix.uk_redis("noshell", "initrd"))
-    image_size(helpers, stats, nix.uk_redis("ushell", "initrd"))
+    image_size(helpers, stats, nix.uk_redis("ushellmpk", "initrd"))
     # image_size(helpers, stats, nix.uk_sqlite("noshell", "initrd"))
-    # image_size(helpers, stats, nix.uk_sqlite("ushell", "initrd"))
+    # image_size(helpers, stats, nix.uk_sqlite("ushellmpk", "initrd"))
     image_size(helpers, stats, nix.uk_sqlite3_backup("noshell", "initrd"))
-    image_size(helpers, stats, nix.uk_sqlite3_backup("ushell", "initrd"))
+    image_size(helpers, stats, nix.uk_sqlite3_backup("ushellmpk", "initrd"))
 
     image_size(helpers, stats, nix.uk_count("noshell", lto=True))
-    image_size(helpers, stats, nix.uk_count("ushell", lto=True))
+    image_size(helpers, stats, nix.uk_count("ushellmpk", lto=True))
     image_size(helpers, stats, nix.uk_nginx("noshell", "initrd", lto=True))
-    image_size(helpers, stats, nix.uk_nginx("ushell", "initrd", lto=True))
+    image_size(helpers, stats, nix.uk_nginx("ushellmpk", "initrd", lto=True))
     image_size(helpers, stats, nix.uk_redis("noshell", "initrd", lto=True))
-    image_size(helpers, stats, nix.uk_redis("ushell", "initrd", lto=True))
+    image_size(helpers, stats, nix.uk_redis("ushellmpk", "initrd", lto=True))
     # image_size(helpers, stats, nix.uk_sqlite("noshell", "initrd", lto=True))
     # image_size(helpers, stats, nix.uk_sqlite("ushell", "initrd", lto=True))
     image_size(helpers, stats, nix.uk_sqlite3_backup("noshell", "initrd", lto=True))
-    image_size(helpers, stats, nix.uk_sqlite3_backup("ushell", "initrd", lto=True))
+    image_size(helpers, stats, nix.uk_sqlite3_backup("ushellmpk", "initrd", lto=True))
 
     util.export_fio("image", stats)
 
