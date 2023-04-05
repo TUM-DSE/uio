@@ -75,6 +75,7 @@
             pkgs.wrk 
             pkgs.nginx
             # gcc (is already in mkShell)
+            pkgs.tokei
           ];
         };
         # app x shell x fs
