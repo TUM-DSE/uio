@@ -119,12 +119,22 @@
             app = "count";
             config = "config.eval.ushellmpk";
           };
-          uk-count-noshell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-ushell-memstat = pkgs.callPackage ./misc/nix/uk-app.nix {
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushell.memstat";
+          };
+          uk-count-noshell = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.noshell";
           };
-          uk-count-ushell-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-noshell-memstat = pkgs.callPackage ./misc/nix/uk-app.nix {
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.noshell.memstat";
+          };
+          uk-count-ushell-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushell.lto";
