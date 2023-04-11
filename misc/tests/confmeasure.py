@@ -54,7 +54,7 @@ class Helpers:
 
     @staticmethod
     def uk_count(shell: str = "ushell") -> UkVmSpec:
-        return nix.uk_count()
+        return nix.uk_count(shell)
 
     @staticmethod
     @contextmanager
