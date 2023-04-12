@@ -85,7 +85,7 @@
           #pkgs.lib.forEach [ "initrd" "9p" ] (bootfs:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}" (
-              pkgs.callPackage ./misc/nix/uk-app.nix { 
+              pkgs.callPackage ./misc/nix/uk-app.nix {
                 inherit pkgs self-stable buildDeps;
                 inherit app;
                 config = "config.eval.${shell}.${bootfs}";
@@ -109,8 +109,8 @@
         )) //
         # (app x shell x memstat)
         builtins.listToAttrs ( pkgs.lib.flatten (
-          pkgs.lib.forEach [ "count"] (app:
-          pkgs.lib.forEach [ "noshell" "ushell"] (shell:
+          pkgs.lib.forEach [ "count" ] (app:
+          pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-memstat" (
               pkgs.callPackage ./misc/nix/uk-app.nix {
                 inherit pkgs self-stable buildDeps;
@@ -119,6 +119,20 @@
               }
             )
           ))
+        )) //
+        # app x shell x fs x memstat
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "nginx" "sqlite3_backup" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "initrd" ] (bootfs:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-memstat-${bootfs}" (
+              pkgs.callPackage ./misc/nix/uk-app.nix {
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.${bootfs}.memstat";
+              }
+            )
+          )))
         )) //
         # some manual packages
         {

@@ -14,13 +14,29 @@ from contextlib import contextmanager
 STATS_PATH = MEASURE_RESULTS.joinpath("memory-stats.json")
 
 
-def measure_memory(helpers: confmeasure.Helpers, stats: Any,
-                   shell: str) -> None:
+def measure_memory(helpers: confmeasure.Helpers,
+                   stats: Any,
+                   app: str,
+                   shell: str,
+                   bootfs: str = "initrd") -> None:
 
-    if f"{shell}" in stats.keys():
-        print(f"skip {shell}")
+    name = f"{app}-{shell}"
+    if name in stats.keys():
+        print(f"skip {name}")
         return
-    print(f"measure {shell} memory consumption")
+    print(f"measure {name} memory consumption")
+
+    shellname = f"{shell}-memstat"
+    if app == "count":
+        vmspec = helpers.uk_count(shell=shellname)
+    elif app == "nginx":
+        vmspec = helpers.uk_nginx(shell=shellname, bootfs=bootfs)
+    elif app == "sqlite3_backup":
+        vmspec = helpers.uk_sqlite3_backup(shell=shellname, bootfs=bootfs)
+    elif app == "sqlite_benchmark":
+        vmspec = helpers.uk_sqlite(shell=shellname, bootfs=bootfs)
+    else:
+        raise ValueError(f"unknown app {app}")
 
     memstats = {}
 
@@ -39,8 +55,7 @@ def measure_memory(helpers: confmeasure.Helpers, stats: Any,
 
     with TemporaryDirectory() as tempdir_:
         log = Path(tempdir_) / "qemu.log"
-        with helpers.spawn_qemu(helpers.uk_count(shell=f"{shell}-memstat"),
-                                log=log) as vm:
+        with helpers.spawn_qemu(vmspec, log=log) as vm:
             time.sleep(5)
             while True:
                 with open(log, "r") as f:
@@ -55,7 +70,7 @@ def measure_memory(helpers: confmeasure.Helpers, stats: Any,
                     if l.startswith(k):
                         memstats[k] = int(l.split(":")[1])
 
-    stats[f"{shell}"] = memstats
+    stats[name] = memstats
     util.write_stats(STATS_PATH, stats)
 
 
@@ -70,8 +85,9 @@ def main():
     stats = util.read_stats(STATS_PATH)
 
     print("\nmeasure memory consumption")
-    measure_memory(helpers, stats, "noshell")
-    measure_memory(helpers, stats, "ushell")
+    for app in ["count", "nginx", "sqlite_benchmark"]:
+        for shell in ["noshell", "ushell", "ushellmpk"]:
+            measure_memory(helpers, stats, app, shell)
 
 
 if __name__ == "__main__":
