@@ -107,50 +107,53 @@
             )
           )))
         )) //
+        # (app x shell x memstat)
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "count"] (app:
+          pkgs.lib.forEach [ "noshell" "ushell"] (shell:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-memstat" (
+              pkgs.callPackage ./misc/nix/uk-app.nix {
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.memstat";
+              }
+            )
+          ))
+        )) //
         # some manual packages
         {
-          uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushell";
           };
-          uk-count-ushellmpk = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-ushellmpk = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushellmpk";
-          };
-          uk-count-ushell-memstat = pkgs.callPackage ./misc/nix/uk-app.nix {
-            inherit pkgs self-stable buildDeps;
-            app = "count";
-            config = "config.eval.ushell.memstat";
           };
           uk-count-noshell = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.noshell";
           };
-          uk-count-noshell-memstat = pkgs.callPackage ./misc/nix/uk-app.nix {
-            inherit pkgs self-stable buildDeps;
-            app = "count";
-            config = "config.eval.noshell.memstat";
-          };
           uk-count-ushell-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushell.lto";
           };
-          uk-count-ushellmpk-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-ushellmpk-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushellmpk.lto";
           };
-          uk-count-noshell-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-noshell-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.noshell.lto";
           };
-          nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix { 
-            inherit pkgs nixos-generators; 
+          nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix {
+            inherit pkgs nixos-generators;
           };
         };
       }));
