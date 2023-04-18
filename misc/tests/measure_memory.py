@@ -89,6 +89,8 @@ def main():
         for shell in ["noshell", "ushell", "ushellmpk"]:
             measure_memory(helpers, stats, app, shell)
 
+    util.export_fio("memory", stats)
+
 
 if __name__ == "__main__":
     main()
