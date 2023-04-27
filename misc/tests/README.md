@@ -16,7 +16,7 @@ TODO add https://github.com/Mic92/vmsh/blob/main/tests/reproduce.py so that user
 ## Reproducability
 
 - For reproducability, check the warnings printed before the benchmark starts to align your setup with ours regarding CPU frequency, hyperthreading, and CPU isolation.
-- We run our experiments on a Linux 6.0.15 kernel (NixOS 22.11).
+- We run our experiments on a Linux 6.1.21 kernel (NixOS 22.11.20230417.a52af07).
 - Our results are based on unikraft-development commit TODO and unikraft commit TODO (tarball also uploaded to zendo.org? TODO)
 - Exact hardware specs: TODO
 
@@ -44,16 +44,25 @@ python3.9 ./misc/tests/nix.py
 Now we run the actual tests:
 
 ```bash
+# console responsiveness
 rm -r ./misc/tests/measurements/console-stats.json
 sudo python3.9 ./misc/tests/measure_console.py
 python3.9 ./misc/tests/graph.py ./misc/tests/measurements/console-latest.tsv
 ls ./misc/tests/measurements/console.pdf
 
+# application performance
 rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
 python3.9 ./misc/tests/graph.py ./misc/tests/measurements/app-latest.tsv
 ls ./misc/tests/measurements/app.pdf
 
+# memory footprint
+rm -r ./misc/tests/measurements/memory-stats.json
+sudo python3.9 ./misc/tests/measure_memory.py
+python3.9 ./misc/tests/graph.py ./misc/tests/measurements/memory-latest.tsv
+ls ./misc/tests/measurements/memory.pdf
+
+# image size
 rm -r ./misc/tests/measurements/image-stats.json
 sudo python3.9 ./misc/tests/measure_image.py
 python3.9 ./misc/tests/graph.py ./misc/tests/measurements/image-latest.tsv
@@ -105,3 +114,7 @@ By default we use a pinned version of the measured unikraft kernels for reproduc
 Measure other kernel configs/versions by updating the `self-stable.url` in `flake.nix` to point i.e. to your local git checkout. Every time the unikraft sources change, run `nix flake lock --update-input self-stable` to tell the nix builder about the new sources.
 
 Measure_${title}.py files have a quick flag: Set to false runs a longer running version of the benchmark with less debug output which is meant for final evaluation.
+
+## Note
+- Use `python3.9`, not `python3` to avoid potential version problems
+- `python3.9 -m IPython` runs an interactve ipython shell

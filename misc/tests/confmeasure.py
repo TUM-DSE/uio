@@ -38,8 +38,8 @@ class Helpers:
 
     @staticmethod
     def uk_sqlite3_backup(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
-        return nix.uk_sqlite(shell, bootfs)
-    
+        return nix.uk_sqlite3_backup(shell, bootfs)
+
     @staticmethod
     def uk_sqlite(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
         return nix.uk_sqlite(shell, bootfs)
@@ -54,7 +54,7 @@ class Helpers:
 
     @staticmethod
     def uk_count(shell: str = "ushell") -> UkVmSpec:
-        return nix.uk_count()
+        return nix.uk_count(shell)
 
     @staticmethod
     @contextmanager

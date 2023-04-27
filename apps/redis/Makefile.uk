@@ -1,1 +1,3 @@
 $(eval $(call addlib,appredis))
+
+APPREDIS_SRCS-y += $(APPREDIS_BASE)/main.c

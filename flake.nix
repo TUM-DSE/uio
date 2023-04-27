@@ -29,9 +29,10 @@
           fire
           jedi
           tqdm # progress bars
+          ipython
 
           # for graphs.py
-          natsort 
+          natsort
           matplotlib
           seaborn
         ]);
@@ -85,7 +86,7 @@
           #pkgs.lib.forEach [ "initrd" "9p" ] (bootfs:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}" (
-              pkgs.callPackage ./misc/nix/uk-app.nix { 
+              pkgs.callPackage ./misc/nix/uk-app.nix {
                 inherit pkgs self-stable buildDeps;
                 inherit app;
                 config = "config.eval.${shell}.${bootfs}";
@@ -107,40 +108,67 @@
             )
           )))
         )) //
+        # (app x shell x memstat)
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "count" ] (app:
+          pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-memstat" (
+              pkgs.callPackage ./misc/nix/uk-app.nix {
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.memstat";
+              }
+            )
+          ))
+        )) //
+        # app x shell x fs x memstat
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite3_backup" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "initrd" ] (bootfs:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-memstat-${bootfs}" (
+              pkgs.callPackage ./misc/nix/uk-app.nix {
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.${bootfs}.memstat";
+              }
+            )
+          )))
+        )) //
         # some manual packages
         {
-          uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushell";
           };
-          uk-count-ushellmpk = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-ushellmpk = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushellmpk";
           };
-          uk-count-noshell = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-noshell = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.noshell";
           };
-          uk-count-ushell-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-ushell-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushell.lto";
           };
-          uk-count-ushellmpk-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-ushellmpk-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushellmpk.lto";
           };
-          uk-count-noshell-lto = pkgs.callPackage ./misc/nix/uk-app.nix { 
+          uk-count-noshell-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.noshell.lto";
           };
-          nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix { 
-            inherit pkgs nixos-generators; 
+          nginx-image = pkgs.callPackage ./misc/nix/nginx-image.nix {
+            inherit pkgs nixos-generators;
           };
         };
       }));
