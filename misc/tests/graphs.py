@@ -556,10 +556,11 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     return g
 
 
-def memory(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
+def memory(df: pd.DataFrame, name: str, names: List[str] = [],
+           value_name="max_mem_use") -> Any:
     if len(names) == 0: names = [name]
-    df = df[df["Unnamed: 0"] == "max_mem_use"]
-    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="max_mem_use")
+    df = df[df["Unnamed: 0"] == value_name]
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=value_name)
     df = parse_app_system(df)
 
     width = 3.3
@@ -578,7 +579,7 @@ def memory(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     )
 
     g.ax.set_ylabel("")
-    g.ax.set_xlabel("Maximum memory usage [MB]")
+    g.ax.set_xlabel("Maximum memory usage to boot [MB]")
     apply_hatch(g, patch_legend=False, hatch_list=hatches)
     annotate_bar_values_kB(g)
 
@@ -590,7 +591,7 @@ def memory(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     p3 = mpl.patches.Patch(facecolor=palette[2], hatch=hatches[2], edgecolor="k",
                            label=f'isolated-{sysname}')
     g.ax.legend(handles=[p1, p2, p3], title="", labelspacing=.2,
-                loc="upper right", bbox_to_anchor=(1.15, 1))
+                loc="upper right", bbox_to_anchor=(1.15, 1.01))
 
     # annotation
     FONT_SIZE = 9
