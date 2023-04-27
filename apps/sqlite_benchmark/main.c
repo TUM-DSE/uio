@@ -1,8 +1,14 @@
+#include <uk/config.h>
+
 #include <stdio.h>
 #include <sqlite3.h>
 #include <time.h>
 
 #include <uk/plat/bootstrap.h>
+
+#ifdef CONFIG_LIBUKALLOC_IFSTATS
+#include "../common/include/memstat.h"
+#endif
 
 #ifndef DB_NAME
 #define DB_NAME     "database.db"
@@ -67,6 +73,10 @@ static int callback(
 }
 
 int main(int argc, char **argv){
+#ifdef CONFIG_LIBUKALLOC_IFSTATS
+	get_ukalloc_stat();
+#endif
+
   char *zErrMsg = 0;
   int rc;
 

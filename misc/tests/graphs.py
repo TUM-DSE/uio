@@ -71,18 +71,26 @@ ROW_ALIASES.update(
             "ushellmpk_run": f"isolated-{sysname}",
             "ushell-run-cached": "cached",
             "ushellmpk-run-cached": "cached + isolated",
+            "uk-count-noshell": f"count",
+            "uk-count-ushell": f"count {sysname}",
+            "uk-count-ushellmpk": f"count isolated-{sysname}",
             "uk-nginx-noshell-initrd": "Nginx",
             "uk-nginx-ushell-initrd": f"Nginx {sysname}",
+            "uk-nginx-ushellmpk-initrd": f"Nginx isolated-{sysname}",
             "uk-redis-noshell-initrd": "Redis",
             "uk-redis-ushell-initrd": f"Redis {sysname}",
+            "uk-redis-ushellmpk-initrd": f"Redis isolated-{sysname}",
             "uk-sqlite_benchmark-noshell-initrd": "SQLite",
             "uk-sqlite_benchmark-ushell-initrd": f"SQLite {sysname}",
+            "uk-sqlite_benchmark-ushellmpk-initrd": f"SQLite isolated-{sysname}",
         },
         "ltoshell": {
             "noshell": "Unikraft",
             "noshell-lto": "Unikraft (opt)",
             "ushell": f"w/ {sysname}",
             "ushell-lto": f"w/ {sysname} (opt)",
+            "ushellmpk": f"w/ isolated-{sysname}",
+            "ushellmpk-lto": f"w/ isolated-{sysname} (opt)",
         },
         # "shell": {
             # "noshell": "baseline",
@@ -114,6 +122,7 @@ FORMATTER.update(
         "io_throughput": magnitude_formatter(6),
         "useconds": magnitude_formatter(-6),
         "kB": magnitude_formatter(3),
+        "MB": magnitude_formatter(6),
         "krps": magnitude_formatter(3, offsetstring=True),
         "mrps": magnitude_formatter(6, offsetstring=True),
     }
@@ -255,6 +264,8 @@ def parse_app_system(df: pd.DataFrame) -> pd.DataFrame:
     def f(row: Any) -> Any:
         if "noshell" in row.system:
             return "noshell"
+        elif "ushellmpk" in row.system:
+            return "ushellmpk"
         elif "ushell" in row.system:
             return "ushell"
 
@@ -544,6 +555,70 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     format(g.ax.xaxis, "kB")
     return g
 
+
+def memory(df: pd.DataFrame, name: str, names: List[str] = [],
+           value_name="max_mem_use") -> Any:
+    if len(names) == 0: names = [name]
+    df = df[df["Unnamed: 0"] == value_name]
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=value_name)
+    df = parse_app_system(df)
+
+    width = 3.3
+    aspect = 1.5
+
+    g = catplot(
+        data=apply_aliases(df),
+        y="app",
+        x="max_mem_use",
+        kind="bar",
+        hue="shell",
+        height=width/aspect,
+        aspect=aspect,
+        palette=palette,
+        legend=False,
+    )
+
+    g.ax.set_ylabel("")
+    g.ax.set_xlabel("Maximum memory usage to boot [MB]")
+    apply_hatch(g, patch_legend=False, hatch_list=hatches)
+    annotate_bar_values_kB(g)
+
+    # legend
+    p1 = mpl.patches.Patch(facecolor=palette[0], hatch=hatches[0], edgecolor="k",
+                           label='Unikraft')
+    p2 = mpl.patches.Patch(facecolor=palette[1], hatch=hatches[1], edgecolor="k",
+                           label=f'{sysname}')
+    p3 = mpl.patches.Patch(facecolor=palette[2], hatch=hatches[2], edgecolor="k",
+                           label=f'isolated-{sysname}')
+    g.ax.legend(handles=[p1, p2, p3], title="", labelspacing=.2,
+                loc="upper right", bbox_to_anchor=(1.10, 1.05),
+                fontsize=7)
+
+    # annotation
+    FONT_SIZE = 9
+    xytext=(110, 40)
+    g.ax.annotate(
+        "Lower is better",
+        xycoords="axes points",
+        xy=(0, 0),
+        xytext=xytext,
+        fontsize=FONT_SIZE,
+        color="navy",
+        weight="bold",
+    )
+    g.ax.annotate(
+        "",
+        xycoords="axes points",
+        xy=tuple(x+y for x,y in zip(xytext, (-15,2))),
+        xytext=tuple(x+y for x,y in zip(xytext, (0,2))),
+        fontsize=FONT_SIZE,
+        arrowprops=dict(arrowstyle="-|>", color="navy"),
+    )
+
+    g.despine()
+    format(g.ax.xaxis, "MB")
+    g.tight_layout()
+    return g
 
 def compute_ratio(x: pd.DataFrame) -> pd.Series:
     title = x.benchmark_title.iloc[0]
@@ -1036,6 +1111,8 @@ def main() -> None:
             graphs.append(("init", console(df, "ushell-init")))
         elif name.startswith("image"):
             graphs.append(("images", images(df, "image-sizes")))
+        elif name.startswith("memory"):
+            graphs.append(("memory", memory(df, "memory")))
         else:
             print(f"unhandled graph name: {tsv_path}", file=sys.stderr)
             sys.exit(1)

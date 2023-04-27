@@ -226,6 +226,7 @@ class QemuVm:
         print("waiting for qemu to stop...")
         while True:
             try:
+                print(".")
                 os.kill(self.pid, 0)
             except ProcessLookupError:
                 print("...done")

@@ -1,7 +1,13 @@
+#include <uk/config.h>
+
 #include <stdio.h>
 #include <string.h>
 
 #include <sqlite3.h>
+
+#ifdef CONFIG_LIBUKALLOC_IFSTATS
+#include "../common/include/memstat.h"
+#endif
 
 #define DB_INIT      "CREATE TABLE tab(INT, VARCHAR);"
 #define DB_QUERY     "INSERT INTO tab VALUES (null, 'value');"
@@ -64,6 +70,10 @@ void sqlite3_generate_table() {
 
 int main()
 {
+#ifdef CONFIG_LIBUKALLOC_IFSTATS
+	get_ukalloc_stat();
+#endif
+
 	int rc;
 
 	rc = sqlite3_open(":memory:", &db);
