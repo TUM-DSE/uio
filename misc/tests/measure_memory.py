@@ -20,7 +20,10 @@ def measure_memory(helpers: confmeasure.Helpers,
                    shell: str,
                    bootfs: str = "initrd") -> None:
 
-    name = f"{app}-{shell}"
+    if app == "count":
+        name = f"uk-{app}-{shell}"
+    else:
+        name = f"uk-{app}-{shell}-{bootfs}"
     if name in stats.keys():
         print(f"skip {name}")
         return

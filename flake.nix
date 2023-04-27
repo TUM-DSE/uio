@@ -29,9 +29,10 @@
           fire
           jedi
           tqdm # progress bars
+          ipython
 
           # for graphs.py
-          natsort 
+          natsort
           matplotlib
           seaborn
         ]);
