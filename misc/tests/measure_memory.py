@@ -34,6 +34,8 @@ def measure_memory(helpers: confmeasure.Helpers,
         vmspec = helpers.uk_count(shell=shellname)
     elif app == "nginx":
         vmspec = helpers.uk_nginx(shell=shellname, bootfs=bootfs)
+    elif app == "redis":
+        vmspec = helpers.uk_redis(shell=shellname, bootfs=bootfs)
     elif app == "sqlite3_backup":
         vmspec = helpers.uk_sqlite3_backup(shell=shellname, bootfs=bootfs)
     elif app == "sqlite_benchmark":
@@ -88,7 +90,7 @@ def main():
     stats = util.read_stats(STATS_PATH)
 
     print("\nmeasure memory consumption")
-    for app in ["count", "nginx", "sqlite_benchmark"]:
+    for app in ["count", "nginx", "redis", "sqlite_benchmark"]:
         for shell in ["noshell", "ushell", "ushellmpk"]:
             measure_memory(helpers, stats, app, shell)
 

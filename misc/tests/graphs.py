@@ -591,11 +591,12 @@ def memory(df: pd.DataFrame, name: str, names: List[str] = [],
     p3 = mpl.patches.Patch(facecolor=palette[2], hatch=hatches[2], edgecolor="k",
                            label=f'isolated-{sysname}')
     g.ax.legend(handles=[p1, p2, p3], title="", labelspacing=.2,
-                loc="upper right", bbox_to_anchor=(1.15, 1.01))
+                loc="upper right", bbox_to_anchor=(1.10, 1.05),
+                fontsize=7)
 
     # annotation
     FONT_SIZE = 9
-    xytext=(110, 5)
+    xytext=(110, 40)
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",

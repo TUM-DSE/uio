@@ -123,7 +123,7 @@
         )) //
         # app x shell x fs x memstat
         builtins.listToAttrs ( pkgs.lib.flatten (
-          pkgs.lib.forEach [ "nginx" "sqlite3_backup" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite3_backup" "sqlite_benchmark" ] (app:
           pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-memstat-${bootfs}" (
