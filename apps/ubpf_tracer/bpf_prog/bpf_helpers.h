@@ -1,6 +1,11 @@
 #ifndef BPF_HELPERS_H
 #define BPF_HELPERS_H
 
+#if !defined(__x86_64__)
+// hack to include stdint.h with bpf target
+#define __x86_64__
+#endif
+
 #include <stdint.h>
 
 #define bpf_map_get ((uint64_t(*)(uint64_t, uint64_t))0)
