@@ -1,7 +1,4 @@
 $(eval $(call addlib,appsqlite))
 
 
-APPSQLITE_CFLAGS-$(APPSQLITE_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount
-# FIXME: Not work?
-# LIBSQLITE_CFLAGS-$(APPSQLITE_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount
-LIBSQLITE_CFLAGS-y += -mno-red-zone -pg -mrecord-mcount -mnop-mcount
+LIBSQLITE_CFLAGS-$(CONFIG_APPSQLITE_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount
