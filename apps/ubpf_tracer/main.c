@@ -33,13 +33,22 @@ __attribute__((noinline)) void function4()
 	return;
 }
 
+__attribute__((noinline)) void function5(int a)
+{
+	static int cnt = 0;
+	printf("hello from function5: %d, %d\n", a+1, cnt);
+	cnt++;
+	return;
+}
+
 int main()
 {
-	for (unsigned int i = 0; i < 10; ++i) {
+	for (unsigned int i = 0; i < 1000; ++i) {
 		function1();
 		function2();
 		function3();
 		function4();
+		function5(i);
 		sleep(10);
 	}
 
