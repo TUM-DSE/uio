@@ -41,3 +41,6 @@
 [submodule "libs/ubpf"]
 	path = libs/ubpf
 	url = git@github.com:vandah/uk_ubpf.git
+[submodule "repo/ubpf_tracer"]
+	path = repo/ubpf_tracer
+	url = https://github.com/vandah/ubpf_tracer
