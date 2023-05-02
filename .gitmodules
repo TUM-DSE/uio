@@ -44,3 +44,6 @@
 [submodule "repo/ubpf_tracer"]
 	path = repo/ubpf_tracer
 	url = https://github.com/vandah/ubpf_tracer
+[submodule "repo/ubpf"]
+	path = repo/ubpf
+	url = https://github.com/iovisor/ubpf
