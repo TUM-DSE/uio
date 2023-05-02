@@ -73,6 +73,7 @@
           name = "devShell";
           buildInputs = buildDeps ++ [
             pythonEnv
+            pkgs.gdb
 
             # needed for app/nginx benchmark
             pkgs.wrk 
