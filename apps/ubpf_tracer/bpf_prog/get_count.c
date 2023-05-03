@@ -8,7 +8,7 @@ int bpf_prog(void *arg)
 	}
 	uint64_t addr = bpf_get_ret_addr((const char *)arg);
 	if (addr == 0) {
-		return -1;
+		return -2;
 	}
 	uint64_t count = bpf_map_get(addr, COUNT_KEY);
 	if (count == UINT64_MAX) {
