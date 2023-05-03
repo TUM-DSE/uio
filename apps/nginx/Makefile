@@ -7,5 +7,8 @@ all:
 	pushd fs0 && find . | cpio --format=newc -o > ../build/fs0.cpio && popd
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS)
 
+	just gen_sym_txt
+	just compile_progs
+
 $(MAKECMDGOALS):
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS) $(MAKECMDGOALS)

@@ -114,6 +114,7 @@ compile_progs:
     @just compile_cmd 'hello'
     @just compile_cmd 'empty'
     @just compile_cmd 'perf'
+    @just compile_cmd 'tcp-ping'
 
 gen_sym_txt:
     nm {{APP}}.dbg | cut -d ' ' -f1,3 > ./fs1/symbol.txt
