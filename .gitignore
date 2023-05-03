@@ -12,3 +12,5 @@ misc/tests/measurements/
 
 .ccls-cache/
 .envrc
+
+.idea
