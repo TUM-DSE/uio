@@ -20,7 +20,7 @@ extern int lwip_close(int s);
 
 // inet_addr is included under ngx namespace
 extern in_addr_t ngx_inet_addr(const char *cp);
-#define int_addr(cp) ngx_inet_addr(cp)
+#define inet_addr(cp) ngx_inet_addr(cp)
 
 extern uint16_t htons(uint16_t hostshort);
 
