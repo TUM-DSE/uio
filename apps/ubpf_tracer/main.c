@@ -49,7 +49,8 @@ int main()
 		function3();
 		function4();
 		function5(i);
-		sleep(10);
+		sleep(5);
+		printf("\n");
 	}
 
 	return 0;
