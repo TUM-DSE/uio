@@ -1,0 +1,10 @@
+config APPNGINX
+	bool
+	default y
+
+if APPNGINX
+	config APPNGINX_TRACING
+		bool "Enable tracing"
+		select LIBUKBPF
+		default n
+endif
