@@ -70,6 +70,24 @@ pkgs.stdenv.mkDerivation {
         };
         dst = "apps/${app}/build/libsqlite/${version}.zip";
       };
+
+      libubpf = with libubpf; {
+        version = "029ea2b6e1e06337ed8fe577b4a4ee09ed0dce7d";
+        src = builtins.fetchurl {
+          url = "http://github.com/iovisor/ubpf/archive/${version}.zip";
+          sha256 = "0y88m47z7mj31aj9yk0amzw9yc2jms1rdf6r0lfcbmrsr0da449p";
+        };
+        dst = "apps/${app}/build/libubpf/${version}.zip";
+      };
+
+      libubpf_tracer = with libubpf_tracer; {
+        version = "8c4401d9c293490d77129946b25bb04ebe803e64";
+        src = builtins.fetchurl {
+          url = "https://github.com/vandah/ubpf_tracer/archive/${version}.zip";
+          sha256 = "0idc39dna9j3qz22skpdffp0vn65l0ya7l185k2zl82xc0rp7w7v";
+        };
+        dst = "apps/${app}/build/libubpf_tracer/${version}.zip";
+      };
     };
   in ''
     # clean sourcetree, in case of impure development tree
