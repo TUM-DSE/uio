@@ -9,4 +9,11 @@ if APPCOUNT
 		select LIBUBPF_TRACER
 		select LIBUSHELL_BPF
 		default n
+
+	config APPCOUNT_TRACING_NOMCOUNT
+		bool "Enable tracing w/o mcount"
+		select LIBUBPF
+		select LIBUBPF_TRACER
+		select LIBUSHELL_BPF
+		default n
 endif
