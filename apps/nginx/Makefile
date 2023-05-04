@@ -9,7 +9,7 @@ all:
 	@mkdir -p ./build
 	@pushd fs0 && find . | cpio --format=newc -o > ../build/fs0.cpio && popd
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS)
-	@cp $(SYMFILE) fs1/debug.sym
+	if [[ -f $(SYMFILE) ]]; then cp $(SYMFILE) fs1/debug.sym; fi
 
 $(MAKECMDGOALS):
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS) $(MAKECMDGOALS)
