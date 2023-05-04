@@ -65,6 +65,7 @@
           pkgs.cpio
           pkgs.libelf
           # to compile BPF
+          pkgs.llvmPackages_14.llvm
           pkgs.llvmPackages_14.clangUseLLVM
         ];
       in
