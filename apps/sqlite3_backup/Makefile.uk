@@ -1,3 +1,7 @@
 $(eval $(call addlib,appapp1))
 
 APPAPP1_SRCS-y += $(APPAPP1_BASE)/main.c
+
+
+APPAPP1_CFLAGS-$(CONFIG_APPAPP1_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount
+LIBSQLITE_CFLAGS-$(CONFIG_APPAPP1_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount
