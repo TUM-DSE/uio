@@ -96,7 +96,7 @@ pkgs.stdenv.mkDerivation {
   configurePhase = ''
     cd apps/${app}
     [[ "${config}" == ".config" ]] || cp ${config} .config
-    make oldconfig # ensure consistency and update absolute paths
+    make olddefconfig # ensure consistency and update absolute paths
   '';
   buildPhase = ''
     make -j $NIX_BUILD_CORES
