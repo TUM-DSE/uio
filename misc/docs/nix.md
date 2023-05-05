@@ -1,5 +1,5 @@
 ## Bulding Unikraft apps with Nix
-- [uk-apps.nix](../nix/uk-apps.nix) defines main build rules
+- [./misc/nix/uk-app.nix](../nix/uk-app.nix) defines main build rules
     - We need to manually download libraries (see `postUnpack`) as nix build system runs in a sandbox and we need to download all necessary libraries before the build phase
 - Define rules for bulding app in [flake.nix](../../flake.nix)
     - Excerpt from the flake.nix
