@@ -5,7 +5,7 @@ default:
 
 compile_bpf target:
     clang -c -target bpf -fno-stack-protector -o build/{{file_stem(target)}}.o {{target}}
-    objcopy -I elf64-little -O binary build/{{file_stem(target)}}.o build/{{file_stem(target)}}.bin
+    objcopy -I elf64-little -O binary --only-section=.text build/{{file_stem(target)}}.o build/{{file_stem(target)}}.bin
 
 compile:
     #!/usr/bin/env bash
