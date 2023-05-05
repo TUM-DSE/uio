@@ -2,7 +2,6 @@
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #define NULL 0
 
@@ -29,9 +28,11 @@ extern int sprintf(char *str, const char *format, ...);
 int US_2_SEC = 1000000;
 double getTimestamp()
 {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return (double)tv.tv_sec + ((double)tv.tv_usec) / US_2_SEC;
+	//struct timeval tv;
+	//gettimeofday(&tv, NULL);
+	//return (double)tv.tv_sec + ((double)tv.tv_usec) / US_2_SEC;
+
+	return 0;
 }
 
 // TODO show error codes for the Errors
