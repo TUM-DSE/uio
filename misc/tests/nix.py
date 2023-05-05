@@ -36,8 +36,10 @@ def uk_build(name: str) -> Path:
     return Path(out)
 
 
-def uk_sqlite3_backup(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
-    flake_name = f"uk-sqlite3_backup-{shell}-{bootfs}"
+def uk_sqlite3_backup(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmSpec:
+    flake_name = f"uk-sqlite3_backup-{shell}"
+    if len(bpf): flake_name += f"-{bpf}"
+    flake_name += f"-{bootfs}"
     if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite3_backup_kvm-x86_64"
@@ -54,8 +56,10 @@ def uk_sqlite3_backup(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
     )
 
 
-def uk_sqlite(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
-    flake_name = f"uk-sqlite_benchmark-{shell}-{bootfs}"
+def uk_sqlite(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmSpec:
+    flake_name = f"uk-sqlite_benchmark-{shell}"
+    if len(bpf): flake_name += f"-{bpf}"
+    flake_name += f"-{bootfs}"
     if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite_benchmark_kvm-x86_64"
@@ -72,8 +76,10 @@ def uk_sqlite(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
     )
 
 
-def uk_redis(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
-    flake_name = f"uk-redis-{shell}-{bootfs}"
+def uk_redis(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmSpec:
+    flake_name = f"uk-redis-{shell}"
+    if len(bpf): flake_name += f"-{bpf}"
+    flake_name += f"-{bootfs}"
     if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "redis_kvm-x86_64"
@@ -90,8 +96,10 @@ def uk_redis(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
     )
 
 
-def uk_nginx(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
-    flake_name = f"uk-nginx-{shell}-{bootfs}"
+def uk_nginx(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmSpec:
+    flake_name = f"uk-nginx-{shell}"
+    if len(bpf): flake_name += f"-{bpf}"
+    flake_name += f"-{bootfs}"
     if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "nginx_kvm-x86_64"
@@ -108,8 +116,9 @@ def uk_nginx(shell: str, bootfs: str, lto: bool = False) -> UkVmSpec:
     )
 
 
-def uk_count(shell: str = "ushell", lto: bool = False) -> UkVmSpec:
+def uk_count(shell: str = "ushell", bpf: str = "", lto: bool = False) -> UkVmSpec:
     flake_name = f"uk-count-{shell}"
+    if len(bpf): flake_name += f"-{bpf}"
     if lto: flake_name += "-lto"
     build = uk_build(f".#{flake_name}")
     kernel = build / "count_kvm-x86_64"
