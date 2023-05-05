@@ -1,3 +1,9 @@
+## How to write BPF programs
+- [./apps/bpf_prog](../../apps/bpf_prog) contains several BPF programs
+    - `just compile` compiles BPF programs
+    - `build/xxx.bun` is loadable BPF program
+- Edit [bpf_helpers.h](../../apps/bpf_prog/bpf_helpers.h) to add BPF helper functions
+
 ## Note about calling BPF helper functions in C
 We can emit call instructions for calling BPF helper function like this.
 
@@ -21,7 +27,7 @@ $ llvm-objdump -D a.o
 0000000000000000 <bpf_prog>:
        0:       b7 01 00 00 00 00 00 00 r1 = 0
        1:       b7 02 00 00 00 00 00 00 r2 = 0
-       2:       85 00 00 00 01 00 00 00 call 1
+       2:       85 00 00 00 00 00 00 00 call 0
        3:       95 00 00 00 00 00 00 00 exit
 ```
 
