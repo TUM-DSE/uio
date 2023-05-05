@@ -3,6 +3,7 @@
     - We need to manually download libraries (see `postUnpack`) as nix build system runs in a sandbox and we need to download all necessary libraries before the build phase
 - Define rules for bulding app in [flake.nix](../../flake.nix)
     - Excerpt from the flake.nix
+    - This build [`./apps/count`](../../apps/count) with the [`./apps/count/config.eval.ushell`](../../apps/count/config.eval.ushell) config
 ```
 packages = {
     [...]
@@ -14,7 +15,6 @@ packages = {
     [...]
 }
 ```
-    - This build [`./apps/count`](../../apps/count) with the [`./apps/count/config.eval.ushell`](../../apps/count/config.eval.ushell) config
 
 ## Examples
 - Upadte the flake lock
