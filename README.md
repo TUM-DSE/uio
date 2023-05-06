@@ -1,6 +1,6 @@
 # ushell
 
-## develop:
+## Quick start
 
 (Tested on adelaide)
 
@@ -30,6 +30,10 @@ just attach
 
 see [./misc/tests/README.md](./misc/tests/README.md)
 
+## Docs
+-[./misec/docs](./misc/docs)
 
-## ATC23 version
-see atc23 branch
+## Branch
+- [dev](https://github.com/TUM-DSE/ushell/tree/dev): Development branch
+- [eurosys23](https://github.com/TUM-DSE/ushell/tree/eurosys23): Eurosys23 version
+
