@@ -2,8 +2,6 @@
 
 This set of scripts runs the evaluation of this project (`measure_*.py`) and generates the plots from the results (`graph.py`)
 
-TODO add https://github.com/Mic92/vmsh/blob/main/tests/reproduce.py so that user only has to issue a single command to do everything
-
 ## Requirements
 
 - A x86_86 CPU with native hardware virtualisation. Our test configuration expects at least 8 CPU cores.
@@ -12,16 +10,18 @@ TODO add https://github.com/Mic92/vmsh/blob/main/tests/reproduce.py so that user
 - Sudo
 - Tmux
 
-
 ## Reproducability
 
+- [./measuerments/eurosys23](./measurements/eurosys23) contains the submitted version of our measurements.
+- Operating Systems
+    - Linux 6.2.12, NixOS, 22.11 (Raccoon), 22.11.20230425.48da06e
+- Hardware
+    - CPU: Intel(R) Xeon(R) Gold 5317 CPU @ 3.00GHz 12 cores
+    - Memory: Samsung DDR4 64GB 3200 MT/s x 16 (1024 GB)
+- Our results are based on ushell eurosys23 branch (TODO: commit hash)
 - For reproducability, check the warnings printed before the benchmark starts to align your setup with ours regarding CPU frequency, hyperthreading, and CPU isolation.
-- We run our experiments on a Linux 6.1.21 kernel (NixOS 22.11.20230417.a52af07).
-- Our results are based on unikraft-development commit TODO and unikraft commit TODO (tarball also uploaded to zendo.org? TODO)
-- Exact hardware specs: TODO
 
-
-## Measurements
+## Preparation
 
 First, go to the root folder of this project and enter our development shell to issue the measurement commands:
 
@@ -38,10 +38,13 @@ just setup_bridge
 popd
 
 # you can choose to build all the unikraft kernels in advance
+# This will take about 30-60 minutes depending on your system
 python3.9 ./misc/tests/nix.py
 ```
 
-Now we run the actual tests:
+## Measurements
+
+The following commands run the measurements and generate the plots.
 
 ```bash
 # console responsiveness
@@ -73,7 +76,7 @@ Each test follows some steps:
 
 If results exists for a test in `*-stats.json`, the test is skipped. To re-run them, delete the file or entries.
 
-Run the tests in `measure_*.py`. 
+Run the tests in `measure_*.py`.
 Depending on your system configuration, QEMU has to be started as root. 
 In that case you have to start the python script as root. 
 The measure script will run different experiments, multiple times each. 
@@ -82,7 +85,6 @@ The QEMU VM is started in a tmux session whose socket is logged to stdout and ca
 The test results are stored in [tests](./.)/measurements as `{name}-{date}-{time}.tsv` files. 
 
 TSV files are handed to `graph.py` which plots and writes them into PDFs (such as `./images.pdf`).
-
 
 ## Measurement List
 
@@ -110,7 +112,7 @@ See [apps/count](../../apps/count) (`perf` program).
 
 ## Development
 
-By default we use a pinned version of the measured unikraft kernels for reproducability. 
+By default we use a pinned version of the measured unikraft kernels for reproducability.
 Measure other kernel configs/versions by updating the `self-stable.url` in `flake.nix` to point i.e. to your local git checkout. Every time the unikraft sources change, run `nix flake lock --update-input self-stable` to tell the nix builder about the new sources.
 
 Measure_${title}.py files have a quick flag: Set to false runs a longer running version of the benchmark with less debug output which is meant for final evaluation.
