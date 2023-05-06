@@ -1,0 +1,12 @@
+config APPSQLITE
+	bool
+	default y
+
+if APPSQLITE
+	config APPSQLITE_TRACING
+		bool "Enable tracing"
+		select LIBUBPF
+		select LIBUBPF_TRACER
+		select LIBUSHELL_BPF
+		default n
+endif

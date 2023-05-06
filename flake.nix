@@ -64,6 +64,9 @@
           pkgs.unzip # needed to make apps/nginx
           pkgs.cpio
           pkgs.libelf
+          # to compile BPF
+          pkgs.llvmPackages_14.llvm
+          pkgs.llvmPackages_14.clangUseLLVM
         ];
       in
       {
@@ -71,6 +74,7 @@
           name = "devShell";
           buildInputs = buildDeps ++ [
             pythonEnv
+            pkgs.gdb
 
             # needed for app/nginx benchmark
             pkgs.wrk 
@@ -94,13 +98,13 @@
             )
           )))
         )) //
-        # (app x shell) with lto # TODO this should also include mpk
+        # (app x shell) with lto
         builtins.listToAttrs ( pkgs.lib.flatten (
           pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" "sqlite3_backup" ] (app:
           pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}-lto" (
-              pkgs.callPackage ./misc/nix/uk-app.nix { 
+              pkgs.callPackage ./misc/nix/uk-app.nix {
                 inherit pkgs self-stable buildDeps;
                 inherit app;
                 config = "config.eval.${shell}.${bootfs}.lto";
@@ -135,6 +139,34 @@
             )
           )))
         )) //
+        # bpf tracing
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite3_backup" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "initrd" ] (bootfs:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-bpf-${bootfs}" (
+              pkgs.callPackage ./misc/nix/uk-app.nix {
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.bpf.${bootfs}";
+              }
+            )
+          )))
+        )) //
+        # bpf tracing w/o mcount
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite3_backup" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "initrd" ] (bootfs:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-bpf-nomcount-${bootfs}" (
+              pkgs.callPackage ./misc/nix/uk-app.nix {
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.bpf.nomcount.${bootfs}";
+              }
+            )
+          )))
+        )) //
         # some manual packages
         {
           uk-count-ushell = pkgs.callPackage ./misc/nix/uk-app.nix {
@@ -146,6 +178,16 @@
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushellmpk";
+          };
+          uk-count-ushellmpk-bpf = pkgs.callPackage ./misc/nix/uk-app.nix {
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushellmpk.bpf";
+          };
+          uk-count-ushellmpk-bpf-nomcount = pkgs.callPackage ./misc/nix/uk-app.nix {
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushellmpk.bpf.nomcount";
           };
           uk-count-noshell = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;

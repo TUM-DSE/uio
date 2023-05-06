@@ -1,0 +1,19 @@
+config APPAPP1
+	bool
+	default y
+
+if APPAPP1
+	config APPAPP1_TRACING
+		bool "Enable tracing"
+		select LIBUBPF
+		select LIBUBPF_TRACER
+		select LIBUSHELL_BPF
+		default n
+
+	config APPAPP1_TRACING_NOMCOUNT
+		bool "Enable tracing w/o mcount"
+		select LIBUBPF
+		select LIBUBPF_TRACER
+		select LIBUSHELL_BPF
+		default n
+endif

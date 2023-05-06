@@ -2,3 +2,6 @@ $(eval $(call addlib,appsqlite))
 
 APPSQLITE_SRCS-y += $(APPSQLITE_BASE)/main.c
 APPSQLITE_CINCLUDES-y += -I$(APPSQLITE_BASE)/include
+
+APPSQLITE_CFLAGS-$(CONFIG_APPSQLITE_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount
+LIBSQLITE_CFLAGS-$(CONFIG_APPSQLITE_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount

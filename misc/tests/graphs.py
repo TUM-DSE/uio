@@ -592,11 +592,11 @@ def memory(df: pd.DataFrame, name: str, names: List[str] = [],
                            label=f'isolated-{sysname}')
     g.ax.legend(handles=[p1, p2, p3], title="", labelspacing=.2,
                 loc="upper right", bbox_to_anchor=(1.10, 1.05),
-                fontsize=7)
+                fontsize=7, frameon=False)
 
     # annotation
     FONT_SIZE = 9
-    xytext=(110, 40)
+    xytext=(110, 10)
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",

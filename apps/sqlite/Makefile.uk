@@ -1,1 +1,4 @@
 $(eval $(call addlib,appsqlite))
+
+
+LIBSQLITE_CFLAGS-$(CONFIG_APPSQLITE_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount

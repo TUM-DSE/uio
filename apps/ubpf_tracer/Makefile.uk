@@ -1,0 +1,5 @@
+$(eval $(call addlib,appubpf_tracer))
+
+APPUBPF_TRACER_SRCS-y += $(APPUBPF_TRACER_BASE)/main.c
+
+APPUBPF_TRACER_CFLAGS-y += -mno-red-zone -Werror -pg -mrecord-mcount -mnop-mcount
