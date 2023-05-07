@@ -67,6 +67,7 @@
           # to compile BPF
           pkgs.llvmPackages_14.llvm
           pkgs.llvmPackages_14.clangUseLLVM
+          pkgs.libcgroup
         ];
       in
       {
