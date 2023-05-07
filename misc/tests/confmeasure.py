@@ -37,24 +37,24 @@ class Helpers:
         return nix.busybox_image()
 
     @staticmethod
-    def uk_sqlite3_backup(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
-        return nix.uk_sqlite3_backup(shell, bootfs)
+    def uk_sqlite3_backup(shell: str = "ushell", bootfs: str = "9p", bpf: str = "") -> UkVmSpec:
+        return nix.uk_sqlite3_backup(shell, bootfs, bpf)
 
     @staticmethod
-    def uk_sqlite(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
-        return nix.uk_sqlite(shell, bootfs)
+    def uk_sqlite(shell: str = "ushell", bootfs: str = "9p", bpf: str = "") -> UkVmSpec:
+        return nix.uk_sqlite(shell, bootfs, bpf)
 
     @staticmethod
-    def uk_redis(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
-        return nix.uk_redis(shell, bootfs)
+    def uk_redis(shell: str = "ushell", bootfs: str = "9p", bpf: str = "") -> UkVmSpec:
+        return nix.uk_redis(shell, bootfs, bpf)
 
     @staticmethod
-    def uk_nginx(shell: str = "ushell", bootfs: str = "9p") -> UkVmSpec:
-        return nix.uk_nginx(shell, bootfs)
+    def uk_nginx(shell: str = "ushell", bootfs: str = "9p", bpf: str = "") -> UkVmSpec:
+        return nix.uk_nginx(shell, bootfs, bpf)
 
     @staticmethod
-    def uk_count(shell: str = "ushell") -> UkVmSpec:
-        return nix.uk_count(shell)
+    def uk_count(shell: str = "ushell", bpf: str = "") -> UkVmSpec:
+        return nix.uk_count(shell, bpf)
 
     @staticmethod
     @contextmanager

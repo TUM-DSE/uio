@@ -212,11 +212,13 @@ def redis_ushell(
     shell: str = "ushell",
     bootfs: str = "9p",
     human: str = "nohuman",
+    bpf: str = "",
 ) -> None:
     """
     per sample: 4s
     """
     name = f"redis_{shell}_{bootfs}_{human}"
+    if len(bpf) > 0: name += f"_{bpf}"
     name_set = f"{name}-set"
     name_get = f"{name}-get"
     if name_set in stats.keys() and name_get in stats.keys():
@@ -227,7 +229,8 @@ def redis_ushell(
         ushell = s.socket(s.AF_UNIX)
 
         # with util.testbench_console(helpers) as vm:
-        with helpers.spawn_qemu(helpers.uk_redis(shell=shell, bootfs=bootfs)) as vm:
+        with helpers.spawn_qemu(helpers.uk_redis(shell=shell, bootfs=bootfs,
+                                                 bpf=bpf)) as vm:
             vm.wait_for_ping("172.44.0.2")
             ushell.connect(bytes(vm.ushell_socket))
 
@@ -261,6 +264,7 @@ def sqlite_ushell(
     shell: str = "ushell",
     bootfs: str = "9p",
     human: str = "nohuman",
+    bpf: str = "",
 ) -> None:
     """
     per sample:
@@ -279,7 +283,7 @@ def sqlite_ushell(
         with TemporaryDirectory() as tempdir_:
             log = Path(tempdir_) / "qemu.log"
             with helpers.spawn_qemu(
-                helpers.uk_sqlite(shell=shell, bootfs=bootfs), log=log
+                helpers.uk_sqlite(shell=shell, bootfs=bootfs, bpf=bpf), log=log
             ) as vm:
                 # vm.wait_for_ping("172.44.0.2")
                 # ushell.connect(bytes(vm.ushell_socket))
@@ -310,6 +314,7 @@ def nginx_ushell(
     shell: str = "ushell",
     bootfs: str = "9p",
     human: str = "nohuman",
+    bpf: str = "",
 ) -> None:
     """
     per sample: 65s
@@ -333,7 +338,8 @@ def nginx_ushell(
         ushell = s.socket(s.AF_UNIX)
 
         # with util.testbench_console(helpers) as vm:
-        with helpers.spawn_qemu(helpers.uk_nginx(shell=shell, bootfs=bootfs)) as vm:
+        with helpers.spawn_qemu(helpers.uk_nginx(shell=shell, bootfs=bootfs,
+                                                 bpf=bpf)) as vm:
             vm.wait_for_ping("172.44.0.2")
             ushell.connect(bytes(vm.ushell_socket))
 
@@ -455,7 +461,8 @@ def nginx_native(helpers: confmeasure.Helpers, stats: Any) -> None:
 def ushell_run(
     helpers: confmeasure.Helpers,
     stats: Any,
-    shell: str = "ushell"
+    shell: str = "ushell",
+    bpf: str = "",
 ) -> None:
     """
     per sample:
@@ -473,7 +480,7 @@ def ushell_run(
         # with util.testbench_console(helpers) as vm:
         with TemporaryDirectory() as tempdir_:
             log = Path(tempdir_) / "qemu.log"
-            vm_spec = helpers.uk_count(shell=shell)
+            vm_spec = helpers.uk_count(shell=shell, bpf=bpf)
             with helpers.spawn_qemu(vm_spec, log=log) as vm:
                 # if vm_spec.fs1_9p is not None:
                     # raise Exception("unwrap failed")
@@ -590,10 +597,14 @@ def main() -> None:
 
     def with_all_configs(f, dur):
         for shell in ["ushell", "noshell", "ushellmpk"]:
-            # for bootfs in ["initrd", "9p"]:
             for bootfs in ["initrd"]:
                 print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs}) (~{dur}sec each)\n")
                 f(helpers, stats, shell=shell, bootfs=bootfs)
+                if shell == "ushellmpk":
+                    for bpf in ["bpf", "bpf-nomcount"]:
+                        print(f"\nmeasure performance for {f.__name__} ({shell}, {bootfs} {bpf}) (~{dur}sec each)\n")
+                        f(helpers, stats, shell=shell, bootfs=bootfs, bpf=bpf)
+
 
 
     print("\nmeasure performance when running external ushell apps (~8sec each)\n")
