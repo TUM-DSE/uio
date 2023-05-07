@@ -207,7 +207,7 @@ def notos_image_custom_kernel(nix: str = NOTOS_IMAGE) -> VmImage:
     return image
 
 def build_all():
-    print("Building all nix (flake) packages in this repository. (~9mins @ 8 cores if uncached)")
+    print("Building all nix (flake) packages in this repository")
     result = subprocess.run(
         ["nix", "flake", "show", "--json"],
         text=True,
