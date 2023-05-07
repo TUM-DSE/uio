@@ -46,29 +46,35 @@ python3.9 ./misc/tests/nix.py
 
 The following commands run the measurements and generate the plots.
 
+- Console responsiveness
 ```bash
-# console responsiveness
 rm -r ./misc/tests/measurements/console-stats.json
 sudo python3.9 ./misc/tests/measure_console.py
-python3.9 ./misc/tests/graph.py ./misc/tests/measurements/console-latest.tsv
+python3.9 ./misc/tests/graphs.py ./misc/tests/measurements/console-latest.tsv
 ls ./misc/tests/measurements/console.pdf
+```
 
-# application performance
+- Application performance
+```bash
 rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
-python3.9 ./misc/tests/graph.py ./misc/tests/measurements/app-latest.tsv
+python3.9 ./misc/tests/graphs.py ./misc/tests/measurements/app-latest.tsv
 ls ./misc/tests/measurements/app.pdf
+```
 
-# memory footprint
+- Memory footprint
+```bash
 rm -r ./misc/tests/measurements/memory-stats.json
 sudo python3.9 ./misc/tests/measure_memory.py
-python3.9 ./misc/tests/graph.py ./misc/tests/measurements/memory-latest.tsv
+python3.9 ./misc/tests/graphs.py ./misc/tests/measurements/memory-latest.tsv
 ls ./misc/tests/measurements/memory.pdf
+```
 
-# image size
+- Image size
+```bash
 rm -r ./misc/tests/measurements/image-stats.json
 sudo python3.9 ./misc/tests/measure_image.py
-python3.9 ./misc/tests/graph.py ./misc/tests/measurements/image-latest.tsv
+python3.9 ./misc/tests/graphs.py ./misc/tests/measurements/image-latest.tsv
 ls ./misc/tests/measurements/images.pdf
 ```
 

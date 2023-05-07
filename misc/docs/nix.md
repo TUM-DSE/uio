@@ -27,4 +27,6 @@ packages = {
     - If build fails, try to run command `--keep-failed` and check the logs
 - Build all
     - `python3.9 ./misc/tests/nix.py`
+- Show all packages
+    - `nix flake show --json | jq`
 
