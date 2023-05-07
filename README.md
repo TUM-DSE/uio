@@ -13,7 +13,7 @@ direnv allow # (or nix develop)
 (in one terminal window)
 ```shell
 cd apps/count
-make menuconfig
+make olddefconfig
 make
 just run
 ```
