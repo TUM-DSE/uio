@@ -44,6 +44,8 @@ def uk_sqlite3_backup(shell: str, bootfs: str, bpf: str = "", lto: bool = False)
     build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite3_backup_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs1"
+    symfile = ushelldir / "symbol.txt"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
@@ -51,6 +53,8 @@ def uk_sqlite3_backup(shell: str, bootfs: str, bpf: str = "", lto: bool = False)
         netbridge=True,
         ushell_devices=True,
         initrd=initrd,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
         fs1_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs1",
     )
@@ -64,6 +68,8 @@ def uk_sqlite(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVm
     build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite_benchmark_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs1"
+    symfile = ushelldir / "symbol.txt"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
@@ -71,6 +77,8 @@ def uk_sqlite(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVm
         netbridge=True,
         ushell_devices=True,
         initrd=initrd,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
         fs1_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs1",
     )
@@ -84,6 +92,8 @@ def uk_redis(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmS
     build = uk_build(f".#{flake_name}")
     kernel = build / "redis_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs1"
+    symfile = ushelldir / "symbol.txt"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
@@ -91,6 +101,8 @@ def uk_redis(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmS
         netbridge=True,
         ushell_devices=True,
         initrd=initrd,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/redis/fs0",
         fs1_9p=PROJECT_ROOT / "apps/redis/fs1",
     )
@@ -104,6 +116,8 @@ def uk_nginx(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmS
     build = uk_build(f".#{flake_name}")
     kernel = build / "nginx_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs1"
+    symfile = ushelldir / "symbol.txt"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
@@ -111,6 +125,8 @@ def uk_nginx(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmS
         netbridge=True,
         ushell_devices=True,
         initrd=initrd,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/nginx/fs0",
         fs1_9p=PROJECT_ROOT / "apps/nginx/fs1",
     )
@@ -123,6 +139,8 @@ def uk_count(shell: str = "ushell", bpf: str = "", lto: bool = False) -> UkVmSpe
     build = uk_build(f".#{flake_name}")
     kernel = build / "count_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs0"
+    symfile = ushelldir / "symbol.txt"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
@@ -130,6 +148,8 @@ def uk_count(shell: str = "ushell", bpf: str = "", lto: bool = False) -> UkVmSpe
         netbridge=True,
         ushell_devices=True,
         initrd=None,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/count/fs0",
         fs1_9p=PROJECT_ROOT / "apps/count/fs0",
     )

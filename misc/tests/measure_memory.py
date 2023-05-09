@@ -18,12 +18,14 @@ def measure_memory(helpers: confmeasure.Helpers,
                    stats: Any,
                    app: str,
                    shell: str,
+                   bpf: str = "",
                    bootfs: str = "initrd") -> None:
 
-    if app == "count":
-        name = f"uk-{app}-{shell}"
-    else:
-        name = f"uk-{app}-{shell}-{bootfs}"
+    name = f"uk-{app}-{shell}"
+    if len(bpf) > 0:
+        name += f"-{bpf}"
+    if app != "count":
+        name += f"-{bootfs}"
     if name in stats.keys():
         print(f"skip {name}")
         return
@@ -93,6 +95,8 @@ def main():
     for app in ["count", "nginx", "redis", "sqlite_benchmark"]:
         for shell in ["noshell", "ushell", "ushellmpk"]:
             measure_memory(helpers, stats, app, shell)
+        # ushellmpk w/ bpf
+        measure_memory(helpers, stats, app, "ushellmpk", "bpf")
 
     util.export_fio("memory", stats)
 

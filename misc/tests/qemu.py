@@ -36,6 +36,8 @@ class UkVmSpec:
     app_cmdline: str
     netbridge: bool
     ushell_devices: bool
+    ushelldir: Path
+    symfile: Path
     initrd: Optional[Path]
     rootfs_9p: Optional[Path]
     fs1_9p: Optional[Path]
