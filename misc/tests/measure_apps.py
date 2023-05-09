@@ -104,11 +104,11 @@ def run_bin(ushell: s.socket, prompt: str, run: str = "hello", load: Optional[st
     if QUICK:
         print("measuring run")
     sw = time.monotonic()
-    
+
     if load is not None:
         sendall(ushell, f"load {load}")
         assertline(ushell, prompt)
-    
+
     sendall(ushell, f"run {run}")
     assertline(ushell, prompt)
 
@@ -133,6 +133,24 @@ def echo_newline(ushell: s.socket, prompt: str) -> float:
     time.sleep(0.5)
     return sw
 
+def lshuman_using_ushell(ushell: s.socket, alive) -> None:
+    sendall(ushell, "\n")
+    assert expect(ushell, 2, "> ")
+    time.sleep(1)
+    while alive.acquire(False):
+        sendall(ushell, "ls\n")
+        assert expect(ushell, 2, "> ")
+        alive.release()
+        time.sleep(1)
+
+def perf_using_ushell(ushell: s.socket, alive, num=1000) -> None:
+    sendall(ushell, f"load /ushell/symbol.txt")
+    assertline(ushell, "> ")
+    time.sleep(1)
+    sendall(ushell, f"run /ushell/perf.o {num}")
+    while alive.acquire(False):
+        alive.release()
+        time.sleep(1)
 
 def nginx_bench(
     host_port, length: str = DURATION, connections: int = 30, threads: int = 14
@@ -213,6 +231,7 @@ def redis_ushell(
     bootfs: str = "9p",
     human: str = "nohuman",
     bpf: str = "",
+    force: bool = False,
 ) -> None:
     """
     per sample: 4s
@@ -221,7 +240,7 @@ def redis_ushell(
     if len(bpf) > 0: name += f"_{bpf}"
     name_set = f"{name}-set"
     name_get = f"{name}-get"
-    if name_set in stats.keys() and name_get in stats.keys():
+    if not force and (name_set in stats.keys() and name_get in stats.keys()):
         print(f"skip {name}")
         return
 
@@ -240,7 +259,37 @@ def redis_ushell(
                 2
             )  # for the count app we dont really have a way to check if it is online
 
+            human_ = None
+            if human == "lshuman":
+                # start human ushell usage
+                alive = threading.Semaphore()
+                human_ = threading.Thread(
+                    target=lambda: lshuman_using_ushell(ushell, alive),
+                    name="Human ushell user",
+                )
+                human_.start()
+            elif human == "perf":
+                # run perf
+                alive = threading.Semaphore()
+                human_ = threading.Thread(
+                    target=lambda: perf_using_ushell(ushell, alive),
+                    name="Human ushell user",
+                )
+                human_.start()
+                time.sleep(1) # wait for perf to start
+            elif human == "nohuman":
+                pass
+            else:
+                raise Exception(f"unknown human {human}")
+
             values = redis_bench("172.44.0.2", 6379)
+
+            if human_ is not None:
+                # terminate human
+                alive.acquire(True)
+                human_.join(timeout=5)
+                if human_.is_alive():
+                    raise Exception("human is still alive")
 
             ushell.close()
             return values
@@ -265,6 +314,7 @@ def sqlite_ushell(
     bootfs: str = "9p",
     human: str = "nohuman",
     bpf: str = "",
+    force: bool = False,
 ) -> None:
     """
     per sample:
@@ -272,7 +322,7 @@ def sqlite_ushell(
     with initrd: 10s
     """
     name = f"sqlite_{shell}_{bootfs}_{human}"
-    if name in stats.keys():
+    if not force and name in stats.keys():
         print(f"skip {name}")
         return
 
@@ -315,24 +365,15 @@ def nginx_ushell(
     bootfs: str = "9p",
     human: str = "nohuman",
     bpf: str = "",
+    force: bool = False,
 ) -> None:
     """
     per sample: 65s
     """
     name = f"nginx_{shell}_{bootfs}_{human}"
-    if name in stats.keys():
+    if not force and name in stats.keys():
         print(f"skip {name}")
         return
-
-    def human_using_ushell(ushell: s.socket, alive) -> None:
-        sendall(ushell, "\n")
-        assert expect(ushell, 2, "> ")
-        time.sleep(1)
-        while alive.acquire(False):
-            sendall(ushell, "ls\n")
-            assert expect(ushell, 2, "> ")
-            alive.release()
-            time.sleep(1)
 
     def experiment(human) -> float:
         ushell = s.socket(s.AF_UNIX)
@@ -349,18 +390,32 @@ def nginx_ushell(
                 2
             )  # for the count app we dont really have a way to check if it is online
 
+            human_ = None
             if human == "lshuman":
                 # start human ushell usage
                 alive = threading.Semaphore()
                 human_ = threading.Thread(
-                    target=lambda: human_using_ushell(ushell, alive),
+                    target=lambda: lshuman_using_ushell(ushell, alive),
                     name="Human ushell user",
                 )
                 human_.start()
+            elif human == "perf":
+                # run perf
+                alive = threading.Semaphore()
+                human_ = threading.Thread(
+                    target=lambda: perf_using_ushell(ushell, alive),
+                    name="Human ushell user",
+                )
+                human_.start()
+                time.sleep(1) # wait for perf to start
+            elif human == "nohuman":
+                pass
+            else:
+                raise Exception(f"unknown human {human}")
 
             value = nginx_bench("172.44.0.2")
 
-            if human == "lshuman":
+            if human_ is not None:
                 # terminate human
                 alive.acquire(True)
                 human_.join(timeout=5)
@@ -463,13 +518,14 @@ def ushell_run(
     stats: Any,
     shell: str = "ushell",
     bpf: str = "",
+    force: bool = False,
 ) -> None:
     """
     per sample:
     """
     name = f"{shell}_run"
     name2 = f"{shell}-run-cached"
-    if name in stats.keys() and name2 in stats.keys():
+    if not force and (name in stats.keys() and name2 in stats.keys()):
         print(f"skip {name}")
         return
 
@@ -583,14 +639,17 @@ def calculate_average_overhead(stats):
         }
 
 
-def main() -> None:
-    """
-    not quick: ~42min
-    """
+def check_requirements():
     util.check_intel_turbo()
     util.check_hyperthreading()
     util.check_root()
     util.check_cpu_isolation()
+
+def main() -> None:
+    """
+    not quick: ~42min
+    """
+    check_requirements()
     helpers = confmeasure.Helpers()
 
     stats = util.read_stats(STATS_PATH)
@@ -636,6 +695,47 @@ def main() -> None:
     means = calculate_average_overhead(stats)
     util.export_fio("app-mean", means)
 
+def main() -> None:
+    check_requirements()
+    helpers = confmeasure.Helpers()
+    stats = util.read_stats(STATS_PATH)
+
+    ## program loading performance
+    ushell_run(helpers, stats, shell = "ushell")
+    ushell_run(helpers, stats, shell = "ushellmpk", bpf="bpf")
+
+
+    ## app performance with no shell
+    nginx_ushell(helpers, stats, shell="noshell", bootfs="initrd")
+    sqlite_ushell(helpers, stats, shell="noshell", bootfs="initrd")
+    redis_ushell(helpers, stats, shell="noshell", bootfs="initrd")
+
+    ## app performance with ushell (nompk, nobpf (mcount))
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd")
+    sqlite_ushell(helpers, stats, shell="ushell", bootfs="initrd")
+    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd")
+
+    ## app performance with ushell (mpk+bpf)
+    nginx_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
+    sqlite_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
+    redis_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
+
+    ## app performance with ushell progs
+    ## ls
+    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
+    #sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
+    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
+
+    ## perf
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="perf", force=True)
+    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf", force=True)
+    #sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
+    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="perf", force=True)
+    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf", force=True)
+
+    ## app performance with BPF tracing
+
 
 if __name__ == "__main__":
+    # main_old()
     main()
