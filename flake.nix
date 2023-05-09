@@ -9,8 +9,8 @@
     };
 
     self-stable = {
-      url = "git+ssh://git@github.com/mmisono/unikraft-development?ref=eurosys23&submodules=1";
-      #url = "path:/scratch/okelmann/unikraft-development"; # use this for local development
+      # url = "git+ssh://git@github.com/mmisono/unikraft-development?ref=eurosys23&submodules=1";
+      url = "path:/scratch/masa/unikraft-development"; # use this for local development
       #url = "path:./"; # this wont include submodules. Nix bug?
       flake = false; # we dont want the flake but just the sources
     };
@@ -78,7 +78,7 @@
             pkgs.gdb
 
             # needed for app/nginx benchmark
-            pkgs.wrk 
+            pkgs.wrk
             pkgs.nginx
             # gcc (is already in mkShell)
             pkgs.tokei
@@ -109,6 +109,20 @@
                 inherit pkgs self-stable buildDeps;
                 inherit app;
                 config = "config.eval.${shell}.${bootfs}.lto";
+              }
+            )
+          )))
+        )) //
+        # (app x shell) with bpf-nomcount with lto
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" "sqlite3_backup" ] (app:
+          pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "initrd" ] (bootfs:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-bpf-nomcount-${bootfs}-lto" (
+              pkgs.callPackage ./misc/nix/uk-app.nix {
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.bpf.nomcount.${bootfs}.lto";
               }
             )
           )))
@@ -154,6 +168,20 @@
             )
           )))
         )) //
+        # bpf tracing w/ memstat
+        builtins.listToAttrs ( pkgs.lib.flatten (
+          pkgs.lib.forEach [ "nginx" "redis" "sqlite3_backup" "sqlite_benchmark" ] (app:
+          pkgs.lib.forEach [ "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "initrd" ] (bootfs:
+            pkgs.lib.nameValuePair "uk-${app}-${shell}-bpf-memstat-${bootfs}" (
+              pkgs.callPackage ./misc/nix/uk-app.nix {
+                inherit pkgs self-stable buildDeps;
+                inherit app;
+                config = "config.eval.${shell}.bpf.${bootfs}.memstat";
+              }
+            )
+          )))
+        )) //
         # bpf tracing w/o mcount
         builtins.listToAttrs ( pkgs.lib.flatten (
           pkgs.lib.forEach [ "nginx" "redis" "sqlite3_backup" "sqlite_benchmark" ] (app:
@@ -185,6 +213,11 @@
             app = "count";
             config = "config.eval.ushellmpk.bpf";
           };
+          uk-count-ushellmpk-bpf-memstat = pkgs.callPackage ./misc/nix/uk-app.nix {
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushellmpk.bpf.memstat";
+          };
           uk-count-ushellmpk-bpf-nomcount = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
             app = "count";
@@ -204,6 +237,11 @@
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushellmpk.lto";
+          };
+          uk-count-ushellmpk-bpf-nomcount-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushellmpk.bpf.nomcount.lto";
           };
           uk-count-noshell-lto = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
