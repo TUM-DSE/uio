@@ -6,8 +6,13 @@ KVM_BINARY  := build/nginx_kvm-x86_64
 SYMFILE     := $(KVM_BINARY).sym
 DBGFILE     := $(KVM_BINARY).dbg
 USHELLDIR   := fs1
+PROG_SRC    := $(shell find $(USHELLDIR)/ -maxdepth 1 -type f -regex ".*\.c")
+PROG_OBJ    := $(patsubst $(USHELLDIR)/%.c, $(USHELLDIR)/%.o, $(PROG_SRC))
 
-all:
+$(USHELLDIR)/%.o: $(USHELLDIR)/%.c
+	gcc -I../common/include -DHAS_MPK -fPIC -c -o $@ $<
+
+all: $(PROG_OBJ)
 	@mkdir -p ./build
 	@pushd fs0 && find . | cpio --format=newc -o > ../build/fs0.cpio && popd
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS)
