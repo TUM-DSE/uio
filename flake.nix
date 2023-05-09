@@ -116,7 +116,7 @@
         # (app x shell) with bpf-nomcount with lto
         builtins.listToAttrs ( pkgs.lib.flatten (
           pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" "sqlite3_backup" ] (app:
-          pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "ushellmpk" ] (shell:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-bpf-nomcount-${bootfs}-lto" (
               pkgs.callPackage ./misc/nix/uk-app.nix {
