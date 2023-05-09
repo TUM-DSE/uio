@@ -24,6 +24,7 @@ packages = {
     - Also see [./misc/tests/README.md](../tests/README.md) for reproducible builds and tests
 - Build a Unikraft app
     - `nix build .#uk-count-ushell`
+    - `./result` directory (symlink) contains the build result
     - If build fails, try to run command `--keep-failed` and check the logs
 - Build all
     - `python3.9 ./misc/tests/nix.py`
