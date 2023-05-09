@@ -69,7 +69,9 @@ static inline void wrmsr(unsigned int msr, __u32 lo, __u32 hi)
 
 static inline void wrmsrl(unsigned int msr, __u64 val)
 {
+	ushell_enable_write();
 	wrmsr(msr, (__u32)(val & 0xffffffffULL), (__u32)(val >> 32));
+	ushell_disable_write();
 }
 
 // CPUID.0AH: EAX[7:0] > 0
@@ -147,7 +149,7 @@ __attribute__((section(".text")))
 int main(int argc, char *argv[])
 {
 	int i = 0, n = 3;
-	char buf[128] = {};
+	char buf[256] = {};
 
 	if (argc >= 2) {
 		n = atoi(argv[1]);
@@ -167,7 +169,7 @@ int main(int argc, char *argv[])
 		unsigned long c0 = rdpmc_ctr(0);
 		unsigned long c1 = rdpmc_ctr(1);
 		unikraft_call_wrapper(snprintf, buf, sizeof(buf), msg2, c0, c1);
-		unikraft_call_wrapper(ushell_puts, buf);
+		ushell_puts(buf);
 	}
 
 	return 0;
