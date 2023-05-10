@@ -11,7 +11,7 @@ extern int snprintf(char *str, long size, const char *fmt, ...) __printf(3, 4);
 #define __u32 uint32_t
 #define __u64 uint64_t
 
-void __stack_chk_fail(void) {}
+// void __stack_chk_fail(void) {}
 
 #define IA32_PERF_EVENTSEL0 0x186
 #define IA32_PERF_EVENTSEL1 0x187
@@ -143,7 +143,7 @@ unsigned long rdpmc_ctr(int sel)
 }
 
 char msg1[] = "pmc not available\n";
-char msg2[] = "%ld instructions, %ld cache-misses\n";
+char msg2[] = "%d: %lu instructions, %lu cache-misses\n";
 
 __attribute__((section(".text")))
 int main(int argc, char *argv[])
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 		unikraft_call_wrapper(sleep, 1);
 		unsigned long c0 = rdpmc_ctr(0);
 		unsigned long c1 = rdpmc_ctr(1);
-		unikraft_call_wrapper(snprintf, buf, sizeof(buf), msg2, c0, c1);
+		unikraft_call_wrapper(snprintf, buf, sizeof(buf), msg2, i, c0, c1);
 		ushell_puts(buf);
 	}
 

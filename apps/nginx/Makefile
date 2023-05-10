@@ -10,7 +10,7 @@ PROG_SRC    := $(shell find $(USHELLDIR)/ -maxdepth 1 -type f -regex ".*\.c")
 PROG_OBJ    := $(patsubst $(USHELLDIR)/%.c, $(USHELLDIR)/%.o, $(PROG_SRC))
 
 $(USHELLDIR)/%.o: $(USHELLDIR)/%.c
-	gcc -I../common/include -DHAS_MPK -fPIC -c -o $@ $<
+	gcc -I../common/include -DHAS_MPK -fPIC -fno-stack-protector -c -o $@ $<
 
 all: $(PROG_OBJ)
 	@mkdir -p ./build
