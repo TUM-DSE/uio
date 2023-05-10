@@ -159,16 +159,24 @@ def lshuman_using_ushell(ushell: s.socket, alive) -> None:
         alive.release()
         time.sleep(1)
 
-def perf_using_ushell(ushell: s.socket, alive, num=1000) -> None:
-    sendall(ushell, f"load /ushell/symbol.txt\n")
+def wait_output(ushell: s.socket, c = ".") -> None:
     while True:
         r = readconsole(ushell)
         if len(r) > 0:
             if QUICK: print(f"[console recv] {r}")
-            break
-        print(".", end="", flush=True)
+            return
+        print(c, end="", flush=True)
         time.sleep(1)
+
+def perf_using_ushell(ushell: s.socket, alive, prepare, num=1000) -> None:
+    sendall(ushell, f"load /ushell/symbol.txt\n")
+    # loading symbol may take time
+    wait_output(ushell, ".")
     sendall(ushell, f"run /ushell/perf.o {num}\n")
+    # wait until at least we get one result
+    wait_output(ushell, "*")
+    with prepare:
+        prepare.notifyAll()
     while alive.acquire(False):
         alive.release()
         r = readconsole(ushell)
@@ -294,12 +302,14 @@ def redis_ushell(
             elif human == "perf":
                 # run perf
                 alive = threading.Semaphore()
+                prepare = threading.Condition()
                 human_ = threading.Thread(
-                    target=lambda: perf_using_ushell(ushell, alive),
+                    target=lambda: perf_using_ushell(ushell, alive, prepare),
                     name="Human ushell user",
                 )
                 human_.start()
-                time.sleep(3) # wait for perf to start
+                with prepare:
+                    prepare.wait()
             elif human == "nohuman":
                 pass
             else:
