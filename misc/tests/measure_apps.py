@@ -55,13 +55,25 @@ def sample(f: Callable[[], Any], size: int = SIZE, warmup: int = WARMUP) -> List
 
 STATS_PATH = MEASURE_RESULTS.joinpath("app-stats.json")
 
+def readconsole(ushell: s.socket) -> str:
+    fd = ushell.fileno()
+    timeout=0.1
+    (r, _, _) = select.select([fd], [], [], timeout)
+    buf = ""
+    while fd in r:
+        out = ushell.recv(1).decode()
+        buf += out
+        (r, _, _) = select.select([fd], [], [], timeout)
+        if len(out) == 0:
+            break
+    return buf
 
 def expect(ushell: s.socket, timeout: int, until: Optional[str] = None) -> bool:
     """
     @return true if terminated because of until
     """
     if QUICK:
-        print("begin readall until", until)
+        print("begin readall until", until if until is not None else "<none>")
 
     fd = ushell.fileno()
 
@@ -82,6 +94,8 @@ def expect(ushell: s.socket, timeout: int, until: Optional[str] = None) -> bool:
     if QUICK:
         if not ret:
             print(f"'{buf}' != '{until}'")
+        else:
+            print("ok") # newline
     return ret
 
 
@@ -91,8 +105,10 @@ def assertline(ushell: s.socket, value: str) -> None:
 
 def sendall(ushell: s.socket, content: str) -> None:
     if QUICK:
-        print("[writeall]", content.strip())
+        print(f"[writeall] {content.strip()} ({len(content)} bytes)")
     c = ushell.send(str.encode(content))
+    if QUICK:
+        print(f"[writeall] sent {c} bytes")
     if c != len(content):
         raise Exception("TODO implement writeall")
 
@@ -144,12 +160,19 @@ def lshuman_using_ushell(ushell: s.socket, alive) -> None:
         time.sleep(1)
 
 def perf_using_ushell(ushell: s.socket, alive, num=1000) -> None:
-    sendall(ushell, f"load /ushell/symbol.txt")
-    assertline(ushell, "> ")
-    time.sleep(1)
-    sendall(ushell, f"run /ushell/perf.o {num}")
+    sendall(ushell, f"load /ushell/symbol.txt\n")
+    while True:
+        r = readconsole(ushell)
+        if len(r) > 0:
+            if QUICK: print(f"[console recv] {r}")
+            break
+        print(".", end="", flush=True)
+        time.sleep(1)
+    sendall(ushell, f"run /ushell/perf.o {num}\n")
     while alive.acquire(False):
         alive.release()
+        r = readconsole(ushell)
+        if QUICK and len(r) > 0: print(f"[console recv] {r}")
         time.sleep(1)
 
 def nginx_bench(
@@ -276,7 +299,7 @@ def redis_ushell(
                     name="Human ushell user",
                 )
                 human_.start()
-                time.sleep(1) # wait for perf to start
+                time.sleep(3) # wait for perf to start
             elif human == "nohuman":
                 pass
             else:
@@ -407,7 +430,7 @@ def nginx_ushell(
                     name="Human ushell user",
                 )
                 human_.start()
-                time.sleep(1) # wait for perf to start
+                time.sleep(5) # wait for perf to start
             elif human == "nohuman":
                 pass
             else:
@@ -727,11 +750,11 @@ def main() -> None:
     redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
 
     ## perf
-    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="perf", force=True)
-    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf", force=True)
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="perf")
+    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
     #sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
-    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="perf", force=True)
-    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf", force=True)
+    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="perf")
+    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
 
     ## app performance with BPF tracing
 
