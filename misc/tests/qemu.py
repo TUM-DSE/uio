@@ -372,8 +372,7 @@ def uk_qemu_command(
 
     if spec.initrd is not None:
         cmd += ["-initrd", f"{spec.initrd}"]
-
-    if spec.rootfs_9p is not None:
+    elif spec.rootfs_9p is not None:
         cmd += [
             "-fsdev",
             f"local,id=myid,path={spec.rootfs_9p},security_model=none",
