@@ -435,12 +435,14 @@ def nginx_ushell(
             elif human == "perf":
                 # run perf
                 alive = threading.Semaphore()
+                prepare = threading.Condition()
                 human_ = threading.Thread(
-                    target=lambda: perf_using_ushell(ushell, alive),
+                    target=lambda: perf_using_ushell(ushell, alive, prepare),
                     name="Human ushell user",
                 )
                 human_.start()
-                time.sleep(5) # wait for perf to start
+                with prepare:
+                    prepare.wait()
             elif human == "nohuman":
                 pass
             else:
