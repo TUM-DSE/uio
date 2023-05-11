@@ -157,7 +157,7 @@
         # bpf tracing
         builtins.listToAttrs ( pkgs.lib.flatten (
           pkgs.lib.forEach [ "nginx" "redis" "sqlite3_backup" "sqlite_benchmark" ] (app:
-          pkgs.lib.forEach [ "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "ushell" "ushellmpk" ] (shell:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-bpf-${bootfs}" (
               pkgs.callPackage ./misc/nix/uk-app.nix {
@@ -202,6 +202,11 @@
             inherit pkgs self-stable buildDeps;
             app = "count";
             config = "config.eval.ushell";
+          };
+          uk-count-ushell-bpf = pkgs.callPackage ./misc/nix/uk-app.nix {
+            inherit pkgs self-stable buildDeps;
+            app = "count";
+            config = "config.eval.ushell.bpf";
           };
           uk-count-ushellmpk = pkgs.callPackage ./misc/nix/uk-app.nix {
             inherit pkgs self-stable buildDeps;
