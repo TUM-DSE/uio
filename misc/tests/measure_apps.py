@@ -282,8 +282,9 @@ def redis_ushell(
     """
     per sample: 4s
     """
-    name = f"redis_{shell}_{bootfs}_{human}"
+    name = f"redis_{shell}"
     if len(bpf) > 0: name += f"_{bpf}"
+    name += f"_{bootfs}_{human}"
     name_set = f"{name}-set"
     name_get = f"{name}-get"
     if not force and (name_set in stats.keys() and name_get in stats.keys()):
@@ -369,7 +370,9 @@ def sqlite_ushell(
     with 9p: 150s
     with initrd: 10s
     """
-    name = f"sqlite_{shell}_{bootfs}_{human}"
+    name = f"sqlite_{shell}"
+    if len(bpf) > 0: name += f"_{bpf}"
+    name += f"_{bootfs}_{human}"
     if not force and name in stats.keys():
         print(f"skip {name}")
         return
@@ -418,7 +421,9 @@ def nginx_ushell(
     """
     per sample: 65s
     """
-    name = f"nginx_{shell}_{bootfs}_{human}"
+    name = f"nginx_{shell}"
+    if len(bpf) > 0: name += f"_{bpf}"
+    name += f"_{bootfs}_{human}"
     if not force and name in stats.keys():
         print(f"skip {name}")
         return
@@ -580,7 +585,7 @@ def ushell_run(
     name_load_sym = f"{name_}_load_sym"
     name_load_cached = f"{name_}-run-cached"
     if not force and (name_load in stats.keys() and name_load_cached in stats.keys()):
-        print(f"skip {name}")
+        print(f"skip {name_}")
         return
 
     def experiment(loadable: str, exec_args: str = "") -> List[float]:
@@ -716,7 +721,7 @@ def check_requirements():
     util.check_root()
     util.check_cpu_isolation()
 
-def main() -> None:
+def main_old() -> None:
     """
     not quick: ~42min
     """
@@ -766,47 +771,71 @@ def main() -> None:
     means = calculate_average_overhead(stats)
     util.export_fio("app-mean", means)
 
-def main() -> None:
+def main(all_: bool = False) -> None:
     check_requirements()
     helpers = confmeasure.Helpers()
     stats = util.read_stats(STATS_PATH)
 
     ## program loading performance
-    ushell_run(helpers, stats, shell = "ushell")
+    ushell_run(helpers, stats, shell = "ushell", bpf="bpf")
     ushell_run(helpers, stats, shell = "ushellmpk", bpf="bpf")
-
 
     ## app performance with no shell
     nginx_ushell(helpers, stats, shell="noshell", bootfs="initrd")
     sqlite_ushell(helpers, stats, shell="noshell", bootfs="initrd")
     redis_ushell(helpers, stats, shell="noshell", bootfs="initrd")
 
+    nginx_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
+    sqlite_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
+    redis_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
+
     ## app performance with ushell (nompk, nobpf (mcount))
     nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd")
     sqlite_ushell(helpers, stats, shell="ushell", bootfs="initrd")
     redis_ushell(helpers, stats, shell="ushell", bootfs="initrd")
+
+    ## app performance with ushell (nompk, bpf)
+    nginx_ushell(helpers, stats, shell="ushell", bpf="bpf", bootfs="initrd")
+    sqlite_ushell(helpers, stats, shell="ushell", bpf="bpf", bootfs="initrd")
+    redis_ushell(helpers, stats, shell="ushell", bpf="bpf", bootfs="initrd")
+
+    nginx_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
+    sqlite_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
+    redis_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
+
+    ## app performance with ushell (mpk, nobpf)
+    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
+    sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
+    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
 
     ## app performance with ushell (mpk+bpf)
     nginx_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
     sqlite_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
     redis_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
 
+    nginx_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
+    sqlite_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
+    redis_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
+
     ## app performance with ushell progs
     ## ls
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="lshuman")
+    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="lshuman")
     nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
-    #sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
     redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
+    #sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
 
     ## perf
-    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="perf")
-    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
-    #sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
-    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", human="perf")
-    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="perf")
+    #nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
+    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="perf")
+    #redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf", force=True)
 
     ## app performance with BPF tracing
 
+    # Export results
+    util.export_fio("app", stats)
 
 if __name__ == "__main__":
     # main_old()
-    main()
+    main(True)

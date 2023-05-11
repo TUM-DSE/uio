@@ -1097,7 +1097,7 @@ def app2(df: pd.DataFrame, config_names) -> Any:
     def plot_nginx(df, ax, what="nginx", fontsize=7):
         df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="nginx-requests")
         df = parse_app_system(df)
-        df = df[df["rootfs"] == "initrd"][df["app"] == what]
+        # df = df[df["rootfs"] == "initrd"][df["app"] == what]
         names = [ config_name.format(app=what) for config_name in config_names ]
         df = pd.concat([ df[df["system"] == n] for n in names ])
         df = sort(df, names)
@@ -1128,11 +1128,11 @@ def app2(df: pd.DataFrame, config_names) -> Any:
     def plot_sqlite(df, ax, what="sqlite", fontsize=7):
         df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="sqlite-seconds")
         df = parse_app_system(df)
-        df = df[df["rootfs"] == "initrd"][df["app"] == what]
+        # df = df[df["rootfs"] == "initrd"][df["app"] == what]
         names = [ config_name.format(app=what) for config_name in config_names ]
         df = pd.concat([ df[df["system"] == n] for n in names ])
-        # df = sort_baseline_first(df, "sqlite_noshell_initrd_nohuman")
         df = sort(df, names)
+        print(df)
 
         g = sns.barplot(
             ax=ax,
