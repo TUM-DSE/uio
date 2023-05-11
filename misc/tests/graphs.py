@@ -464,10 +464,9 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
     xytext = (-100,-27)
-    # hatch_list_console = ["", "...", "///", "...", "///"]
-    # hatch_list_run = ["", "...", "///", "...", "///"]
     hatch_list_console = ["", "...", "**", "\\\\...", "\\\\**"]
-    hatch_list_run = ["...", "**", "/...", "/**"]
+    # hatch_list_run = ["...", "**", "/...", "/**"]
+    hatch_list_run = ["...", "/...", "**", "/**"]
     offsets = None
     if name == "ushell-console": 
         offsets = [6, 3, 3, 3, 3]
@@ -478,7 +477,8 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
         offsets = [6, 3, 3, 7]
         apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_run)
         # bar_colors(g, [col_ushell, col_ushellmpk, palette[4], palette[5]])
-        bar_colors(g, [col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
+        # bar_colors(g, [col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
+        bar_colors(g, [col_ushell, col_ushell, col_ushellmpk, col_ushellmpk])
         xytext = (-60,-27)
     annotate_bar_values_us(g, offsets)
 
@@ -582,7 +582,7 @@ def images2(df: pd.DataFrame, names: List[str] = []) -> Any:
     print(df)
 
     width = 3.3
-    aspect = 1.2
+    aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("app"),
@@ -1362,7 +1362,7 @@ def main() -> None:
         name = tsv_path.stem
 
         if name.startswith("console"):
-            responsiveness = console(df, "ushell-console", aspect = 1.8,
+            responsiveness = console(df, "ushell-console", aspect = 2.0,
                                      names=["qemu_ssh_console",
                                             "ushell-bpf-console",
                                             "ushell-bpf-console-nginx",
@@ -1371,7 +1371,7 @@ def main() -> None:
                                             ])
             graphs.append(("console", responsiveness))
         elif name.startswith("app"):
-            graphs.append(("run", console(df, "ushell_run", aspect = 1.8,
+            graphs.append(("load", console(df, "ushell_run", aspect = 2.5,
                                           names=[
                                                   "ushell-bpf_run",
                                                   "ushell-bpf-run-cached",
@@ -1380,7 +1380,7 @@ def main() -> None:
                                                  ]
                                           )))
             # w/ symbol load time
-            graphs.append(("run2", console(df, "ushell_run", aspect = 1.8,
+            graphs.append(("load2", console(df, "ushell_run", aspect = 2.0,
                                           names=[
                                                   "ushell-bpf_load_sym",
                                                   "ushellmpk-bpf_load_sym",
