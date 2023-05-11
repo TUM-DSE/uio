@@ -214,7 +214,7 @@ class QemuVm:
         Block until icmp is responding
         @host: example: 172.44.0.2
         """
-        timeout = 0.5
+        timeout = 1
         max_ = int(1 / timeout * 60)
         for i in range(0, max_):
             response = run(
