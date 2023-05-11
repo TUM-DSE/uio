@@ -40,31 +40,35 @@ def main() -> None:
     image_size(helpers, stats, nix.uk_count("noshell"))
     image_size(helpers, stats, nix.uk_nginx("noshell", "initrd"))
     image_size(helpers, stats, nix.uk_redis("noshell", "initrd"))
-    # image_size(helpers, stats, nix.uk_sqlite("noshell", "initrd"))
+    image_size(helpers, stats, nix.uk_sqlite("noshell", "initrd"))
     image_size(helpers, stats, nix.uk_sqlite3_backup("noshell", "initrd"))
 
     # ushell (nompk, nobpf)
     image_size(helpers, stats, nix.uk_count("ushell"))
     image_size(helpers, stats, nix.uk_nginx("ushell", "initrd"))
     image_size(helpers, stats, nix.uk_redis("ushell", "initrd"))
+    image_size(helpers, stats, nix.uk_sqlite("ushell", "initrd"))
     image_size(helpers, stats, nix.uk_sqlite3_backup("ushell", "initrd"))
 
     # ushell (mpk, nobpf)
     image_size(helpers, stats, nix.uk_count("ushellmpk"))
     image_size(helpers, stats, nix.uk_nginx("ushellmpk", "initrd"))
     image_size(helpers, stats, nix.uk_redis("ushellmpk", "initrd"))
+    image_size(helpers, stats, nix.uk_sqlite("ushellmpk", "initrd"))
     image_size(helpers, stats, nix.uk_sqlite3_backup("ushellmpk", "initrd"))
 
     # ushell (mpk + bpf, mcount)
     image_size(helpers, stats, nix.uk_count("ushellmpk", "bpf"))
     image_size(helpers, stats, nix.uk_nginx("ushellmpk", "initrd", "bpf"))
     image_size(helpers, stats, nix.uk_redis("ushellmpk", "initrd", "bpf"))
+    image_size(helpers, stats, nix.uk_sqlite("ushellmpk", "initrd", "bpf"))
     image_size(helpers, stats, nix.uk_sqlite3_backup("ushellmpk", "initrd", "bpf"))
 
     # ushell (mpk + bpf, nomcount)
     image_size(helpers, stats, nix.uk_count("ushellmpk", "bpf-nomcount"))
     image_size(helpers, stats, nix.uk_nginx("ushellmpk", "initrd", "bpf-nomcount"))
     image_size(helpers, stats, nix.uk_redis("ushellmpk", "initrd", "bpf-nomcount"))
+    image_size(helpers, stats, nix.uk_sqlite("ushellmpk", "initrd", "bpf-nomcount"))
     image_size(helpers, stats, nix.uk_sqlite3_backup("ushellmpk", "initrd", "bpf-nomcount"))
 
     #------------------

@@ -43,6 +43,9 @@ col_ushellmpk = palette[2]
 
 # hatches = ["", "..", "//"]
 hatches = ["", "..", "**"]
+hatch_base = hatches[0]
+hatch_ushell = hatches[1]
+hatch_ushellmpk = hatches[2]
 barheight = 0.5
 app_height = 1.8
 sysname = "ᴜSʜᴇʟʟ"
@@ -50,10 +53,14 @@ sysname = "ᴜSʜᴇʟʟ"
 ROW_ALIASES.update(
     {
         "system": {
-            "ushell-console": f"{sysname}",
+            "ushell-console": f"{sysname}*",
             "ushellmpk-console": f"isolated-{sysname}",
             "ushell-console-nginx": f"{sysname} + Nginx load",
             "ushellmpk-console-nginx": f"isolated-{sysname} + Nginx load",
+            "ushell-bpf-console": f"{sysname}*",
+            "ushell-bpf-console-nginx": f"{sysname}* w/ Nginx load",
+            "ushellmpk-bpf-console": f"{sysname}",
+            "ushellmpk-bpf-console-nginx": f"{sysname} w/ Nginx load",
             "qemu_ssh_console": "linux + ssh",
             "ushell-init": "wo/ isolation",
             "redis_ushell_initrd_nohuman": f"{sysname}",
@@ -71,6 +78,10 @@ ROW_ALIASES.update(
             "ushellmpk_run": f"isolated-{sysname}",
             "ushell-run-cached": "cached",
             "ushellmpk-run-cached": "cached + isolated",
+            "ushell-bpf_run": f"{sysname}*",
+            "ushell-bpf-run-cached": f"{sysname}* (cached)",
+            "ushellmpk-bpf_run": f"{sysname}",
+            "ushellmpk-bpf-run-cached": f"{sysname} (cached)",
             "uk-count-noshell": f"count",
             "uk-count-ushell": f"count {sysname}",
             "uk-count-ushellmpk": f"count isolated-{sysname}",
@@ -91,6 +102,10 @@ ROW_ALIASES.update(
             "ushell-lto": f"w/ {sysname} (opt)",
             "ushellmpk": f"w/ isolated-{sysname}",
             "ushellmpk-lto": f"w/ isolated-{sysname} (opt)",
+        },
+        "ltoshell2": {
+            "noshell-lto": "Unikraft",
+            "ushellmpk-lto": f"{sysname}",
         },
         # "shell": {
             # "noshell": "baseline",
@@ -531,6 +546,71 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     sns.move_legend(g, "upper right", bbox_to_anchor=(0.77, 1.01), labelspacing=.2)
     # g.ax.set_xlim(0, 2500000)
     g.ax.set_xlim(0, 2800000)
+
+    FONT_SIZE = 9
+    g.ax.annotate(
+        "Lower is better",
+        xycoords="axes points",
+        xy=(0, 0),
+        xytext=(-20, -27),
+        fontsize=FONT_SIZE,
+        color="navy",
+        weight="bold",
+    )
+    g.ax.annotate(
+        "",
+        xycoords="axes points",
+        xy=(-20-15, -25),
+        xytext=(-20, -25),
+        fontsize=FONT_SIZE,
+        arrowprops=dict(arrowstyle="-|>", color="navy"),
+    )
+
+    g.despine()
+    format(g.ax.xaxis, "kB")
+    return g
+
+def images2(df: pd.DataFrame, names: List[str] = []) -> Any:
+    # Unikraft vs. ushell (opt version)
+
+    df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"image-size")
+    df = parse_app_system(df)
+    df = df.sort_values(by="shell")
+
+    if len(names) != 0:
+        df = pd.concat([ df[df["system"] == n] for n in names ])
+    print(df)
+
+    width = 3.3
+    aspect = 1.2
+    g = catplot(
+        data=apply_aliases(df),
+        y=column_alias("app"),
+        x=column_alias(f"image-size"),
+        hue="shell",
+        kind="bar",
+        height=width/aspect,
+        aspect=aspect,
+        palette=[col_base, col_ushellmpk],
+        legend=None,
+    )
+    # apply_to_graphs(g.ax, False, 0.285)
+    # g.ax.set_xscale("log")
+    g.ax.set_ylabel("")
+    g.ax.set_yticklabels(["count", "Nginx", "Redis", "SQLite"])
+    annotate_bar_values_kB(g)
+    # sns.move_legend(g, "upper right", bbox_to_anchor=(0.77, 1.01), labelspacing=.2)
+    g.ax.set_xlim(0, 2800000)
+
+    hatches = ["", "**"]
+    apply_hatch(g, patch_legend=False, hatch_list=hatches)
+    p1 = mpl.patches.Patch(facecolor=col_base, hatch=hatch_base, edgecolor="k",
+                           label='Unikraft')
+    p2 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch=hatch_ushellmpk, edgecolor="k",
+                           label=f'{sysname}')
+    g.ax.legend(handles=[p1, p2], title="", labelspacing=.2,
+                loc="upper right", #bbox_to_anchor=(1.10, 1.05),
+                fontsize=7, frameon=False)
 
     FONT_SIZE = 9
     g.ax.annotate(
@@ -1006,6 +1086,137 @@ def app(df: pd.DataFrame) -> Any:
 
     return fig
 
+def app2(df: pd.DataFrame, config_names) -> Any:
+
+    width = 7 # \textwidth is 7 inch
+    height = 1.8
+
+    fig, axs = plt.subplots(ncols=3, gridspec_kw={'width_ratios': [1, 1, 2]})
+    fig.set_size_inches(width, height)
+
+    def plot_nginx(df, ax, what="nginx", fontsize=7):
+        df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="nginx-requests")
+        df = parse_app_system(df)
+        df = df[df["rootfs"] == "initrd"][df["app"] == what]
+        names = [ config_name.format(app=what) for config_name in config_names ]
+        df = pd.concat([ df[df["system"] == n] for n in names ])
+        df = sort(df, names)
+        g = sns.barplot(
+            ax=ax,
+            data=apply_aliases(df),
+            x=column_alias("system"),
+            y=column_alias("nginx-requests"),
+            ci="sd",
+            palette=palette,
+            edgecolor="k",
+            errcolor="black",
+            errwidth=1,
+            capsize=0.2,
+            # height=height,
+            # aspect=nginx_width/height,
+        )
+        annotate_bar_values_k_ax(ax, fontsize)
+        sns.despine(ax=ax)
+        apply_hatch_ax(ax, patch_legend=False, hatch_list=hatches)
+        format(ax.yaxis, "krps")
+        g.set(xticks=[], xticklabels=[], xlabel="(a) Nginx")
+        g.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold",
+                    x = 0.40, y=1, pad=10)
+        change_width(g, 0.8)
+        return g
+
+    def plot_sqlite(df, ax, what="sqlite", fontsize=7):
+        df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="sqlite-seconds")
+        df = parse_app_system(df)
+        df = df[df["rootfs"] == "initrd"][df["app"] == what]
+        names = [ config_name.format(app=what) for config_name in config_names ]
+        df = pd.concat([ df[df["system"] == n] for n in names ])
+        # df = sort_baseline_first(df, "sqlite_noshell_initrd_nohuman")
+        df = sort(df, names)
+
+        g = sns.barplot(
+            ax=ax,
+            data=apply_aliases(df),
+            x=column_alias("system"),
+            y=column_alias("sqlite-seconds"),
+            ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
+            palette=palette,
+            edgecolor="k",
+            errcolor="black",
+            errwidth=1,
+            capsize=0.2,
+        )
+
+        annotate_bar_values_s2_ax(g, fontsize)
+        sns.despine(ax=ax)
+        g.set(xticks=[], xticklabels=[], xlabel="(b) SQLite")
+        g.set_title("Lower is better ↓", fontsize=9, color="navy", weight="bold",
+                    x = 0.45, y=1, pad=10)
+        apply_hatch_ax(ax, patch_legend=True, hatch_list=hatches)
+        change_width(g, 0.8)
+
+    def plot_redis(df, ax, what="redis", fontsize=7):
+        df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="redis-requests")
+        df = parse_app_system(df)
+        names = [ config_name.format(app=what) for config_name in config_names ]
+        df = pd.concat([ df[df["system"] == n] for n in names ])
+        df = sort(df, names)
+
+
+        g = sns.barplot(
+            ax=ax,
+            data=apply_aliases(df),
+            x=column_alias("direction"),
+            y=column_alias("redis-requests"),
+            hue=column_alias("system"),
+            ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
+            palette=palette,
+            edgecolor="k",
+            errcolor="black",
+            errwidth=1.0,
+            # capsize=0.2,
+            capsize=0.05,
+        )
+        annotate_bar_values_M2_ax(g, fontsize=fontsize)
+        sns.despine(ax=ax)
+        hatches = ["", "", "..", "..", "**", "**"]
+        for idx, bar in enumerate(g.patches):
+            bar.set_hatch(hatches[idx%len(hatches)])
+
+        bar_width = 0.22
+        change_width(g, bar_width)
+        # reduce space between "get" and "set"
+        # for idx, bar in enumerate(g.patches):
+        #     if idx % 2 != 0:
+        #         bar.set_x(bar.get_x() - 0.1)
+        g.margins(x=0.001)
+        g.set_xlabel("(c) Redis")
+        g.tick_params(axis='x', length=0) # remove ticks
+        g.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold", pad=10)
+        format(ax.yaxis, "mrps")
+        ax.legend([], [], frameon=False) # remove legend
+        # g.legend(frameon=False) # (re-)draw legend with hatches
+        # sns.move_legend(g, "center left", bbox_to_anchor=(1.00, 0.5))
+
+    fs = 7 # font size of the valeus top of the bars
+    plot_nginx(df, axs[0], fontsize=fs)
+    plot_sqlite(df, axs[1], fontsize=fs)
+    plot_redis(df, axs[2], fontsize=fs)
+
+    # legend
+    p1 = mpl.patches.Patch(facecolor=palette[0], hatch=hatches[0], edgecolor="k",
+                           label='Unikraft')
+    p2 = mpl.patches.Patch(facecolor=palette[1], hatch=hatches[1], edgecolor="k",
+                           label=f'{sysname}*')
+    p3 = mpl.patches.Patch(facecolor=palette[2], hatch=hatches[2], edgecolor="k",
+                           label=f'{sysname}')
+    # fig.legend(handles=[p1, p2, p3], loc="center left", bbox_to_anchor=(1.0, 0.5), frameon=False, ncol=1)
+    fig.legend(handles=[p1, p2, p3], loc="lower center", bbox_to_anchor=(0.5, -0.1), frameon=False, ncol=3)
+
+    fig.tight_layout()
+
+    return fig
+
 def fio_overhead(df: pd.DataFrame, what: str, value_name: str) -> Any:
     df = df[df["benchmark"] == what]
     df = df.melt(
@@ -1090,7 +1301,14 @@ def fio_overhead(df: pd.DataFrame, what: str, value_name: str) -> Any:
     return g
 
 
-def main() -> None:
+def main_old() -> None:
+    """
+    Create graph of
+        1. unikraft (baseline)
+        2. ushell (nompk)
+        3. isolated-ushell (with mpk)
+    """
+
     if len(sys.argv) < 2:
         print(f"USAGE: {sys.argv[0]} graph.tsv...")
     graphs = []
@@ -1123,5 +1341,109 @@ def main() -> None:
         graph.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
 
 
+def main() -> None:
+    """
+    Create graph of
+        1. unikraft (baseline)
+        3. ushell* (w/o mpk, w/ bpf tracing (mcount))
+        3. ushell (w/ mpk, w/ bpf tracing (mcount))
+    For file size measurement, nops for mcount are not added
+    """
+
+    if len(sys.argv) < 2:
+        print(f"USAGE: {sys.argv[0]} graph.tsv...")
+
+    graphs = []
+
+    for arg in sys.argv[1:]:
+        tsv_path = Path(arg)
+        df = pd.read_csv(tsv_path, sep="\t")
+        assert isinstance(df, pd.DataFrame)
+        name = tsv_path.stem
+
+        if name.startswith("console"):
+            responsiveness = console(df, "ushell-console", aspect = 1.8,
+                                     names=["qemu_ssh_console",
+                                            "ushell-bpf-console",
+                                            "ushell-bpf-console-nginx",
+                                            "ushellmpk-bpf-console",
+                                            "ushellmpk-bpf-console-nginx",
+                                            ])
+            graphs.append(("console", responsiveness))
+        elif name.startswith("app"):
+            graphs.append(("run", console(df, "ushell_run", aspect = 1.8,
+                                          names=[
+                                                  "ushell-bpf_run",
+                                                  "ushell-bpf-run-cached",
+                                                  "ushellmpk-bpf_run",
+                                                  "ushellmpk-bpf-run-cached"
+                                                 ]
+                                          )))
+            # w/ symbol load time
+            graphs.append(("run2", console(df, "ushell_run", aspect = 1.8,
+                                          names=[
+                                                  "ushell-bpf_load_sym",
+                                                  "ushellmpk-bpf_load_sym",
+                                                  "ushell-bpf_run",
+                                                  "ushellmpk-bpf_run",
+                                                  "ushell-bpf-run-cached",
+                                                  "ushellmpk-bpf-run-cached"
+                                                 ]
+                                          )))
+            graphs.append(("app-nomcount", app2(df, [
+                                            "{app}_noshell_initrd_nohuman",
+                                            "{app}_ushell_bpf-nomcount_initrd_nohuman",
+                                            "{app}_ushellmpk_bpf-nomcount_initrd_nohuman"
+                                           ],
+                                       )))
+            graphs.append(("app-mcount", app2(df, [
+                                            "{app}_noshell-mcount_initrd_nohuman",
+                                            "{app}_ushell_bpf_initrd_nohuman",
+                                            "{app}_ushellmpk_bpf_initrd_nohuman"
+                                           ],
+                                       )))
+            graphs.append(("app-nobpf", app2(df, [
+                                            "{app}_noshell_initrd_nohuman",
+                                            "{app}_ushell_initrd_nohuman",
+                                            "{app}_ushellmpk_initrd_nohuman"
+                                           ],
+                                       )))
+        elif name.startswith("image"):
+            graphs.append(("images-lto", images2(df,
+                                             [
+                                                 "uk-count-noshell-lto",
+                                                 "uk-nginx-noshell-initrd-lto",
+                                                 "uk-redis-noshell-initrd-lto",
+                                                 # "uk-sqlite_benchmark-noshell-initrd-lto",
+                                                 "uk-sqlite3_backup-noshell-initrd-lto",
+                                                 "uk-count-ushellmpk-bpf-nomcount-lto",
+                                                 "uk-nginx-ushellmpk-bpf-nomcount-initrd-lto",
+                                                 "uk-redis-ushellmpk-bpf-nomcount-initrd-lto",
+                                                 "uk-sqlite3_backup-ushellmpk-bpf-nomcount-initrd-lto",
+                                             ]
+                                             )))
+            graphs.append(("images-nobpf", images2(df,
+                                             [
+                                                 "uk-count-noshell-lto",
+                                                 "uk-nginx-noshell-initrd-lto",
+                                                 "uk-redis-noshell-initrd-lto",
+                                                 # "uk-sqlite_benchmark-noshell-initrd-lto",
+                                                 "uk-sqlite3_backup-noshell-initrd-lto",
+                                                 "uk-count-ushellmpk-lto",
+                                                 "uk-nginx-ushellmpk-initrd-lto",
+                                                 "uk-redis-ushellmpk-initrd-lto",
+                                                 "uk-sqlite3_backup-ushellmpk-initrd-lto",
+                                             ]
+                                             )))
+        else:
+            print(f"unhandled graph name: {tsv_path}", file=sys.stderr)
+            continue
+
+    for prefix, graph in graphs:
+        fname = f"{prefix}{out_format}"
+        print(f"write {fname}")
+        graph.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
+
 if __name__ == "__main__":
+    # main_old()
     main()
