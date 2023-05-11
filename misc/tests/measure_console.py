@@ -401,18 +401,23 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
-    print("\nmeasure performance for ushell console (~4sec each)\n")
+    # normal response
+    print("\nmeasure performance for ushell console\n")
     ushell_console(helpers, stats)
-    print("\nmeasure performance for ushellmpk console (~4sec each)\n")
+    ushell_console(helpers, stats, shell = "ushell", bpf = "bpf")
     ushell_console(helpers, stats, shell = "ushellmpk", bpf = "bpf")
-    print("\nmeasure performance for ushell console with nignx load (~4sec each)\n")
+
+    # w/nginx
+    print("\nmeasure performance for ushell console with nignx load\n")
     ushell_console_nginx(helpers, stats)
-    print("\nmeasure performance for ushellmpk console with nignx load (~4sec each)\n")
+    ushell_console_nginx(helpers, stats, shell = "ushell", bpf= "bpf")
     ushell_console_nginx(helpers, stats, shell = "ushellmpk", bpf= "bpf")
-    print("\nmeasure performance of ushell init (~4sec each)\n")
-    ushell_init(helpers, stats, do_reattach=False)
-    # print("\nmeasure performance of ushell reattach\n")
-    # ushell_init(helpers, stats, do_reattach=True)
+
+    #print("\nmeasure performance of ushell init (~4sec each)\n")
+    #ushell_init(helpers, stats, do_reattach=False)
+    #print("\nmeasure performance of ushell reattach\n")
+    #ushell_init(helpers, stats, do_reattach=True)
+
     print("\nmeasure performance of ssh console (~4sec each)\n")
     qemu_ssh(helpers, stats)
 
