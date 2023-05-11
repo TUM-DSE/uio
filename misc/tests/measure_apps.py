@@ -95,7 +95,7 @@ def expect(ushell: s.socket, timeout: int, until: Optional[str] = None) -> bool:
         if not ret:
             print(f"'{buf}' != '{until}'")
         else:
-            print("ok") # newline
+            print(f"ok: {buf}") # newline
     return ret
 
 
@@ -133,6 +133,21 @@ def run_bin(ushell: s.socket, prompt: str, run: str = "hello", load: Optional[st
     time.sleep(0.5)
     return sw
 
+def load_bin(ushell: s.socket, prompt: str, run: str = "hello"):
+    sw = time.monotonic()
+    sendall(ushell, f"prog-load {run}")
+    assertline(ushell, prompt)
+    sw = time.monotonic() - sw
+    time.sleep(0.5)
+    return sw
+
+def load_sym(ushell: s.socket, prompt: str, symfile: str = "symbol.txt"):
+    sw = time.monotonic()
+    sendall(ushell, f"load {symfile}")
+    assertline(ushell, prompt)
+    sw = time.monotonic() - sw
+    time.sleep(0.5)
+    return sw
 
 def echo_newline(ushell: s.socket, prompt: str) -> float:
     """
@@ -558,9 +573,13 @@ def ushell_run(
     """
     per sample:
     """
-    name = f"{shell}_run"
-    name2 = f"{shell}-run-cached"
-    if not force and (name in stats.keys() and name2 in stats.keys()):
+    name_ = f"{shell}"
+    if len(bpf) > 0:
+        name_ += f"-{bpf}"
+    name_load = f"{name_}_run"
+    name_load_sym = f"{name_}_load_sym"
+    name_load_cached = f"{name_}-run-cached"
+    if not force and (name_load in stats.keys() and name_load_cached in stats.keys()):
         print(f"skip {name}")
         return
 
@@ -575,14 +594,19 @@ def ushell_run(
             with helpers.spawn_qemu(vm_spec, log=log) as vm:
                 # if vm_spec.fs1_9p is not None:
                     # raise Exception("unwrap failed")
-                bin_source = unwrap(vm_spec.fs1_9p) / f"{loadable}.c"
+                bin_source = unwrap(vm_spec.ushelldir) / f"{loadable}.c"
                 bin_include = unwrap(vm_spec.fs1_9p) / "../../common/include"
-                bin_out = unwrap(vm_spec.fs1_9p) / f"{loadable}"
-                bin_syms = unwrap(vm_spec.fs1_9p) / "symbol.txt"
+                bin_out = unwrap(vm_spec.ushelldir) / f"{loadable}"
+                if vm_spec.ushelldir.name == "fs1":
+                    bin_syms = "/ushell/symbol.txt"
+                else:
+                    bin_syms = "/symbol.txt"
+
+                # building is now handled in the app's Makefile; we do not do it here
                 # build the executable
-                run(["gcc", f"-I{bin_include}", "-DHAS_MPK", "-fPIC", "-c", "-o", str(bin_out), str(bin_source)])
+                #run(["gcc", f"-I{bin_include}", "-DHAS_MPK", "-fPIC", "-c", "-o", str(bin_out), str(bin_source)])
                 # extract symbols
-                run(["sh", "-c", f"nm {unwrap(vm_spec.kernel)}.dbg | cut -d ' ' -f1,3 > {bin_syms}"])
+                #run(["sh", "-c", f"nm {unwrap(vm_spec.kernel)}.dbg | cut -d ' ' -f1,3 > {bin_syms}"])
 
                 # vm.wait_for_ping("172.44.0.2")
                 ushell.connect(bytes(unsafe_cast(vm.ushell_socket)))
@@ -592,29 +616,41 @@ def ushell_run(
                 # time.sleep(2) # for the count app we dont really have a way to check if it is online
 
                 # load has huge variances (0.009-0.000,09s). Thus we exclude it from measurements.
-                sendall(ushell, f"load {bin_syms}")
-                assertline(ushell, "> ")
+                # sendall(ushell, f"load {bin_syms}\n")
+                # assertline(ushell, "> ")
+                # time.sleep(0.5)
+                load_sym_time = load_sym(ushell, "> ", symfile=bin_syms)
                 time.sleep(0.5)
 
-                value = run_bin(ushell, "> ", run=cmdline, load=None)
-                value_cached = run_bin(ushell, "> ", run=cmdline, load=None)
-                print("sample:", value)
-                print("sample (cached):", value_cached)
+                # value = run_bin(ushell, "> ", run=cmdline, load=None)
+                # value_cached = run_bin(ushell, "> ", run=cmdline, load=None)
+                load_time = load_bin(ushell, "> ", run=cmdline)
+                time.sleep(0.5)
+                load_time_cached = load_bin(ushell, "> ", run=cmdline)
+
+                print(f"load_sym_time: {load_sym_time}")
+                print(f"load_time: {load_time}")
+                print(f"load_time (cached): {load_time_cached}")
 
                 # return values
                 # vm.wait_for_death()
             ushell.close()
-            return [value, value_cached]
+            return [load_sym_time, load_time, load_time_cached]
 
-    samples = sample(lambda: experiment("set_count_func", exec_args = "3"))
-    run_ = []
-    run_cached = []
-    for i in samples:
-        run_ += [i[0]]
-        run_cached += [i[1]]
+    # samples = sample(lambda: experiment("set_count_func", exec_args = "3"))
+    samples = sample(lambda: experiment("set_count_func.o", exec_args = ""))
 
-    stats[name] = run_
-    stats[name2] = run_cached
+    load_sym_ = []
+    load_ = []
+    load_cached = []
+    for load_sym_time, load_time, load_time_cached in samples:
+        load_sym_ += [load_sym_time]
+        load_ += [load_time]
+        load_cached += [load_time_cached]
+
+    stats[name_load_sym] = load_sym_
+    stats[name_load] = load_
+    stats[name_load_cached] = load_cached
     util.write_stats(STATS_PATH, stats)
 
 
