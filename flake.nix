@@ -87,7 +87,7 @@
         # app x shell x fs
         packages = builtins.listToAttrs ( pkgs.lib.flatten (
           pkgs.lib.forEach [ "nginx" "redis" "sqlite_benchmark" "sqlite3_backup" ] (app:
-          pkgs.lib.forEach [ "noshell" "ushell" "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "noshell" "noshell-mcount" "ushell" "ushellmpk" ] (shell:
           #pkgs.lib.forEach [ "initrd" "9p" ] (bootfs:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-${bootfs}" (
@@ -185,7 +185,7 @@
         # bpf tracing w/o mcount
         builtins.listToAttrs ( pkgs.lib.flatten (
           pkgs.lib.forEach [ "nginx" "redis" "sqlite3_backup" "sqlite_benchmark" ] (app:
-          pkgs.lib.forEach [ "ushellmpk" ] (shell:
+          pkgs.lib.forEach [ "ushell" "ushellmpk" ] (shell:
           pkgs.lib.forEach [ "initrd" ] (bootfs:
             pkgs.lib.nameValuePair "uk-${app}-${shell}-bpf-nomcount-${bootfs}" (
               pkgs.callPackage ./misc/nix/uk-app.nix {
