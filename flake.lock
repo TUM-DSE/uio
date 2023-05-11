@@ -78,11 +78,11 @@
     "self-stable": {
       "flake": false,
       "locked": {
-        "lastModified": 1683405244,
-        "narHash": "sha256-DhkOM4ccCac1rqg/8c7C1JRv64hsjUffuT0eqg4bFwI=",
+        "lastModified": 1683838135,
+        "narHash": "sha256-ECFKU6El7GG4hgDRWCyhGGClE8gVO8GoGte9BTe3PqY=",
         "ref": "eurosys23",
-        "rev": "70c35d580819b2d47d9fe7d81473bf514f584e9a",
-        "revCount": 273,
+        "rev": "b4ea750479114d0c7a47d40cc3382dcfe13f5cad",
+        "revCount": 311,
         "submodules": true,
         "type": "git",
         "url": "ssh://git@github.com/mmisono/unikraft-development"
