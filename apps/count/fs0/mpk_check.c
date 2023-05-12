@@ -6,6 +6,7 @@ extern void ushell_puts(char *);
 
 char ok[] = "OK\n";
 char no[] = "NO\n";
+char nompk[] = "MPK is not enabled in this kernel\n";
 
 #define SHOULD_ENABLED                                                         \
 	do {                                                                   \
@@ -25,6 +26,20 @@ char no[] = "NO\n";
 		}                                                              \
 	} while (0)
 
+__attribute__((always_inline)) static inline uint32_t is_mpk_enabled(void)
+{
+	uint64_t res;
+
+	// X86_CR4_PKE: 1 << 22
+
+	asm volatile("movq %%cr4, %%rax;"
+		     "andq $0x400000, %%rax;"
+		     "movq %%rax, %0"
+		     : "=r"(res)::"rax");
+
+	return !!res;
+}
+
 __attribute__((always_inline)) static inline uint32_t rdpkru(void)
 {
 	uint32_t res;
@@ -39,6 +54,12 @@ __attribute__((always_inline)) static inline uint32_t rdpkru(void)
 
 __attribute__((section(".text"))) int main(int argc, char *argv[])
 {
+
+	if (!is_mpk_enabled()) {
+		ushell_puts(nompk);
+		return 0;
+	}
+
 	// at first, check if the write is enabled
 	SHOULD_DISABLED;
 
