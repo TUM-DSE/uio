@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (!check_pmc()) {
-		unikraft_call_wrapper(ushell_puts, msg1);
+		ushell_puts(msg1);
 		return 0;
 	}
 

@@ -1,3 +1,4 @@
+#include "unicall_wrapper.h"
 
 int atoi(char *str)
 {
