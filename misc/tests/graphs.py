@@ -37,12 +37,14 @@ else:
 palette = sns.color_palette("pastel")
 # palette = sns.color_palette("colorblind")
 # palette = [palette[-1], palette[1], palette[2]]
+palette_mpk = [palette[0], palette[2]]
 col_base = palette[0]
 col_ushell = palette[1]
 col_ushellmpk = palette[2]
 
 # hatches = ["", "..", "//"]
 hatches = ["", "..", "**"]
+hatches_mpk = ["", "**"]
 hatch_base = hatches[0]
 hatch_ushell = hatches[1]
 hatch_ushellmpk = hatches[2]
@@ -636,12 +638,14 @@ def images2(df: pd.DataFrame, names: List[str] = []) -> Any:
     return g
 
 
-def memory(df: pd.DataFrame, name: str, names: List[str] = [],
-           value_name="max_mem_use") -> Any:
-    if len(names) == 0: names = [name]
+def memory(df: pd.DataFrame, names: List[str] = [],
+                     value_name="max_mem_use") -> Any:
     df = df[df["Unnamed: 0"] == value_name]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=value_name)
     df = parse_app_system(df)
+    if len(names) != 0:
+        df = pd.concat([ df[df["system"] == n] for n in names ])
+    print(df)
 
     width = 3.3
     aspect = 1.5
@@ -649,28 +653,26 @@ def memory(df: pd.DataFrame, name: str, names: List[str] = [],
     g = catplot(
         data=apply_aliases(df),
         y="app",
-        x="max_mem_use",
+        x=value_name,
         kind="bar",
         hue="shell",
         height=width/aspect,
         aspect=aspect,
-        palette=palette,
+        palette=palette_mpk,
         legend=False,
     )
 
     g.ax.set_ylabel("")
     g.ax.set_xlabel("Maximum memory usage to boot [MB]")
-    apply_hatch(g, patch_legend=False, hatch_list=hatches)
+    apply_hatch(g, patch_legend=False, hatch_list=hatches_mpk)
     annotate_bar_values_kB(g)
 
     # legend
-    p1 = mpl.patches.Patch(facecolor=palette[0], hatch=hatches[0], edgecolor="k",
+    p1 = mpl.patches.Patch(facecolor=col_base, hatch=hatch_base, edgecolor="k",
                            label='Unikraft')
-    p2 = mpl.patches.Patch(facecolor=palette[1], hatch=hatches[1], edgecolor="k",
+    p2 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch=hatch_ushellmpk, edgecolor="k",
                            label=f'{sysname}')
-    p3 = mpl.patches.Patch(facecolor=palette[2], hatch=hatches[2], edgecolor="k",
-                           label=f'isolated-{sysname}')
-    g.ax.legend(handles=[p1, p2, p3], title="", labelspacing=.2,
+    g.ax.legend(handles=[p1, p2], title="", labelspacing=.2,
                 loc="upper right", bbox_to_anchor=(1.10, 1.05),
                 fontsize=7, frameon=False)
 
@@ -699,6 +701,156 @@ def memory(df: pd.DataFrame, name: str, names: List[str] = [],
     format(g.ax.xaxis, "MB")
     g.tight_layout()
     return g
+
+def memory2(df: pd.DataFrame,
+            names: List[str],
+            baseline: List[str],
+            value_name = "max_mem_use"
+            ) -> Any:
+
+    def get_df(value_name):
+        df1 = df[df["Unnamed: 0"] == value_name]
+        df1 = df1.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=value_name)
+        df1_base = pd.concat([ df1[df1["system"] == n] for n in baseline ]).reset_index(drop=True)
+        df1 = pd.concat([ df1[df1["system"] == n] for n in names ]).reset_index(drop=True)
+        df1[value_name] -= df1_base[value_name]
+        return df1.drop("Unnamed: 0", axis=1)
+
+    df1 = get_df("max_mem_use")
+    df2 = get_df("total_host_mem_with_shell_peak")
+    df = df1.merge(df2)
+    df = parse_app_system(df)
+    print(df)
+
+    width = 3.3
+    aspect = 1.5
+
+    g = catplot(
+        data=apply_aliases(df),
+        y="app",
+        x=value_name,
+        kind="bar",
+        hue="shell",
+        height=width/aspect,
+        aspect=aspect,
+        palette=[palette[2]],
+        legend=False,
+    )
+
+    g.ax.set_ylabel("")
+    g.ax.set_xlabel("Maximum memory usage increase [MB]")
+    apply_hatch(g, patch_legend=False, hatch_list=[hatches[2]])
+    annotate_bar_values_kB(g)
+
+    # legend
+    # p1 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch=hatch_ushellmpk, edgecolor="k",
+    #                        label=f'{sysname}')
+    # g.ax.legend(handles=[p1], title="", labelspacing=.2,
+    #             loc="upper right", bbox_to_anchor=(1.10, 1.05),
+    #             fontsize=7, frameon=False)
+
+    # annotation
+    FONT_SIZE = 9
+    xytext=(110, 10)
+    g.ax.annotate(
+        "Lower is better",
+        xycoords="axes points",
+        xy=(0, 0),
+        xytext=xytext,
+        fontsize=FONT_SIZE,
+        color="navy",
+        weight="bold",
+    )
+    g.ax.annotate(
+        "",
+        xycoords="axes points",
+        xy=tuple(x+y for x,y in zip(xytext, (-15,2))),
+        xytext=tuple(x+y for x,y in zip(xytext, (0,2))),
+        fontsize=FONT_SIZE,
+        arrowprops=dict(arrowstyle="-|>", color="navy"),
+    )
+
+    g.despine()
+    format(g.ax.xaxis, "MB")
+    g.tight_layout()
+    return g
+
+def memory3(df: pd.DataFrame,
+            names: List[str],
+            baseline: List[str],
+            ) -> Any:
+
+    def get_df(value_name):
+        df1 = df[df["Unnamed: 0"] == value_name]
+        df1 = df1.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=value_name)
+        df1_base = pd.concat([ df1[df1["system"] == n] for n in baseline ]).reset_index(drop=True)
+        df1 = pd.concat([ df1[df1["system"] == n] for n in names ]).reset_index(drop=True)
+        df1[value_name] -= df1_base[value_name]
+        return df1.drop("Unnamed: 0", axis=1)
+
+    df1 = get_df("max_mem_use")
+    df2 = get_df("total_host_mem_with_shell_peak")
+    df1 = df1.melt(id_vars=["system"], value_vars=["max_mem_use"], var_name="mem")
+    df2 = df2.melt(id_vars=["system"], value_vars=["total_host_mem_with_shell_peak"], var_name="mem")
+    df = pd.concat([df1, df2])
+    df = parse_app_system(df)
+    print(df)
+
+    width = 3.3
+    aspect = 2.0
+
+    g = catplot(
+        data=apply_aliases(df),
+        y="app",
+        x="value",
+        kind="bar",
+        hue="mem",
+        height=width/aspect,
+        aspect=aspect,
+        palette=[palette[2]],
+        legend=False,
+    )
+
+    g.ax.set_ylabel("")
+    g.ax.set_xlabel("Increase in maximum memory usage [MB]")
+    apply_hatch(g, patch_legend=False, hatch_list=[hatches[2]])
+    annotate_bar_values_kB(g)
+
+    # legend
+    p1 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch=hatch_ushellmpk, edgecolor="k",
+                           label=f'{sysname}')
+    p2 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch="", edgecolor="k",
+                           label=f'Host/guest total')
+    g.ax.legend(handles=[p1, p2], title="", labelspacing=.2,
+                loc="upper right", bbox_to_anchor=(1.10, 0.75),
+                fontsize=7, frameon=False)
+
+    # annotation
+    FONT_SIZE = 9
+    xytext=(110, 10)
+    g.ax.annotate(
+        "Lower is better",
+        xycoords="axes points",
+        xy=(0, 0),
+        xytext=xytext,
+        fontsize=FONT_SIZE,
+        color="navy",
+        weight="bold",
+    )
+    g.ax.annotate(
+        "",
+        xycoords="axes points",
+        xy=tuple(x+y for x,y in zip(xytext, (-15,2))),
+        xytext=tuple(x+y for x,y in zip(xytext, (0,2))),
+        fontsize=FONT_SIZE,
+        arrowprops=dict(arrowstyle="-|>", color="navy"),
+    )
+
+    g.despine()
+    format(g.ax.xaxis, "MB")
+    g.tight_layout()
+    return g
+
 
 def compute_ratio(x: pd.DataFrame) -> pd.Series:
     title = x.benchmark_title.iloc[0]
@@ -1329,8 +1481,6 @@ def main_old() -> None:
             graphs.append(("init", console(df, "ushell-init")))
         elif name.startswith("image"):
             graphs.append(("images", images(df, "image-sizes")))
-        elif name.startswith("memory"):
-            graphs.append(("memory", memory(df, "memory")))
         else:
             print(f"unhandled graph name: {tsv_path}", file=sys.stderr)
             sys.exit(1)
@@ -1370,6 +1520,27 @@ def main() -> None:
                                             "ushellmpk-bpf-console-nginx",
                                             ])
             graphs.append(("console", responsiveness))
+        elif name.startswith("memory"):
+            names = ["uk-count-noshell", "uk-count-ushellmpk-bpf",
+                     "uk-redis-noshell-initrd", "uk-redis-ushellmpk-bpf-initrd",
+                     "uk-nginx-noshell-initrd", "uk-nginx-ushellmpk-bpf-initrd",
+                     "uk-sqlite3_backup-noshell-initrd", "uk-sqlite3_backup-ushellmpk-bpf-initrd",
+                    ]
+            names2 = ["uk-count-ushellmpk-bpf",
+                      "uk-redis-ushellmpk-bpf-initrd",
+                      "uk-nginx-ushellmpk-bpf-initrd",
+                      "uk-sqlite3_backup-ushellmpk-bpf-initrd",
+                    ]
+            baseline = ["uk-count-noshell",
+                        "uk-redis-noshell-initrd",
+                        "uk-nginx-noshell-initrd",
+                        "uk-sqlite3_backup-noshell-initrd",
+                    ]
+            graphs.append(("memory-unikernel", memory(df, names, value_name="max_mem_use")))
+            graphs.append(("memory-host", memory(df, names, value_name="total_host_mem_with_shell_peak")))
+            graphs.append(("memory-unikernel-rel", memory2(df, names2, baseline, value_name="max_mem_use")))
+            graphs.append(("memory-host-rel", memory2(df, names2, baseline, value_name="total_host_mem_with_shell_peak")))
+            graphs.append(("memory-rel", memory3(df, names2, baseline)))
         elif name.startswith("app"):
             graphs.append(("load", console(df, "ushell_run", aspect = 2.5,
                                           names=[
