@@ -299,7 +299,8 @@ def redis_ushell(
         with helpers.spawn_qemu(helpers.uk_redis(shell=shell, bootfs=bootfs,
                                                  bpf=bpf)) as vm:
             vm.wait_for_ping("172.44.0.2")
-            ushell.connect(bytes(vm.ushell_socket))
+            if vm.ushell_socket is not None:
+                ushell.connect(bytes(vm.ushell_socket))
 
             # ensure readiness of system
             # time.sleep(1) # guest network stack is up, but also wait for application to start
@@ -436,7 +437,8 @@ def nginx_ushell(
         with helpers.spawn_qemu(helpers.uk_nginx(shell=shell, bootfs=bootfs,
                                                  bpf=bpf)) as vm:
             vm.wait_for_ping("172.44.0.2")
-            ushell.connect(bytes(vm.ushell_socket))
+            if vm.ushell_socket is not None:
+                ushell.connect(bytes(vm.ushell_socket))
 
             # ensure readiness of system
             # time.sleep(1) # guest network stack is up, but also wait for application to start
