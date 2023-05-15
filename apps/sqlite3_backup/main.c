@@ -72,6 +72,7 @@ int main()
 {
 #ifdef CONFIG_LIBUKALLOC_IFSTATS
 	get_ukalloc_stat();
+	while(1);
 #endif
 
 	int rc;

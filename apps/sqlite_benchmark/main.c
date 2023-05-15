@@ -75,6 +75,7 @@ static int callback(
 int main(int argc, char **argv){
 #ifdef CONFIG_LIBUKALLOC_IFSTATS
 	get_ukalloc_stat();
+	while(1);
 #endif
 
   char *zErrMsg = 0;

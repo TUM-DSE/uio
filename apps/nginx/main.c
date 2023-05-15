@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
 {
 #ifdef CONFIG_LIBUKALLOC_IFSTATS
 	get_ukalloc_stat();
+	while(1);
 #endif
 	return nginx_main(argc, argv);
 }
