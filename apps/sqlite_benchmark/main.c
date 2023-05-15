@@ -117,7 +117,7 @@ int main(int argc, char **argv){
         --n_sec;
         n_nsec += 1000000000L;
     }
-    printf("%ld.%09ld\n", n_sec, n_nsec);
+    printf("\n%ld.%09ld\n", n_sec, n_nsec);
 
 #if VERIFY_Q
     puts("========== Read back ===============");
