@@ -96,8 +96,8 @@ def measure_memory(helpers: confmeasure.Helpers,
             memstats["total_host_mem_peak"] = peak
 
             if shell == "noshell":
-                memstats["total_host_mem_with_shell_current"] = 0
-                memstats["total_host_mem_with_shell_peak"] = 0
+                memstats["total_host_mem_with_shell_current"] = current
+                memstats["total_host_mem_with_shell_peak"] = peak
             else:
                 # spawn a socat process
                 sh = vm.socat_Popen()
