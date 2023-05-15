@@ -13,6 +13,8 @@ $(USHELLDIR)/%.o: $(USHELLDIR)/%.c
 	gcc -I../common/include -DHAS_MPK -fPIC -fno-stack-protector -c -o $@ $<
 
 all: $(PROG_OBJ)
+	mkdir -p ./build
+	pushd fs0 && find . | cpio --format=newc -o > ../build/fs0.cpio && popd
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS)
 	if [[ -f $(SYMFILE) ]]; then cp $(SYMFILE) fs1/debug.sym; fi
 	if [[ -f $(DBGFILE) ]]; then nm $(DBGFILE) | cut -d ' ' -f1,3 > ./$(USHELLDIR)/symbol.txt; fi
