@@ -46,12 +46,13 @@ def uk_sqlite3_backup(shell: str, bootfs: str, bpf: str = "", lto: bool = False)
     initrd = build / "fs0.cpio"
     ushelldir = build / "fs1"
     symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
-        netbridge=True,
-        ushell_devices=True,
+        netbridge=False,
+        ushell_devices=ushell_devices,
         initrd=initrd,
         ushelldir=ushelldir,
         symfile=symfile,
@@ -70,12 +71,13 @@ def uk_sqlite(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVm
     initrd = build / "fs0.cpio"
     ushelldir = build / "fs1"
     symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
-        netbridge=True,
-        ushell_devices=True,
+        netbridge=False,
+        ushell_devices=ushell_devices,
         initrd=initrd,
         ushelldir=ushelldir,
         symfile=symfile,
@@ -94,12 +96,13 @@ def uk_redis(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmS
     initrd = build / "fs0.cpio"
     ushelldir = build / "fs1"
     symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="/redis.conf",
         netbridge=True,
-        ushell_devices=True,
+        ushell_devices=ushell_devices,
         initrd=initrd,
         ushelldir=ushelldir,
         symfile=symfile,
@@ -118,12 +121,13 @@ def uk_nginx(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmS
     initrd = build / "fs0.cpio"
     ushelldir = build / "fs1"
     symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="-c /nginx/conf/nginx.conf",
         netbridge=True,
-        ushell_devices=True,
+        ushell_devices=ushell_devices,
         initrd=initrd,
         ushelldir=ushelldir,
         symfile=symfile,
@@ -141,12 +145,13 @@ def uk_count(shell: str = "ushell", bpf: str = "", lto: bool = False) -> UkVmSpe
     initrd = build / "fs0.cpio"
     ushelldir = build / "fs0"
     symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
-        netbridge=True,
-        ushell_devices=True,
+        netbridge=False,
+        ushell_devices=ushell_devices,
         initrd=None,
         ushelldir=ushelldir,
         symfile=symfile,

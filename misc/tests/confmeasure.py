@@ -68,9 +68,10 @@ class Helpers:
         log: Optional[Path] = None,
         extra_args: List[str] = [],
         extra_args_pre: List[str] = [],
+        cgroup: bool = False,
     ) -> "contextlib._GeneratorContextManager[QemuVm]":
         return spawn_qemu(
-            image, extra_args, extra_args_pre, log=log, cpu_pinning=CORES_QEMU, vcpu_pinning=[int(CORES_VCPU1)]
+            image, extra_args, extra_args_pre, log=log, cpu_pinning=CORES_QEMU, vcpu_pinning=[int(CORES_VCPU1)], cgroup=cgroup
         )
 
 
