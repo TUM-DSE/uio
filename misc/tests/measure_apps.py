@@ -465,6 +465,7 @@ def nginx_ushell(
     if not force and name in stats.keys():
         print(f"skip {name}")
         return
+    print(f"run {name}")
 
     def experiment(human) -> float:
         ushell = s.socket(s.AF_UNIX)
@@ -506,8 +507,7 @@ def nginx_ushell(
                 # attach bpf
                 alive = threading.Semaphore()
                 prepare = threading.Condition()
-                function_name = "ngx_http_process_request"
-                # function_name = "ngx_http_init_connection"
+                function_name = "ngx_http_process_request_line"
                 human_ = threading.Thread(
                     target=lambda: attach_bpf_ushell(ushell, alive, prepare, function_name),
                     name="Human ushell user",
@@ -827,7 +827,6 @@ def main(all_: bool = False) -> None:
     check_requirements()
     helpers = confmeasure.Helpers()
     stats = util.read_stats(STATS_PATH)
-
 
     ## program loading performance
     ushell_run(helpers, stats, shell = "ushell", bpf="bpf")
