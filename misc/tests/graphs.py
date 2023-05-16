@@ -1623,7 +1623,7 @@ def app4(df: pd.DataFrame, config_names, aspect:float = 4.0) -> Any:
         for idx, bar in enumerate(g.patches):
             bar.set_hatch(redis_hatches[idx%len(redis_hatches)])
 
-        bar_width = 0.10
+        bar_width = 0.07
         change_width(g, bar_width)
         # reduce space between "get" and "set"
         # for idx, bar in enumerate(g.patches):
@@ -1652,8 +1652,10 @@ def app4(df: pd.DataFrame, config_names, aspect:float = 4.0) -> Any:
     handles.append(mpl.patches.Patch(facecolor=app_palette[2], hatch=hatches[2], edgecolor="k", label=f'{sysname}'))
     handles.append(mpl.patches.Patch(facecolor=app_palette[3], hatch=hatches[3], edgecolor="k", label=f'{sysname}* w/ ls'))
     handles.append(mpl.patches.Patch(facecolor=app_palette[4], hatch=hatches[4], edgecolor="k", label=f'{sysname}  w/ ls'))
-    handles.append(mpl.patches.Patch(facecolor=app_palette[5], hatch=hatches[5], edgecolor="k", label=f'{sysname}* w/ perf'))
-    handles.append(mpl.patches.Patch(facecolor=app_palette[6], hatch=hatches[6], edgecolor="k", label=f'{sysname}  w/ perf'))
+    # handles.append(mpl.patches.Patch(facecolor=app_palette[5], hatch=hatches[5], edgecolor="k", label=f'{sysname}* w/ perf'))
+    # handles.append(mpl.patches.Patch(facecolor=app_palette[6], hatch=hatches[6], edgecolor="k", label=f'{sysname}  w/ perf'))
+    handles.append(mpl.patches.Patch(facecolor=app_palette[5], hatch="--..", edgecolor="k", label=f'{sysname}* w/ perf'))
+    handles.append(mpl.patches.Patch(facecolor=app_palette[6], hatch="--**", edgecolor="k", label=f'{sysname}  w/ perf'))
     handles.append(mpl.patches.Patch(facecolor=app_palette[7], hatch=hatches[7], edgecolor="k", label=f'{sysname}* w/ bpf'))
     handles.append(mpl.patches.Patch(facecolor=app_palette[8], hatch=hatches[8], edgecolor="k", label=f'{sysname}  w/ bpf'))
     fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.25), frameon=False, ncol=5)
@@ -1836,21 +1838,6 @@ def main() -> None:
             graphs.append(("memory-host-rel", memory2(df, names2, baseline, value_name="total_host_mem_with_shell_peak")))
             graphs.append(("memory-rel", memory3(df, names2, baseline, aspect=2.0)))
         elif name.startswith("app"):
-            graphs.append(("app2-all", app4(df, [
-                                             "{app}_noshell_initrd_nohuman",
-                                             "{app}_ushell_bpf_initrd_nohuman",
-                                             "{app}_ushellmpk_bpf_initrd_nohuman",
-                                             "{app}_ushell_bpf_initrd_lshuman",
-                                             "{app}_ushellmpk_bpf_initrd_lshuman",
-                                             "{app}_ushell_bpf_initrd_perf",
-                                             "{app}_ushellmpk_bpf_initrd_perf",
-                                             "{app}_ushell_bpf_initrd_bpf",
-                                             "{app}_ushellmpk_bpf_initrd_bpf",
-                                           ],
-                                       )))
-            break
-
-
             graphs.append(("load", console(df, "ushell_run", aspect = 2.0,
                                           names=[
                                                   "ushell-bpf_run",
@@ -1900,6 +1887,18 @@ def main() -> None:
                                              "{app}_ushellmpk_bpf_initrd_nohuman",
                                              "{app}_ushellmpk_bpf_initrd_lshuman",
                                              "{app}_ushellmpk_bpf_initrd_perf",
+                                           ],
+                                       )))
+            graphs.append(("app2-all", app4(df, [
+                                             "{app}_noshell_initrd_nohuman",
+                                             "{app}_ushell_bpf_initrd_nohuman",
+                                             "{app}_ushellmpk_bpf_initrd_nohuman",
+                                             "{app}_ushell_bpf_initrd_lshuman",
+                                             "{app}_ushellmpk_bpf_initrd_lshuman",
+                                             "{app}_ushell_bpf_initrd_perf",
+                                             "{app}_ushellmpk_bpf_initrd_perf",
+                                             "{app}_ushell_bpf_initrd_bpf",
+                                             "{app}_ushellmpk_bpf_initrd_bpf",
                                            ],
                                        )))
         elif name.startswith("image"):
