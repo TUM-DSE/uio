@@ -450,6 +450,8 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     df = pd.concat([ df[df["system"] == n] for n in names ])
     # df = df.append(dict(system=r"human", seconds=0.013), ignore_index=True)
     width = 3.3
+    palette_console = [col_base, col_ushell, col_ushell, col_ushellmpk, col_ushellmpk]
+    hatch_list_console = ["", "...", "|...", "**", "|**"]
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("system"),
@@ -459,21 +461,22 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
         ci="sd",  # show standard deviation! otherwise with_stddev_to_long_form does not work.
         height=width/aspect,
         aspect=aspect,
-        palette=palette,
+        palette=palette_console,
     )
     # plot.set_barplot_height(g.ax, barheight)
     # apply_to_graphs(g.ax, False, 0.285)
     # g.ax.set_xscale("log")
     g.ax.set_ylabel("")
-    xytext = (-100,-27)
-    hatch_list_console = ["", "...", "**", "\\\\...", "\\\\**"]
+    xytext = (-80,-27)
+    # hatch_list_console = ["", "...", "**", "\\\\...", "\\\\**"]
     # hatch_list_run = ["...", "**", "/...", "/**"]
     hatch_list_run = ["...", "/...", "**", "/**"]
     offsets = None
     if name == "ushell-console": 
         offsets = [6, 3, 3, 3, 3]
         apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_console)
-        bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
+        bar_colors(g, palette_console)
+        # bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
         # bar_colors(g, [col_base, col_ushell, col_ushellmpk, palette[6], palette[6]])
     if name == "ushell_run": 
         offsets = [6, 3, 3, 7]
@@ -572,7 +575,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     format(g.ax.xaxis, "kB")
     return g
 
-def images2(df: pd.DataFrame, names: List[str] = []) -> Any:
+def images2(df: pd.DataFrame, names: List[str] = [], aspect: float = 2.0) -> Any:
     # Unikraft vs. ushell (opt version)
 
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=f"image-size")
@@ -584,7 +587,6 @@ def images2(df: pd.DataFrame, names: List[str] = []) -> Any:
     print(df)
 
     width = 3.3
-    aspect = 2.0
     g = catplot(
         data=apply_aliases(df),
         y=column_alias("app"),
@@ -638,8 +640,11 @@ def images2(df: pd.DataFrame, names: List[str] = []) -> Any:
     return g
 
 
-def memory(df: pd.DataFrame, names: List[str] = [],
-                     value_name="max_mem_use") -> Any:
+# plot both baseline and ushell
+def memory(df: pd.DataFrame,
+           names: List[str] = [],
+           value_name="max_mem_use",
+           aspect: float = 1.5) -> Any:
     df = df[df["Unnamed: 0"] == value_name]
     df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name=value_name)
     df = parse_app_system(df)
@@ -648,7 +653,6 @@ def memory(df: pd.DataFrame, names: List[str] = [],
     print(df)
 
     width = 3.3
-    aspect = 1.5
 
     g = catplot(
         data=apply_aliases(df),
@@ -702,10 +706,12 @@ def memory(df: pd.DataFrame, names: List[str] = [],
     g.tight_layout()
     return g
 
+# plot memory increase in the unikernels or the host
 def memory2(df: pd.DataFrame,
             names: List[str],
             baseline: List[str],
-            value_name = "max_mem_use"
+            value_name = "max_mem_use",
+            aspect: float = 1.5,
             ) -> Any:
 
     def get_df(value_name):
@@ -723,7 +729,6 @@ def memory2(df: pd.DataFrame,
     print(df)
 
     width = 3.3
-    aspect = 1.5
 
     g = catplot(
         data=apply_aliases(df),
@@ -775,9 +780,11 @@ def memory2(df: pd.DataFrame,
     g.tight_layout()
     return g
 
+# plot memory increase in the unikernel and the host side
 def memory3(df: pd.DataFrame,
             names: List[str],
             baseline: List[str],
+            aspect: float = 2.0,
             ) -> Any:
 
     def get_df(value_name):
@@ -797,7 +804,6 @@ def memory3(df: pd.DataFrame,
     print(df)
 
     width = 3.3
-    aspect = 2.0
 
     g = catplot(
         data=apply_aliases(df),
@@ -1238,10 +1244,12 @@ def app(df: pd.DataFrame) -> Any:
 
     return fig
 
-def app2(df: pd.DataFrame, config_names) -> Any:
+def app2(df: pd.DataFrame, config_names, aspect:float = 4.0) -> Any:
 
+    # this figure uses double column
     width = 7 # \textwidth is 7 inch
-    height = 1.8
+    # height = 1.8
+    height = width/aspect
 
     fig, axs = plt.subplots(ncols=3, gridspec_kw={'width_ratios': [1, 1, 2]})
     fig.set_size_inches(width, height)
@@ -1540,9 +1548,9 @@ def main() -> None:
             graphs.append(("memory-host", memory(df, names, value_name="total_host_mem_with_shell_peak")))
             graphs.append(("memory-unikernel-rel", memory2(df, names2, baseline, value_name="max_mem_use")))
             graphs.append(("memory-host-rel", memory2(df, names2, baseline, value_name="total_host_mem_with_shell_peak")))
-            graphs.append(("memory-rel", memory3(df, names2, baseline)))
+            graphs.append(("memory-rel", memory3(df, names2, baseline, aspect=2.0)))
         elif name.startswith("app"):
-            graphs.append(("load", console(df, "ushell_run", aspect = 2.5,
+            graphs.append(("load", console(df, "ushell_run", aspect = 2.0,
                                           names=[
                                                   "ushell-bpf_run",
                                                   "ushell-bpf-run-cached",
