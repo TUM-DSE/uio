@@ -199,6 +199,29 @@ def perf_using_ushell(ushell: s.socket, alive, prepare, num=1000) -> None:
         if QUICK and len(r) > 0: print(f"[console recv] {r}")
         time.sleep(1)
 
+def attach_bpf_ushell(ushell: s.socket, alive, prepare, function_name,
+                      prog="/ushell/bpf/count.bin") -> None:
+    sendall(ushell, f"load /ushell/symbol.txt\n")
+    # loading symbol may take time
+    wait_output(ushell, ".")
+    sendall(ushell, f"bpf_attach {function_name} {prog}\n")
+    wait_output(ushell, "*")
+    with prepare:
+        prepare.notifyAll()
+    while alive.acquire(False):
+        alive.release()
+        r = readconsole(ushell)
+        if QUICK and len(r) > 0: print(f"[console recv] {r}")
+        time.sleep(1)
+    if QUICK:
+        # for debug
+        sendall(ushell, f"bpf_exec /ushell/bpf/get_count.bin {function_name}\n")
+        r = readconsole(ushell)
+        if len(r) > 0:
+            print(f"[console recv] {r}")
+        else:
+            print(f"[console recv] BUG: No output")
+
 def nginx_bench(
     host_port, length: str = DURATION, connections: int = 30, threads: int = 14
 ) -> float:
@@ -328,6 +351,18 @@ def redis_ushell(
                 human_.start()
                 with prepare:
                     prepare.wait()
+            elif human == "bpf":
+                # attach bpf
+                alive = threading.Semaphore()
+                prepare = threading.Condition()
+                function_name = "processCommand"
+                human_ = threading.Thread(
+                    target=lambda: attach_bpf_ushell(ushell, alive, prepare, function_name),
+                    name="Human ushell user",
+                )
+                human_.start()
+                with prepare:
+                    prepare.wait()
             elif human == "nohuman":
                 pass
             else:
@@ -358,6 +393,7 @@ def redis_ushell(
     util.write_stats(STATS_PATH, stats)
 
 
+# sqlite benchmark
 def sqlite_ushell(
     helpers: confmeasure.Helpers,
     stats: Any,
@@ -461,6 +497,19 @@ def nginx_ushell(
                 prepare = threading.Condition()
                 human_ = threading.Thread(
                     target=lambda: perf_using_ushell(ushell, alive, prepare),
+                    name="Human ushell user",
+                )
+                human_.start()
+                with prepare:
+                    prepare.wait()
+            elif human == "bpf":
+                # attach bpf
+                alive = threading.Semaphore()
+                prepare = threading.Condition()
+                function_name = "ngx_http_process_request"
+                # function_name = "ngx_http_init_connection"
+                human_ = threading.Thread(
+                    target=lambda: attach_bpf_ushell(ushell, alive, prepare, function_name),
                     name="Human ushell user",
                 )
                 human_.start()
@@ -646,7 +695,7 @@ def ushell_run(
             return [load_sym_time, load_time, load_time_cached]
 
     # samples = sample(lambda: experiment("set_count_func", exec_args = "3"))
-    samples = sample(lambda: experiment("set_count_func.o", exec_args = ""))
+    samples = sample(lambda: experiment("perf.o", exec_args = ""))
 
     load_sym_ = []
     load_ = []
@@ -779,6 +828,7 @@ def main(all_: bool = False) -> None:
     helpers = confmeasure.Helpers()
     stats = util.read_stats(STATS_PATH)
 
+
     ## program loading performance
     ushell_run(helpers, stats, shell = "ushell", bpf="bpf")
     ushell_run(helpers, stats, shell = "ushellmpk", bpf="bpf")
@@ -830,11 +880,15 @@ def main(all_: bool = False) -> None:
 
     ## perf
     nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="perf")
-    #nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
+    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
     redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="perf")
-    #redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf", force=True)
+    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="perf")
 
     ## app performance with BPF tracing
+    nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="bpf")
+    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="bpf")
+    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="bpf")
+    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="bpf")
 
     # Export results
     util.export_fio("app", stats)
