@@ -81,10 +81,10 @@ pkgs.stdenv.mkDerivation {
       };
 
       libubpf_tracer = with libubpf_tracer; {
-        version = "8c4401d9c293490d77129946b25bb04ebe803e64";
+        version = "7d41354540d812adafcf6e601e3fbfce82360343";
         src = builtins.fetchurl {
           url = "https://github.com/vandah/ubpf_tracer/archive/${version}.zip";
-          sha256 = "0idc39dna9j3qz22skpdffp0vn65l0ya7l185k2zl82xc0rp7w7v";
+          sha256 = "052hzs8hz5z3r5ji5sv4dibz6xhads46z2fh7v0cmf7xsa2492l8";
         };
         dst = "apps/${app}/build/libubpf_tracer/${version}.zip";
       };
