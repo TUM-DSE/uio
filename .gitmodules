@@ -43,7 +43,7 @@
 	url = https://github.com/vandah/uk_ubpf.git
 [submodule "repo/ubpf_tracer"]
 	path = repo/ubpf_tracer
-	url = https://github.com/vandah/ubpf_tracer
+	url = git@github.com:vandah/ubpf_tracer.git
 [submodule "repo/ubpf"]
 	path = repo/ubpf
 	url = https://github.com/iovisor/ubpf
