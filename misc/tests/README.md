@@ -6,7 +6,7 @@ This set of scripts runs the evaluation of this project (`measure_*.py`) and gen
 
 - A x86_86 CPU with native hardware virtualisation. Our test configuration expects at least 8 CPU cores.
 - Python3 to run the scripts (tested with version 3.9).
-- The [Nix](https://nixos.org/download.html) package manager to provide reproducible builts and handle software dependencies.
+- The [Nix](https://nixos.org/download.html) package manager to provide reproducible builds and handle software dependencies.
 - Sudo
 - Tmux
 
@@ -18,7 +18,7 @@ This set of scripts runs the evaluation of this project (`measure_*.py`) and gen
 - Hardware
     - CPU: Intel(R) Xeon(R) Gold 5317 CPU @ 3.00GHz 12 cores
     - Memory: Samsung DDR4 64GB 3200 MT/s x 16 (1024 GB)
-- Our results are based on ushell eurosys23 branch (TODO: commit hash)
+- Our results are based on ushell eurosys23 branch
 - For reproducability, check the warnings printed before the benchmark starts to align your setup with ours regarding CPU frequency, hyperthreading, and CPU isolation.
 
 ## Preparation
@@ -36,9 +36,12 @@ Set up the system:
 pushd apps/nginx
 just setup_bridge
 popd
+```
 
-# you can choose to build all the unikraft kernels in advance
-# This will take about 30-60 minutes depending on your system
+Optionally, you can pre-build all unikraft applications defined in flake.nix.
+However, this will build all applications, not only the ones used in the measurements, and take some time.
+```bash
+# This will take about 30-60 minutes on the evaluation machine
 python3.9 ./misc/tests/nix.py
 ```
 
@@ -83,14 +86,17 @@ Each test follows some steps:
 If results exists for a test in `*-stats.json`, the test is skipped. To re-run them, delete the file or entries.
 
 Run the tests in `measure_*.py`.
-Depending on your system configuration, QEMU has to be started as root. 
-In that case you have to start the python script as root. 
-The measure script will run different experiments, multiple times each. 
-It builds the respective unikraft kernel (like `uk_nginx()` in [nix.py](./nix.py)), boots a VM with it (`spawn_qemu()` in [qemu.py](./qemy.py)) and runs the benchmark afterwards. 
+Depending on your system configuration, QEMU has to be started as root.
+In that case you have to start the python script as root.
+The measure script will run different experiments, multiple times each.
+It builds the respective unikraft kernel (like `uk_nginx()` in [nix.py](./nix.py)), boots a VM with it (`spawn_qemu()` in [qemu.py](./qemy.py)) and runs the benchmark afterwards.
 The QEMU VM is started in a tmux session whose socket is logged to stdout and can be connected to via `tmux -L ...`.
-The test results are stored in [tests](./.)/measurements as `{name}-{date}-{time}.tsv` files. 
+The test results are stored in [tests](./.)/measurements as `{name}-{date}-{time}.tsv` files.
 
 TSV files are handed to `graph.py` which plots and writes them into PDFs (such as `./images.pdf`).
+
+By default test scripts run experiments multiple times to get a more stable result.
+If you want to do quick experiments, set `QUICK=True` in the respective `measure_*.py` file.
 
 ## Measurement List
 

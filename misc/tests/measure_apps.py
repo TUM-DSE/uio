@@ -36,7 +36,8 @@ if QUICK:
     SIZE = 2
 
 
-REDIS_REPS = 100000
+# REDIS_REPS = 100000
+REDIS_REPS = 10000000
 if QUICK:
     REDIS_REPS = 10000
 
@@ -824,9 +825,18 @@ def main_old() -> None:
     util.export_fio("app-mean", means)
 
 def main(all_: bool = False) -> None:
+    """all_: run all measurements, not just the ones used in the paper
+    """
     check_requirements()
     helpers = confmeasure.Helpers()
     stats = util.read_stats(STATS_PATH)
+
+    if all_:
+        print("Run all measurements")
+    if QUICK:
+        print("Do quick experiment")
+    else:
+        print("Do full experiment")
 
     ## program loading performance
     ushell_run(helpers, stats, shell = "ushell", bpf="bpf")
@@ -837,9 +847,10 @@ def main(all_: bool = False) -> None:
     sqlite_ushell(helpers, stats, shell="noshell", bootfs="initrd")
     redis_ushell(helpers, stats, shell="noshell", bootfs="initrd")
 
-    nginx_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
-    sqlite_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
-    redis_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
+    if all_:
+        nginx_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
+        sqlite_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
+        redis_ushell(helpers, stats, shell="noshell-mcount", bootfs="initrd")
 
     ## app performance with ushell (nompk, nobpf (mcount))
     nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd")
@@ -851,29 +862,32 @@ def main(all_: bool = False) -> None:
     sqlite_ushell(helpers, stats, shell="ushell", bpf="bpf", bootfs="initrd")
     redis_ushell(helpers, stats, shell="ushell", bpf="bpf", bootfs="initrd")
 
-    nginx_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
-    sqlite_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
-    redis_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
+    if all_:
+        nginx_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
+        sqlite_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
+        redis_ushell(helpers, stats, shell="ushell", bpf="bpf-nomcount", bootfs="initrd")
 
     ## app performance with ushell (mpk, nobpf)
-    nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
-    sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
-    redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
+    if all_:
+        nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
+        sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
+        redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd")
 
     ## app performance with ushell (mpk+bpf)
     nginx_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
     sqlite_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
     redis_ushell(helpers, stats, shell="ushellmpk", bpf="bpf", bootfs="initrd")
 
-    nginx_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
-    sqlite_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
-    redis_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
+    if all_:
+        nginx_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
+        sqlite_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
+        redis_ushell(helpers, stats, shell="ushellmpk", bpf="bpf-nomcount", bootfs="initrd")
 
     ## app performance with ushell progs
     ## ls
     nginx_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="lshuman")
-    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="lshuman")
     nginx_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
+    redis_ushell(helpers, stats, shell="ushell", bootfs="initrd", bpf="bpf", human="lshuman")
     redis_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
     #sqlite_ushell(helpers, stats, shell="ushellmpk", bootfs="initrd", bpf="bpf", human="lshuman")
 
@@ -893,5 +907,9 @@ def main(all_: bool = False) -> None:
     util.export_fio("app", stats)
 
 if __name__ == "__main__":
-    # main_old()
-    main(True)
+    from argparse import ArgumentParser
+    argparser = ArgumentParser()
+    argparser.add_argument("--all", action="store_true",
+                           help="run all measurements, not just the ones used in the paper")
+    args = argparser.parse_args()
+    main(args.all)
