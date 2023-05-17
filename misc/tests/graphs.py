@@ -236,11 +236,11 @@ def system_to_iotype(df: pd.DataFrame, value: str) -> pd.DataFrame:
 def parse_app_system(df: pd.DataFrame) -> pd.DataFrame:
     def h(row: Any) -> Any:
         if "redis" in row.system:
-            return "redis"
+            return "Redis"
         elif "nginx" in row.system:
-            return "nginx"
+            return "Nginx"
         elif "sqlite" in row.system:
-            return "sqlite"
+            return "SQLite"
         elif "count" in row.system:
             return "count"
 
@@ -376,8 +376,8 @@ def fio(df: pd.DataFrame, what: str, value_name: str) -> Any:
     return g
 
 
-def sort(df: pd.DataFrame, systems: List[str]) -> pd.DataFrame:
-    sparse = pd.concat([ df[df["system"] == n] for n in systems ])
+def sort(df: pd.DataFrame, systems: List[str], col = "system") -> pd.DataFrame:
+    sparse = pd.concat([ df[df[col] == n] for n in systems ])
     return pd.concat([ sparse, df ]).drop_duplicates(keep='first')
 
 def annotate_bar_values_s(g: Any):
@@ -487,7 +487,7 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
         xytext = (-60,-27)
     annotate_bar_values_us(g, offsets)
 
-    FONT_SIZE = 9 
+    FONT_SIZE = 7
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
@@ -552,7 +552,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     # g.ax.set_xlim(0, 2500000)
     g.ax.set_xlim(0, 2800000)
 
-    FONT_SIZE = 9
+    FONT_SIZE = 7
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
@@ -801,6 +801,7 @@ def memory3(df: pd.DataFrame,
     df2 = df2.melt(id_vars=["system"], value_vars=["total_host_mem_with_shell_peak"], var_name="mem")
     df = pd.concat([df1, df2])
     df = parse_app_system(df)
+    df = sort(df, ["count", "Nginx", "Redis", "SQLite"], "app")
     print(df)
 
     width = 3.3
@@ -828,12 +829,12 @@ def memory3(df: pd.DataFrame,
     p2 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch="", edgecolor="k",
                            label=f'Host/guest total')
     g.ax.legend(handles=[p1, p2], title="", labelspacing=.2,
-                loc="upper right", bbox_to_anchor=(1.10, 0.75),
+                loc="upper right", bbox_to_anchor=(1.10, 0.55),
                 fontsize=7, frameon=False)
 
     # annotation
-    FONT_SIZE = 9
-    xytext=(110, 10)
+    FONT_SIZE = 7
+    xytext=(110, 5)
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
@@ -1800,6 +1801,7 @@ def main() -> None:
         print(f"USAGE: {sys.argv[0]} graph.tsv...")
 
     graphs = []
+    aspect = 2.3
 
     for arg in sys.argv[1:]:
         tsv_path = Path(arg)
@@ -1808,7 +1810,7 @@ def main() -> None:
         name = tsv_path.stem
 
         if name.startswith("console"):
-            responsiveness = console(df, "ushell-console", aspect = 2.0,
+            responsiveness = console(df, "ushell-console", aspect=aspect,
                                      names=["qemu_ssh_console",
                                             "ushell-bpf-console",
                                             "ushell-bpf-console-nginx",
@@ -1836,9 +1838,9 @@ def main() -> None:
             graphs.append(("memory-host", memory(df, names, value_name="total_host_mem_with_shell_peak")))
             graphs.append(("memory-unikernel-rel", memory2(df, names2, baseline, value_name="max_mem_use")))
             graphs.append(("memory-host-rel", memory2(df, names2, baseline, value_name="total_host_mem_with_shell_peak")))
-            graphs.append(("memory-rel", memory3(df, names2, baseline, aspect=2.0)))
+            graphs.append(("memory-rel", memory3(df, names2, baseline, aspect=aspect)))
         elif name.startswith("app"):
-            graphs.append(("load", console(df, "ushell_run", aspect = 2.0,
+            graphs.append(("load", console(df, "ushell_run", aspect=aspect+0.5,
                                           names=[
                                                   "ushell-bpf_run",
                                                   "ushell-bpf-run-cached",
@@ -1847,7 +1849,7 @@ def main() -> None:
                                                  ]
                                           )))
             # w/ symbol load time
-            graphs.append(("load2", console(df, "ushell_run", aspect = 2.0,
+            graphs.append(("load2", console(df, "ushell_run", aspect=aspect,
                                           names=[
                                                   "ushell-bpf_load_sym",
                                                   "ushellmpk-bpf_load_sym",
@@ -1899,7 +1901,7 @@ def main() -> None:
                                              "{app}_ushellmpk_bpf_initrd_perf",
                                              "{app}_ushell_bpf_initrd_bpf",
                                              "{app}_ushellmpk_bpf_initrd_bpf",
-                                           ],
+                                           ], aspect=2*aspect,
                                        )))
         elif name.startswith("image"):
             graphs.append(("images-lto", images2(df,
@@ -1913,7 +1915,7 @@ def main() -> None:
                                                  "uk-nginx-ushellmpk-bpf-nomcount-initrd-lto",
                                                  "uk-redis-ushellmpk-bpf-nomcount-initrd-lto",
                                                  "uk-sqlite3_backup-ushellmpk-bpf-nomcount-initrd-lto",
-                                             ]
+                                             ], aspect=aspect+0.3,
                                              )))
             graphs.append(("images-nobpf", images2(df,
                                              [
@@ -1926,7 +1928,7 @@ def main() -> None:
                                                  "uk-nginx-ushellmpk-initrd-lto",
                                                  "uk-redis-ushellmpk-initrd-lto",
                                                  "uk-sqlite3_backup-ushellmpk-initrd-lto",
-                                             ]
+                                             ], aspect=aspect,
                                              )))
         else:
             print(f"unhandled graph name: {tsv_path}", file=sys.stderr)
