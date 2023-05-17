@@ -80,14 +80,14 @@ pkgs.stdenv.mkDerivation {
         dst = "apps/${app}/build/libubpf/${version}.zip";
       };
 
-      libubpf_tracer = with libubpf_tracer; {
-        version = "7d41354540d812adafcf6e601e3fbfce82360343";
-        src = builtins.fetchurl {
-          url = "https://github.com/vandah/ubpf_tracer/archive/${version}.zip";
-          sha256 = "052hzs8hz5z3r5ji5sv4dibz6xhads46z2fh7v0cmf7xsa2492l8";
-        };
-        dst = "apps/${app}/build/libubpf_tracer/${version}.zip";
-      };
+      # libubpf_tracer = with libubpf_tracer; {
+      #   version = "7d41354540d812adafcf6e601e3fbfce82360343";
+      #   src = builtins.fetchurl {
+      #     url = "https://github.com/vandah/ubpf_tracer/archive/${version}.zip";
+      #     sha256 = "052hzs8hz5z3r5ji5sv4dibz6xhads46z2fh7v0cmf7xsa2492l8";
+      #   };
+      #   dst = "apps/${app}/build/libubpf_tracer/${version}.zip";
+      # };
     };
   in ''
     # clean sourcetree, in case of impure development tree

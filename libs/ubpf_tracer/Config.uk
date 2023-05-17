@@ -1,0 +1,10 @@
+menuconfig LIBUBPF_TRACER
+	bool "ubpf_tracer Unikraft library"
+	default n
+
+if LIBUBPF_TRACER
+config LIBUBPF_TRACER_MAIN_FUNCTION
+	bool "Provide main function"
+	default n
+
+endif
