@@ -1915,7 +1915,7 @@ def main() -> None:
                                                  "uk-nginx-ushellmpk-bpf-nomcount-initrd-lto",
                                                  "uk-redis-ushellmpk-bpf-nomcount-initrd-lto",
                                                  "uk-sqlite3_backup-ushellmpk-bpf-nomcount-initrd-lto",
-                                             ], aspect=aspect+0.3,
+                                             ], aspect=aspect+0.2,
                                              )))
             graphs.append(("images-nobpf", images2(df,
                                              [
