@@ -1801,7 +1801,8 @@ def main() -> None:
         print(f"USAGE: {sys.argv[0]} graph.tsv...")
 
     graphs = []
-    aspect = 2.3
+    # aspect = 2.3
+    aspect = 2.0
 
     for arg in sys.argv[1:]:
         tsv_path = Path(arg)
@@ -1840,7 +1841,13 @@ def main() -> None:
             graphs.append(("memory-host-rel", memory2(df, names2, baseline, value_name="total_host_mem_with_shell_peak")))
             graphs.append(("memory-rel", memory3(df, names2, baseline, aspect=aspect)))
         elif name.startswith("app"):
-            graphs.append(("load", console(df, "ushell_run", aspect=aspect+0.5,
+            has_mcount_eval = False
+            for column in df.columns:
+                if column.find("nomcount") != -1:
+                    has_mcount_eval = True
+                    break
+
+            graphs.append(("load", console(df, "ushell_run", aspect=aspect,
                                           names=[
                                                   "ushell-bpf_run",
                                                   "ushell-bpf-run-cached",
@@ -1859,24 +1866,25 @@ def main() -> None:
                                                   "ushellmpk-bpf-run-cached"
                                                  ]
                                           )))
-            graphs.append(("app-nomcount", app2(df, [
-                                            "{app}_noshell_initrd_nohuman",
-                                            "{app}_ushell_bpf-nomcount_initrd_nohuman",
-                                            "{app}_ushellmpk_bpf-nomcount_initrd_nohuman"
-                                           ],
-                                       )))
-            graphs.append(("app-mcount", app2(df, [
-                                            "{app}_noshell-mcount_initrd_nohuman",
-                                            "{app}_ushell_bpf_initrd_nohuman",
-                                            "{app}_ushellmpk_bpf_initrd_nohuman"
-                                           ],
-                                       )))
-            graphs.append(("app-nobpf", app2(df, [
+            if has_mcount_eval:
+                graphs.append(("app-nomcount", app2(df, [
+                                                "{app}_noshell_initrd_nohuman",
+                                                "{app}_ushell_bpf-nomcount_initrd_nohuman",
+                                                "{app}_ushellmpk_bpf-nomcount_initrd_nohuman"
+                                               ],
+                                           )))
+                graphs.append(("app-mcount", app2(df, [
+                                                "{app}_noshell-mcount_initrd_nohuman",
+                                                "{app}_ushell_bpf_initrd_nohuman",
+                                                "{app}_ushellmpk_bpf_initrd_nohuman"
+                                               ],
+                                           )))
+                graphs.append(("app-nobpf", app2(df, [
                                             "{app}_noshell_initrd_nohuman",
                                             "{app}_ushell_initrd_nohuman",
                                             "{app}_ushellmpk_initrd_nohuman"
                                            ],
-                                       )))
+                                           )))
             graphs.append(("app", app2(df, [
                                             "{app}_noshell_initrd_nohuman",
                                             "{app}_ushell_bpf_initrd_nohuman",
@@ -1915,7 +1923,7 @@ def main() -> None:
                                                  "uk-nginx-ushellmpk-bpf-nomcount-initrd-lto",
                                                  "uk-redis-ushellmpk-bpf-nomcount-initrd-lto",
                                                  "uk-sqlite3_backup-ushellmpk-bpf-nomcount-initrd-lto",
-                                             ], aspect=aspect+0.2,
+                                             ], aspect=aspect,
                                              )))
             graphs.append(("images-nobpf", images2(df,
                                              [
