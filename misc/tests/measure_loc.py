@@ -7,8 +7,8 @@ def main():
     proc = run([
         "tokei", f"{PROJECT_ROOT}/unikraft/lib/ushell",
         f"{PROJECT_ROOT}/unikraft/lib/ukpku",
-        f"{PROJECT_ROOT}/repo/ubpf_tracer/src",
-        f"{PROJECT_ROOT}/repo/ubpf_tracer/include",
+        f"{PROJECT_ROOT}/libs/ubpf_tracer/src",
+        f"{PROJECT_ROOT}/libs/ubpf_tracer/include",
         "-f", "-e", "**/test", "-e", "*.json"
     ])
     print(proc.stdout)
