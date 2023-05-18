@@ -32,7 +32,7 @@ just attach
 see [./misc/tests/README.md](./misc/tests/README.md)
 
 ## Docs
--[./misec/docs](./misc/docs)
+- [./misec/docs](./misc/docs)
 
 ## Branch
 - [eurosys24](https://github.com/TUM-DSE/ushell/tree/eurosys24): Eurosys24 version
