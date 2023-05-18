@@ -1,0 +1,113 @@
+{
+    "uk-count-noshell": [
+        328648
+    ],
+    "uk-count-noshell-lto": [
+        263112
+    ],
+    "uk-count-ushell": [
+        918728
+    ],
+    "uk-count-ushellmpk": [
+        918728
+    ],
+    "uk-count-ushellmpk-bpf": [
+        984344
+    ],
+    "uk-count-ushellmpk-bpf-nomcount": [
+        984264
+    ],
+    "uk-count-ushellmpk-bpf-nomcount-lto": [
+        459880
+    ],
+    "uk-count-ushellmpk-lto": [
+        394344
+    ],
+    "uk-nginx-noshell-initrd": [
+        1443168
+    ],
+    "uk-nginx-noshell-initrd-lto": [
+        853344
+    ],
+    "uk-nginx-ushell-initrd": [
+        1443264
+    ],
+    "uk-nginx-ushellmpk-bpf-initrd": [
+        1508880
+    ],
+    "uk-nginx-ushellmpk-bpf-nomcount-initrd": [
+        1508800
+    ],
+    "uk-nginx-ushellmpk-bpf-nomcount-initrd-lto": [
+        984416
+    ],
+    "uk-nginx-ushellmpk-initrd": [
+        1443264
+    ],
+    "uk-nginx-ushellmpk-initrd-lto": [
+        918880
+    ],
+    "uk-redis-noshell-initrd": [
+        2032992
+    ],
+    "uk-redis-noshell-initrd-lto": [
+        1639776
+    ],
+    "uk-redis-ushell-initrd": [
+        2098624
+    ],
+    "uk-redis-ushellmpk-bpf-initrd": [
+        2164240
+    ],
+    "uk-redis-ushellmpk-bpf-nomcount-initrd": [
+        2098624
+    ],
+    "uk-redis-ushellmpk-bpf-nomcount-initrd-lto": [
+        1705312
+    ],
+    "uk-redis-ushellmpk-initrd": [
+        2098624
+    ],
+    "uk-redis-ushellmpk-initrd-lto": [
+        1639776
+    ],
+    "uk-sqlite3_backup-noshell-initrd": [
+        1836136
+    ],
+    "uk-sqlite3_backup-noshell-initrd-lto": [
+        1180776
+    ],
+    "uk-sqlite3_backup-ushell-initrd": [
+        1836136
+    ],
+    "uk-sqlite3_backup-ushellmpk-bpf-initrd": [
+        1901752
+    ],
+    "uk-sqlite3_backup-ushellmpk-bpf-nomcount-initrd": [
+        1901672
+    ],
+    "uk-sqlite3_backup-ushellmpk-bpf-nomcount-initrd-lto": [
+        1246312
+    ],
+    "uk-sqlite3_backup-ushellmpk-initrd": [
+        1836136
+    ],
+    "uk-sqlite3_backup-ushellmpk-initrd-lto": [
+        1180776
+    ],
+    "uk-sqlite_benchmark-noshell-initrd": [
+        1770600
+    ],
+    "uk-sqlite_benchmark-ushell-initrd": [
+        1770600
+    ],
+    "uk-sqlite_benchmark-ushellmpk-bpf-initrd": [
+        1901752
+    ],
+    "uk-sqlite_benchmark-ushellmpk-bpf-nomcount-initrd": [
+        1836136
+    ],
+    "uk-sqlite_benchmark-ushellmpk-initrd": [
+        1836136
+    ]
+}
