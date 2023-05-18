@@ -487,7 +487,7 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
         xytext = (-60,-27)
     annotate_bar_values_us(g, offsets)
 
-    FONT_SIZE = 7
+    FONT_SIZE = 9
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
@@ -552,7 +552,7 @@ def images(df: pd.DataFrame, name: str, names: List[str] = []) -> Any:
     # g.ax.set_xlim(0, 2500000)
     g.ax.set_xlim(0, 2800000)
 
-    FONT_SIZE = 7
+    FONT_SIZE = 9
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
@@ -833,8 +833,8 @@ def memory3(df: pd.DataFrame,
                 fontsize=7, frameon=False)
 
     # annotation
-    FONT_SIZE = 7
-    xytext=(110, 5)
+    FONT_SIZE = 9
+    xytext=(115, 5)
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
@@ -1528,7 +1528,7 @@ def app4(df: pd.DataFrame, config_names, aspect:float = 4.0) -> Any:
     app_palette = [col_base, col_ushell, col_ushellmpk, palette[3], palette[3], palette[4], palette[4], palette[5], palette[5]]
     # app_palette = [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk]
 
-    title_pad = 25
+    title_pad = 37
 
     def plot_nginx(df, ax, what="nginx", fontsize=7):
         df = df.melt(id_vars=["Unnamed: 0"], var_name="system", value_name="nginx-requests")
@@ -1556,7 +1556,7 @@ def app4(df: pd.DataFrame, config_names, aspect:float = 4.0) -> Any:
         apply_hatch_ax(ax, patch_legend=False, hatch_list=hatches)
         format(ax.yaxis, "krps")
         g.set(xticks=[], xticklabels=[], xlabel="(a) Nginx")
-        g.set_title("Higher is better ↑", fontsize=7, color="navy", weight="bold",
+        g.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold",
                     x = 0.40, y=1.0, pad=title_pad)
         change_width(g, 0.8)
         return g
@@ -1587,7 +1587,7 @@ def app4(df: pd.DataFrame, config_names, aspect:float = 4.0) -> Any:
         annotate_bar_values_s2_ax(g, fontsize, rotation=90)
         sns.despine(ax=ax)
         g.set(xticks=[], xticklabels=[], xlabel="(c) SQLite\n60k insertaion")
-        g.set_title("Lower is better ↓", fontsize=7, color="navy", weight="bold",
+        g.set_title("Lower is better ↓", fontsize=9, color="navy", weight="bold",
                     x = 0.45, y=1, pad=title_pad)
         apply_hatch_ax(ax, patch_legend=True, hatch_list=hatches)
         change_width(g, 0.8)
@@ -1633,13 +1633,13 @@ def app4(df: pd.DataFrame, config_names, aspect:float = 4.0) -> Any:
         g.margins(x=0.001)
         g.set_xlabel("(b) Redis")
         g.tick_params(axis='x', length=0) # remove ticks
-        g.set_title("Higher is better ↑", fontsize=7, color="navy", weight="bold", pad=title_pad)
+        g.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold", pad=title_pad)
         format(ax.yaxis, "mrps")
         ax.legend([], [], frameon=False) # remove legend
         # g.legend(frameon=False) # (re-)draw legend with hatches
         # sns.move_legend(g, "center left", bbox_to_anchor=(1.00, 0.5))
 
-    fs = 7 # font size of the valeus top of the bars
+    fs = 9 # font size of the valeus top of the bars
     plot_nginx(df, axs[0], fontsize=fs)
     plot_redis(df, axs[1], fontsize=fs)
     plot_sqlite(df, axs[2], fontsize=fs)
@@ -1909,7 +1909,7 @@ def main() -> None:
                                              "{app}_ushellmpk_bpf_initrd_perf",
                                              "{app}_ushell_bpf_initrd_bpf",
                                              "{app}_ushellmpk_bpf_initrd_bpf",
-                                           ], aspect=2*aspect,
+                                           ], aspect=3.7,
                                        )))
         elif name.startswith("image"):
             graphs.append(("images-lto", images2(df,
