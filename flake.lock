@@ -78,20 +78,20 @@
     "self-stable": {
       "flake": false,
       "locked": {
-        "lastModified": 1684350533,
-        "narHash": "sha256-yntTT+ngU0MjCIDbKwz98DkP4YBtceCLhhVt9PeEgxw=",
-        "ref": "eurosys23",
-        "rev": "359becb66d5ea448a34ae8cb66bbf7c449e5e6c7",
-        "revCount": 336,
+        "lastModified": 1684393909,
+        "narHash": "sha256-YEwDVzxoS2IHZ9+7+dpqIGeJXH5aiFhA039DWWah7kY=",
+        "ref": "eurosys24",
+        "rev": "da72704476ec157f70bb008163601492b8119c60",
+        "revCount": 339,
         "submodules": true,
         "type": "git",
-        "url": "ssh://git@github.com/mmisono/unikraft-development"
+        "url": "ssh://git@github.com/TUM-dse/ushell"
       },
       "original": {
-        "ref": "eurosys23",
+        "ref": "eurosys24",
         "submodules": true,
         "type": "git",
-        "url": "ssh://git@github.com/mmisono/unikraft-development"
+        "url": "ssh://git@github.com/TUM-dse/ushell"
       }
     }
   },
