@@ -12,13 +12,13 @@ This set of scripts runs the evaluation of this project (`measure_*.py`) and gen
 
 ## Reproducability
 
-- [./measuerments/eurosys23](./measurements/eurosys23) contains the submitted version of our measurements.
+- [./measuerments/eurosys24](./measurements/eurosys24) contains the submitted version of our measurements.
 - Operating Systems
     - Linux 6.2.12, NixOS, 22.11 (Raccoon), 22.11.20230425.48da06e
 - Hardware
     - CPU: Intel(R) Xeon(R) Gold 5317 CPU @ 3.00GHz 12 cores
     - Memory: Samsung DDR4 64GB 3200 MT/s x 16 (1024 GB)
-- Our results are based on ushell eurosys23 branch
+- Our results are based on ushell eurosys24 branch
 - For reproducability, check the warnings printed before the benchmark starts to align your setup with ours regarding CPU frequency, hyperthreading, and CPU isolation.
 
 ## Preparation
@@ -48,6 +48,13 @@ python3.9 ./misc/tests/nix.py
 ## Measurements
 
 The following commands run the measurements and generate the plots.
+
+```bash
+cd ./misc/tests
+bash ./run_all.sh
+```
+
+### Individual measurements
 
 - Console responsiveness
 ```bash
