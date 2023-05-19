@@ -1,10 +1,11 @@
 # Evaluation
 
-This set of scripts runs the evaluation of this project (`measure_*.py`) and generates the plots from the results (`graph.py`)
+This set of scripts runs the evaluation of this project (`measure_*.py`) and generates the plots from the results (`graphs.py`)
 
 ## Requirements
 
-- A x86_86 CPU with native hardware virtualisation. Our test configuration expects at least 8 CPU cores.
+- A x86_86 CPU with native hardware virtualisation and MPK.
+- Our test configuration expects at least 8 CPU cores.
 - Python3 to run the scripts (tested with version 3.9).
 - The [Nix](https://nixos.org/download.html) package manager to provide reproducible builds and handle software dependencies.
 - Sudo
@@ -14,10 +15,10 @@ This set of scripts runs the evaluation of this project (`measure_*.py`) and gen
 
 - [./measuerments/eurosys24](./measurements/eurosys24) contains the submitted version of our measurements.
 - Operating Systems
-    - Linux 6.2.12, NixOS, 22.11 (Raccoon), 22.11.20230425.48da06e
+    - Linux 6.2.12, NixOS, 22.11 (Raccoon)
 - Hardware
     - CPU: Intel(R) Xeon(R) Gold 5317 CPU @ 3.00GHz 12 cores
-    - Memory: Samsung DDR4 64GB 3200 MT/s x 16 (1024 GB)
+    - Memory: Samsung DDR4 256GB 3200 MT/s x 4 (1024 GB)
 - Our results are based on ushell eurosys24 branch
 - For reproducability, check the warnings printed before the benchmark starts to align your setup with ours regarding CPU frequency, hyperthreading, and CPU isolation.
 
@@ -26,7 +27,8 @@ This set of scripts runs the evaluation of this project (`measure_*.py`) and gen
 First, go to the root folder of this project and enter our development shell to issue the measurement commands:
 
 ```
-nix develop
+cd <path-to-repo>/
+nix develop # this starts a development shell
 ```
 
 Set up the system:
