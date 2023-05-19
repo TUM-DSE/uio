@@ -18,7 +18,7 @@ This set of scripts runs the evaluation of this project (`measure_*.py`) and gen
     - Linux 6.2.12, NixOS, 22.11 (Raccoon)
 - Hardware
     - CPU: Intel(R) Xeon(R) Gold 5317 CPU @ 3.00GHz 12 cores
-    - Memory: Samsung DDR4 256GB 3200 MT/s x 4 (1024 GB)
+    - Memory: Samsung DDR4 64 3200 MT/s x 4 (256 GB)
 - Our results are based on ushell eurosys24 branch
 - For reproducability, check the warnings printed before the benchmark starts to align your setup with ours regarding CPU frequency, hyperthreading, and CPU isolation.
 
