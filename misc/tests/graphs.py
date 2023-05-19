@@ -473,13 +473,13 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     hatch_list_run = ["...", "/...", "**", "/**"]
     offsets = None
     if name == "ushell-console": 
-        offsets = [6, 3, 3, 3, 3]
+        offsets = [7, 3, 3, 3, 3]
         apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_console)
         bar_colors(g, palette_console)
         # bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
         # bar_colors(g, [col_base, col_ushell, col_ushellmpk, palette[6], palette[6]])
     if name == "ushell_run": 
-        offsets = [6, 3, 3, 7]
+        offsets = [7, 3, 3, 7]
         apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_run)
         # bar_colors(g, [col_ushell, col_ushellmpk, palette[4], palette[5]])
         # bar_colors(g, [col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
