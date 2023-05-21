@@ -34,17 +34,16 @@ nix develop # this starts a development shell
 Set up the system:
 
 ```bash
-# set up a bridge for qemu networking
-pushd apps/nginx
+cd <path-to-repo>/misc/tests
 just setup_bridge
-popd
 ```
 
 Optionally, you can pre-build all unikraft applications defined in flake.nix.
 However, this will build all applications, not only the ones used in the measurements, and take some time.
 ```bash
 # This will take about 30-60 minutes on the evaluation machine
-python3.9 ./misc/tests/nix.py
+cd <path-to-repo>/misc/tests
+python3.9 ./nix.py
 ```
 
 ## Measurements
@@ -52,13 +51,13 @@ python3.9 ./misc/tests/nix.py
 The following commands run the measurements and generate the plots.
 
 ```bash
-cd ./misc/tests
+cd <path-to-repo>/misc/tests
 bash ./run_all.sh
 ```
 
 ### Individual measurements
 
-- Console responsiveness
+- Console responsiveness (~3min when applications are built)
 ```bash
 rm -r ./misc/tests/measurements/console-stats.json
 sudo python3.9 ./misc/tests/measure_console.py
@@ -66,7 +65,7 @@ python3.9 ./misc/tests/graphs.py ./misc/tests/measurements/console-latest.tsv
 ls ./misc/tests/measurements/console.pdf
 ```
 
-- Application performance
+- Application performance (~3hr when applications are built)
 ```bash
 rm -r ./misc/tests/measurements/app-stats.json
 sudo python3.9 ./misc/tests/measure_apps.py
@@ -74,7 +73,7 @@ python3.9 ./misc/tests/graphs.py ./misc/tests/measurements/app-latest.tsv
 ls ./misc/tests/measurements/app.pdf
 ```
 
-- Memory footprint
+- Memory footprint (~3min when applications are built)
 ```bash
 rm -r ./misc/tests/measurements/memory-stats.json
 sudo python3.9 ./misc/tests/measure_memory.py
@@ -82,7 +81,7 @@ python3.9 ./misc/tests/graphs.py ./misc/tests/measurements/memory-latest.tsv
 ls ./misc/tests/measurements/memory.pdf
 ```
 
-- Image size
+- Image size (~1min when applications are built)
 ```bash
 rm -r ./misc/tests/measurements/image-stats.json
 sudo python3.9 ./misc/tests/measure_image.py
