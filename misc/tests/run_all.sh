@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+ip a s virbr0 >/dev/null || (echo "Please run 'just setup_bridge' to configure the network" && exit 1)
+
 START=$SECONDS
 
 sudo python3.9 ./measure_apps.py
