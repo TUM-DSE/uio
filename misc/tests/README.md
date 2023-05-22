@@ -130,6 +130,9 @@ See [apps/sqlite3_backup](../../apps/sqlite3_backup).
 ### 4. Performance monitoring with performance counters
 See [apps/count](../../apps/count) (`perf` program).
 
+### 5. BPF
+See [apps/nginx](../../apps/nginx). Also see [apps/bpf_prog](../../apps/bpf_prog) for the actual BPF programs.
+
 ## Development
 
 By default we use a pinned version of the measured unikraft kernels for reproducability.
