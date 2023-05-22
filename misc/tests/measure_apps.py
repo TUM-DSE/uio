@@ -224,7 +224,7 @@ def attach_bpf_ushell(ushell: s.socket, alive, prepare, function_name,
             print(f"[console recv] BUG: No output")
 
 def nginx_bench(
-    host_port, length: str = DURATION, connections: int = 30, threads: int = 14
+    host_port, length: str = DURATION, connections: int = 30, threads: int = 2
 ) -> float:
 
     cmd = [
