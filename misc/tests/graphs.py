@@ -479,7 +479,7 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
         # bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
         # bar_colors(g, [col_base, col_ushell, col_ushellmpk, palette[6], palette[6]])
     if name == "ushell_run": 
-        offsets = [7, 3, 3, 7]
+        offsets = [5, 5, 5, 5]
         apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_run)
         # bar_colors(g, [col_ushell, col_ushellmpk, palette[4], palette[5]])
         # bar_colors(g, [col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
@@ -829,12 +829,12 @@ def memory3(df: pd.DataFrame,
     p2 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch="", edgecolor="k",
                            label=f'Host/guest total')
     g.ax.legend(handles=[p1, p2], title="", labelspacing=.2,
-                loc="upper right", bbox_to_anchor=(1.10, 0.55),
+                loc="upper right", bbox_to_anchor=(1.10, 0.65),
                 fontsize=7, frameon=False)
 
     # annotation
     FONT_SIZE = 9
-    xytext=(115, 5)
+    xytext=(110, 15)
     g.ax.annotate(
         "Lower is better",
         xycoords="axes points",
