@@ -2,7 +2,7 @@
 
 ## Quick start
 
-(Tested on adelaide)
+(Tested on [adelaide](https://github.com/TUM-DSE/doctor-cluster-config/blob/master/docs/hosts/adelaide.md))
 
 ```shell
 git clone --recurse-submodules https://github.com/TUM-DSE/ushell
@@ -32,7 +32,7 @@ just attach
 see [./misc/tests/README.md](./misc/tests/README.md)
 
 ## Docs
-- [./misec/docs](./misc/docs)
+- [./misc/docs](./misc/docs)
 
 ## Branch
 - [eurosys24](https://github.com/TUM-DSE/ushell/tree/eurosys24): Eurosys24 version
