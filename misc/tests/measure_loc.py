@@ -16,10 +16,10 @@ def main():
     print("ubpf")
     proc = run([
         "tokei",
-        f"{PROJECT_ROOT}/repo/ubpf/vm/ubpf_vm.c",
-        f"{PROJECT_ROOT}/repo/ubpf/vm/ubpf_loader.c",
-        f"{PROJECT_ROOT}/repo/ubpf/vm/ubpf_int.h",
-        f"{PROJECT_ROOT}/repo/ubpf/vm/ebpf.h",
+        f"{PROJECT_ROOT}/libs/ubpf/vm/ubpf_vm.c",
+        f"{PROJECT_ROOT}/libs/ubpf/vm/ubpf_loader.c",
+        f"{PROJECT_ROOT}/libs/ubpf/vm/ubpf_int.h",
+        f"{PROJECT_ROOT}/libs/ubpf/vm/ebpf.h",
         "-f",
     ])
     print(proc.stdout)
