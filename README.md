@@ -2,7 +2,7 @@
 
 ## Quick start
 
-(Tested on adelaide)
+(Tested on [adelaide](https://github.com/TUM-DSE/doctor-cluster-config/blob/master/docs/hosts/adelaide.md))
 
 ```shell
 git clone --recurse-submodules https://github.com/TUM-DSE/ushell
@@ -13,12 +13,13 @@ direnv allow # (or nix develop)
 (in one terminal window)
 ```shell
 cd apps/count
-make menuconfig
+cp config.eval.ushellmpk.bpf .config
+make olddefconfig
 make
 just run
 ```
 
-> Since .config contains the absolute path, we need to regenerate .config by running make menuconfig 
+> Since .config contains the absolute path, we need to regenerate .config by running make olddefconfig
 
 (in another terminal window)
 ```shell
@@ -31,9 +32,8 @@ just attach
 see [./misc/tests/README.md](./misc/tests/README.md)
 
 ## Docs
--[./misec/docs](./misc/docs)
+- [./misc/docs](./misc/docs)
 
 ## Branch
-- [dev](https://github.com/TUM-DSE/ushell/tree/dev): Development branch
-- [eurosys23](https://github.com/TUM-DSE/ushell/tree/eurosys23): Eurosys23 version
+- [eurosys24](https://github.com/TUM-DSE/ushell/tree/eurosys24): Eurosys24 version
 

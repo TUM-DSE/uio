@@ -32,7 +32,7 @@ script https://github.com/unikraft/eurosys21-artifacts can do all the setup for
 you, including cloning the different branches of this repository.
 
 To reproduce this experiment by hand, you will also need original SQLite
-include files in an `include` folder, and do a `make menuconfig` before
+include files in an `include` folder, and do a `make olddefconfig` before
 building with `make`.
 
 For the Linux test, if `/tmp` is on tmpfs, i.e. a RAM disk, it will be used.

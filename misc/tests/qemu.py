@@ -36,6 +36,8 @@ class UkVmSpec:
     app_cmdline: str
     netbridge: bool
     ushell_devices: bool
+    ushelldir: Path
+    symfile: Path
     initrd: Optional[Path]
     rootfs_9p: Optional[Path]
     fs1_9p: Optional[Path]
@@ -165,6 +167,13 @@ def ssh_cmd(port: int) -> List[str]:
         "root@172.44.0.2",
     ]
 
+def socat_cmd(sock: Path, cgroup: bool = False, cgroup_name: str = "memory:ushell") -> List[str]:
+    cmd = []
+    if cgroup:
+        cmd += ["cgexec", "-g", cgroup_name]
+    cmd += ["socat", str(sock), "-"]
+    return cmd
+
 
 class QemuVm:
     def __init__(
@@ -173,12 +182,16 @@ class QemuVm:
         tmux_session: str,
         pid: int,
         ushell_socket: Optional[Path],
+        cgroup: bool = False,
+        cgroup_name: str = "memory:ushell",
     ) -> None:
         self.qmp_session = qmp_session
         self.tmux_session = tmux_session
         self.pid = pid
         self.ssh_port = 22  # get_ssh_port(qmp_session)
         self.ushell_socket = ushell_socket
+        self.cgroup = cgroup
+        self.cgroup_name = cgroup_name
 
     def events(self) -> Iterator[Dict[str, Any]]:
         return self.qmp_session.events()
@@ -212,7 +225,7 @@ class QemuVm:
         Block until icmp is responding
         @host: example: 172.44.0.2
         """
-        timeout = 0.5
+        timeout = 1
         max_ = int(1 / timeout * 60)
         for i in range(0, max_):
             response = run(
@@ -272,6 +285,20 @@ class QemuVm:
             cmd, stdin=stdin, stdout=stdout, stderr=stderr, check=check, verbose=verbose
         )
 
+    def socat_Popen(
+        self,
+        stdout: ChildFd = None,
+        stderr: ChildFd = None,
+        stdin: ChildFd = None,
+    ) -> subprocess.Popen:
+        """
+        opens a background process with an interactive socat session
+        """
+        cmd = socat_cmd(self.ushell_socket, self.cgroup, self.cgroup_name)
+        pprint_cmd(cmd)
+        return subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+
+
     def regs(self) -> Dict[str, int]:
         """
         Get cpu register:
@@ -310,6 +337,8 @@ def uk_qemu_command(
     qmp_socket: Path,
     ushell_socket=Optional[Path],
     cpu_pinning: Optional[str] = None,
+    cgroup: bool = False,
+    cgroup_name: str = "memory:ushell",
 ) -> List[str]:
     cmd = []
 
@@ -320,6 +349,13 @@ def uk_qemu_command(
             "taskset",
             "-c",
             cpu_pinning,
+        ]
+
+    if cgroup:
+        cmd += [
+            "cgexec",
+            "-g",
+            f"{cgroup_name}",
         ]
 
     cmd += [
@@ -370,8 +406,7 @@ def uk_qemu_command(
 
     if spec.initrd is not None:
         cmd += ["-initrd", f"{spec.initrd}"]
-
-    if spec.rootfs_9p is not None:
+    elif spec.rootfs_9p is not None:
         cmd += [
             "-fsdev",
             f"local,id=myid,path={spec.rootfs_9p},security_model=none",
@@ -379,10 +414,11 @@ def uk_qemu_command(
             "virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off",
         ]
 
-    if spec.fs1_9p is not None:
+    # if spec.fs1_9p is not None:
+    if spec.ushelldir is not None:
         cmd += [
             "-fsdev",
-            f"local,id=myid2,path={spec.fs1_9p},security_model=none",
+            f"local,id=myid2,path={spec.ushelldir},security_model=none",
             "-device",
             "virtio-9p-pci,fsdev=myid2,mount_tag=fs1,disable-modern=on,disable-legacy=off",
         ]
@@ -448,8 +484,16 @@ def spawn_qemu(
     log: Optional[Path] = None,
     cpu_pinning: Optional[str] = None,
     vcpu_pinning: List[int] = [],
+    cgroup: bool = False,
+    cgroup_name: str = "memory:ushell",
 ) -> Iterator[QemuVm]:
     with TemporaryDirectory() as tempdir:
+        if cgroup:
+            # first, delete cgroup if exist
+            subprocess.run(["cgdelete", "-g", f"{cgroup_name}"])
+            # create cgroup
+            subprocess.run(["cgcreate", "-g", f"{cgroup_name}"])
+
         qmp_socket = Path(tempdir).joinpath("qmp.sock")
         cmd = extra_args_pre.copy()
         ushell_socket = None
@@ -459,7 +503,8 @@ def spawn_qemu(
             )
             # build qemu command for unikraft VM
             cmd += uk_qemu_command(
-                image, qmp_socket, ushell_socket, cpu_pinning=cpu_pinning
+                image, qmp_socket, ushell_socket, cpu_pinning=cpu_pinning,
+                cgroup=cgroup, cgroup_name=cgroup_name,
             )
         elif isinstance(image, NixosVmSpec):
             # build qemu command for nixos VMs
@@ -507,7 +552,8 @@ def spawn_qemu(
                         "Qemu vm was terminated quickly. Check QEMU_DEBUG above."
                     )
             with connect_qmp(qmp_socket) as session:
-                vm = QemuVm(session, tmux_session, qemu_pid, ushell_socket)
+                vm = QemuVm(session, tmux_session, qemu_pid, ushell_socket,
+                            cgroup=cgroup, cgroup_name=cgroup_name)
                 vm.set_vcpumap(vcpu_pinning)
                 yield vm
         finally:
@@ -520,3 +566,7 @@ def spawn_qemu(
                 else:
                     print("waiting for qemu to stop")
                     time.sleep(1)
+
+            if cgroup:
+                # delete cgroup
+                subprocess.run(["cgdelete", "-g", f"{cgroup_name}"])

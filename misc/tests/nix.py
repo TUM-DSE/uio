@@ -44,13 +44,18 @@ def uk_sqlite3_backup(shell: str, bootfs: str, bpf: str = "", lto: bool = False)
     build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite3_backup_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs1"
+    symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
-        netbridge=True,
-        ushell_devices=True,
+        netbridge=False,
+        ushell_devices=ushell_devices,
         initrd=initrd,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
         fs1_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs1",
     )
@@ -64,13 +69,18 @@ def uk_sqlite(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVm
     build = uk_build(f".#{flake_name}")
     kernel = build / "sqlite_benchmark_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs1"
+    symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
-        netbridge=True,
-        ushell_devices=True,
+        netbridge=False,
+        ushell_devices=ushell_devices,
         initrd=initrd,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs0",
         fs1_9p=PROJECT_ROOT / "apps/sqlite_benchmark/fs1",
     )
@@ -84,13 +94,18 @@ def uk_redis(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmS
     build = uk_build(f".#{flake_name}")
     kernel = build / "redis_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs1"
+    symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="/redis.conf",
         netbridge=True,
-        ushell_devices=True,
+        ushell_devices=ushell_devices,
         initrd=initrd,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/redis/fs0",
         fs1_9p=PROJECT_ROOT / "apps/redis/fs1",
     )
@@ -104,13 +119,18 @@ def uk_nginx(shell: str, bootfs: str, bpf: str = "", lto: bool = False) -> UkVmS
     build = uk_build(f".#{flake_name}")
     kernel = build / "nginx_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs1"
+    symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="-c /nginx/conf/nginx.conf",
         netbridge=True,
-        ushell_devices=True,
+        ushell_devices=ushell_devices,
         initrd=initrd,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/nginx/fs0",
         fs1_9p=PROJECT_ROOT / "apps/nginx/fs1",
     )
@@ -123,13 +143,18 @@ def uk_count(shell: str = "ushell", bpf: str = "", lto: bool = False) -> UkVmSpe
     build = uk_build(f".#{flake_name}")
     kernel = build / "count_kvm-x86_64"
     initrd = build / "fs0.cpio"
+    ushelldir = build / "fs0"
+    symfile = ushelldir / "symbol.txt"
+    ushell_devices = shell != "noshell"
     return UkVmSpec(
         flake_name=flake_name,
         kernel=kernel,
         app_cmdline="",
-        netbridge=True,
-        ushell_devices=True,
+        netbridge=False,
+        ushell_devices=ushell_devices,
         initrd=None,
+        ushelldir=ushelldir,
+        symfile=symfile,
         rootfs_9p=PROJECT_ROOT / "apps/count/fs0",
         fs1_9p=PROJECT_ROOT / "apps/count/fs0",
     )
@@ -207,7 +232,7 @@ def notos_image_custom_kernel(nix: str = NOTOS_IMAGE) -> VmImage:
     return image
 
 def build_all():
-    print("Building all nix (flake) packages in this repository. (~9mins @ 8 cores if uncached)")
+    print("Building all nix (flake) packages in this repository")
     result = subprocess.run(
         ["nix", "flake", "show", "--json"],
         text=True,

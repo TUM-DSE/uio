@@ -75,6 +75,7 @@ static int callback(
 int main(int argc, char **argv){
 #ifdef CONFIG_LIBUKALLOC_IFSTATS
 	get_ukalloc_stat();
+	while(1);
 #endif
 
   char *zErrMsg = 0;
@@ -116,7 +117,7 @@ int main(int argc, char **argv){
         --n_sec;
         n_nsec += 1000000000L;
     }
-    printf("%ld.%09ld\n", n_sec, n_nsec);
+    printf("\n%ld.%09ld\n", n_sec, n_nsec);
 
 #if VERIFY_Q
     puts("========== Read back ===============");

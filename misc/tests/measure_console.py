@@ -167,15 +167,20 @@ def nginx_load(
     return subprocess.Popen(cmd)
 
 
-def ushell_console(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell") -> None:
-    name = f"{shell}-console"
+def ushell_console(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell",
+                   bpf: str = "") -> None:
+    name = f"{shell}"
+    if len(bpf) > 0:
+        name += f"-{bpf}"
+    name += "-console"
     if name in stats.keys():
         print(f"skip {name}")
         return
 
+    print(f"start {name}")
     ushell = s.socket(s.AF_UNIX)
 
-    with helpers.spawn_qemu(helpers.uk_count(shell = shell)) as vm:
+    with helpers.spawn_qemu(helpers.uk_count(shell = shell, bpf=bpf)) as vm:
         # vm.wait_for_ping("172.44.0.2")
         ushell.connect(bytes(vm.ushell_socket))
 
@@ -197,15 +202,20 @@ def ushell_console(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushel
     stats[name] = samples
     util.write_stats(STATS_PATH, stats)
 
-def ushell_console_nginx(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell") -> None:
-    name = f"{shell}-console-nginx"
+def ushell_console_nginx(helpers: confmeasure.Helpers, stats: Any, shell: str = "ushell",
+                         bpf: str = "") -> None:
+    name = f"{shell}"
+    if len(bpf) > 0:
+        name += f"-{bpf}"
+    name += "-console-nginx"
     if name in stats.keys():
         print(f"skip {name}")
         return
 
+    print(f"start {name}")
     ushell = s.socket(s.AF_UNIX)
 
-    with helpers.spawn_qemu(helpers.uk_nginx(shell=shell, bootfs="initrd")) as vm:
+    with helpers.spawn_qemu(helpers.uk_nginx(shell=shell, bootfs="initrd", bpf=bpf)) as vm:
         # vm.wait_for_ping("172.44.0.2")
         ushell.connect(bytes(vm.ushell_socket))
 
@@ -391,18 +401,23 @@ def main() -> None:
 
     stats = util.read_stats(STATS_PATH)
 
-    print("\nmeasure performance for ushell console (~4sec each)\n")
+    # normal response
+    print("\nmeasure performance for ushell console\n")
     ushell_console(helpers, stats)
-    print("\nmeasure performance for ushellmpk console (~4sec each)\n")
-    ushell_console(helpers, stats, shell = "ushellmpk")
-    print("\nmeasure performance for ushell console with nignx load (~4sec each)\n")
+    ushell_console(helpers, stats, shell = "ushell", bpf = "bpf")
+    ushell_console(helpers, stats, shell = "ushellmpk", bpf = "bpf")
+
+    # w/nginx
+    print("\nmeasure performance for ushell console with nignx load\n")
     ushell_console_nginx(helpers, stats)
-    print("\nmeasure performance for ushellmpk console with nignx load (~4sec each)\n")
-    ushell_console_nginx(helpers, stats, shell = "ushellmpk")
-    print("\nmeasure performance of ushell init (~4sec each)\n")
-    ushell_init(helpers, stats, do_reattach=False)
-    # print("\nmeasure performance of ushell reattach\n")
-    # ushell_init(helpers, stats, do_reattach=True)
+    ushell_console_nginx(helpers, stats, shell = "ushell", bpf= "bpf")
+    ushell_console_nginx(helpers, stats, shell = "ushellmpk", bpf= "bpf")
+
+    #print("\nmeasure performance of ushell init (~4sec each)\n")
+    #ushell_init(helpers, stats, do_reattach=False)
+    #print("\nmeasure performance of ushell reattach\n")
+    #ushell_init(helpers, stats, do_reattach=True)
+
     print("\nmeasure performance of ssh console (~4sec each)\n")
     qemu_ssh(helpers, stats)
 

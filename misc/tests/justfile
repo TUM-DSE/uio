@@ -1,0 +1,14 @@
+# vim: set ft=make et :
+
+default:
+    @just --choose
+
+setup_bridge:
+    #!/usr/bin/env bash
+    ip a s virbr0 >/dev/null 2>&1
+    if [ $? ]; then
+        sudo brctl addbr virbr0
+        sudo ip a a 172.44.0.1/24 dev virbr0
+        sudo ip l set dev virbr0 up
+    fi
+

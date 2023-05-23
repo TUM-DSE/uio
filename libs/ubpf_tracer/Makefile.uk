@@ -1,0 +1,89 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# ubpf_tracer Unikraft library
+#
+# Authors: Vanda Hendrychova <vandah3@gmail.com>
+#
+# Copyright (c) 2023, Vanda Hendrychova <vandah3@gmail.com>. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# Library registration
+################################################################################
+$(eval $(call addlib_s,libubpf_tracer,$(CONFIG_LIBUBPF_TRACER)))
+
+################################################################################
+# Sources
+################################################################################]
+#LIBUBPF_TRACER_VERSION = dev
+#LIBUBPF_TRACER_URL = https://github.com/vandah/ubpf_tracer/archive/refs/heads/$(LIBUBPF_TRACER_VERSION).zip
+#LIBUBPF_TRACER_VERSION = 7d41354540d812adafcf6e601e3fbfce82360343
+#LIBUBPF_TRACER_URL = https://github.com/vandah/ubpf_tracer/archive/$(LIBUBPF_TRACER_VERSION).zip
+#LIBUBPF_TRACER_SUBDIR = ubpf_tracer-$(LIBUBPF_TRACER_VERSION)
+#LIBUBPF_TRACER_PATCHDIR = $(LIBUBPF_TRACER_BASE)/patches
+#$(eval $(call fetch,libubpf_tracer,$(LIBUBPF_TRACER_URL)))
+#$(eval $(call patch,libubpf_tracer,$(LIBUBPF_TRACER_PATCHDIR),$(LIBUBPF_TRACER_SUBDIR)))
+
+################################################################################
+# Helpers
+################################################################################
+LIBUBPF_TRACER_SRC = $(LIBUBPF_TRACER_BASE)
+
+################################################################################
+# Library includes
+################################################################################
+CINCLUDES-y += -I$(LIBUBPF_TRACER_BASE)/include
+
+################################################################################
+# Flags
+################################################################################
+LIBUBPF_TRACER_FLAGS =
+
+# Suppress some warnings to make the build process look neater
+LIBUBPF_TRACER_FLAGS_SUPPRESS =
+
+LIBUBPF_TRACER_CFLAGS-y += $(LIBUBPF_TRACER_FLAGS)
+LIBUBPF_TRACER_CFLAGS-y += $(LIBUBPF_TRACER_FLAGS_SUPPRESS)
+
+################################################################################
+# Glue code
+################################################################################
+# Include paths
+# LIBUBPF_TRACER_CINCLUDES-y   += $(LIBUBPF_TRACER_COMMON_INCLUDES-y)
+LIBUBPF_TRACER_CINCLUDES-y   += -I$(LIBUBPF_TRACER_SRC)/include
+# LIBUBPF_TRACER_CXXINCLUDES-y += $(LIBUBPF_TRACER_COMMON_INCLUDES-y)
+LIBUBPF_TRACERSRCS-$(CONFIG_LIBUBPF_TRACER_MAIN_FUNCTION) += $(LIBUBPF_TRACER_BASE)/main.c|unikraft
+
+################################################################################
+# Library sources
+################################################################################
+# LIBUBPF_TRACER_SRCS-y += # Include source files here
+LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/arraylist.c
+LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/hash_chains.c
+LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/ubpf_helpers.c
+LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/ubpf_tracer.c
+LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/ubpf_tracer_trampoline.S
