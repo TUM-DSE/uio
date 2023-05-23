@@ -78,11 +78,11 @@
     "self-stable": {
       "flake": false,
       "locked": {
-        "lastModified": 1684393909,
-        "narHash": "sha256-YEwDVzxoS2IHZ9+7+dpqIGeJXH5aiFhA039DWWah7kY=",
+        "lastModified": 1684884622,
+        "narHash": "sha256-okDHA5f0D7uv1nrETVfATZHECGWmfHdAdgfU+ACTkFI=",
         "ref": "eurosys24",
-        "rev": "da72704476ec157f70bb008163601492b8119c60",
-        "revCount": 339,
+        "rev": "cc8a7069d4dd4139d26c61c3fc068af99e816076",
+        "revCount": 368,
         "submodules": true,
         "type": "git",
         "url": "ssh://git@github.com/TUM-dse/ushell"
