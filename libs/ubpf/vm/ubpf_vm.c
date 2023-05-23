@@ -281,9 +281,16 @@ ubpf_exec(const struct ubpf_vm* vm, void* mem, size_t mem_len, uint64_t* bpf_ret
     reg[2] = (uint64_t)mem_len;
     reg[10] = (uintptr_t)stack + sizeof(stack);
 
+    unsigned count = 0;
     while (1) {
         const uint16_t cur_pc = pc;
         struct ebpf_inst inst = ubpf_fetch_instruction(vm, pc++);
+
+        count++;
+#define MAX_INSTRUCTIONS 1000000
+        if (count >= MAX_INSTRUCTIONS) {
+            return -1;
+        }
 
         switch (inst.opcode) {
         case EBPF_OP_ADD_IMM:
