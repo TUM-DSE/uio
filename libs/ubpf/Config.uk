@@ -1,0 +1,11 @@
+menuconfig LIBUBPF
+	bool "ubpf Unikraft library"
+	select LIBUKMMAP
+	default n
+
+if LIBUBPF
+config LIBUBPF_MAIN_FUNCTION
+	bool "Provide main function"
+	default n
+
+endif
