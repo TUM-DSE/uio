@@ -1,0 +1,98 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# ubpf Unikraft library
+#
+# Authors: Vanda Hendrychova <vandah3@gmail.com>
+#
+# Copyright (c) 2022, Vanda Hendrychova <vandah3@gmail.com>. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# Library registration
+################################################################################
+$(eval $(call addlib_s,libubpf,$(CONFIG_LIBUBPF)))
+
+################################################################################
+# Sources
+################################################################################]
+#LIBUBPF_VERSION = main
+#LIBUBPF_URL = https://github.com/iovisor/ubpf/archive/refs/heads/main.zip
+#LIBUBPF_VERSION = 029ea2b6e1e06337ed8fe577b4a4ee09ed0dce7d
+#LIBUBPF_URL = http://github.com/iovisor/ubpf/archive/$(LIBUBPF_VERSION).zip
+#LIBUBPF_SUBDIR = ubpf-$(LIBUBPF_VERSION)
+#LIBUBPF_PATCHDIR = $(LIBUBPF_BASE)/patches
+#$(eval $(call fetch,libubpf,$(LIBUBPF_URL)))
+#$(eval $(call patch,libubpf,$(LIBUBPF_PATCHDIR),$(LIBUBPF_SUBDIR)))
+
+################################################################################
+# Helpers
+################################################################################
+# LIBUBPF_SRC = $(LIBUBPF_ORIGIN)/$(LIBUBPF_SUBDIR)
+LIBUBPF_SRC = $(LIBUBPF_BASE)
+
+################################################################################
+
+$(LIBUBPF_SRC)/vm/inc/ubpf_config.h: $(LIBUBPF_SRC)
+	make -C $(LIBUBPF_SRC)/vm
+
+UK_PREPARE-$(CONFIG_LIBUBPF) += $(LIBUBPF_SRC)/vm/inc/ubpf_config.h
+
+################################################################################
+# Library includes
+################################################################################
+CINCLUDES-y += -I$(LIBUBPF_BASE)/include
+CINCLUDES-$(CONFIG_LIBUBPF) += -I$(LIBUBPF_SRC)/vm/inc
+
+################################################################################
+# Flags
+################################################################################
+LIBUBPF_FLAGS =
+
+# Suppress some warnings to make the build process look neater
+LIBUBPF_FLAGS_SUPPRESS =
+
+LIBUBPF_CFLAGS-y += $(LIBUBPF_FLAGS)
+LIBUBPF_CFLAGS-y += -Wall -Wunused-parameter
+LIBUBPF_CFLAGS-y += $(LIBUBPF_FLAGS_SUPPRESS)
+
+################################################################################
+# Glue code
+################################################################################
+# Include paths
+# LIBUBPF_CINCLUDES-y   += $(LIBUBPF_COMMON_INCLUDES-y)
+LIBUBPF_CINCLUDES-y   += -I$(LIBUBPF_SRC)/vm/inc
+# LIBUBPF_CXXINCLUDES-y += $(LIBUBPF_COMMON_INCLUDES-y)
+LIBUBPFSRCS-$(CONFIG_LIBUBPF_MAIN_FUNCTION) += $(LIBUBPF_BASE)/main.c|unikraft
+
+################################################################################
+# Library sources
+################################################################################
+# LIBUBPF_SRCS-y += # Include source files here
+LIBUBPF_SRCS-y += $(LIBUBPF_SRC)/vm/ubpf_vm.c
+LIBUBPF_SRCS-y += $(LIBUBPF_SRC)/vm/ubpf_loader.c
+LIBUBPF_SRCS-y += $(LIBUBPF_SRC)/vm/ubpf_jit.c
+LIBUBPF_SRCS-y += $(LIBUBPF_SRC)/vm/ubpf_jit_x86_64.c

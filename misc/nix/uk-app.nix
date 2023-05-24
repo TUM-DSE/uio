@@ -71,14 +71,14 @@ pkgs.stdenv.mkDerivation {
         dst = "apps/${app}/build/libsqlite/${version}.zip";
       };
 
-      libubpf = with libubpf; {
-        version = "029ea2b6e1e06337ed8fe577b4a4ee09ed0dce7d";
-        src = builtins.fetchurl {
-          url = "http://github.com/iovisor/ubpf/archive/${version}.zip";
-          sha256 = "0y88m47z7mj31aj9yk0amzw9yc2jms1rdf6r0lfcbmrsr0da449p";
-        };
-        dst = "apps/${app}/build/libubpf/${version}.zip";
-      };
+      #libubpf = with libubpf; {
+      #  version = "029ea2b6e1e06337ed8fe577b4a4ee09ed0dce7d";
+      #  src = builtins.fetchurl {
+      #    url = "http://github.com/iovisor/ubpf/archive/${version}.zip";
+      #    sha256 = "0y88m47z7mj31aj9yk0amzw9yc2jms1rdf6r0lfcbmrsr0da449p";
+      #  };
+      #  dst = "apps/${app}/build/libubpf/${version}.zip";
+      #};
 
       # libubpf_tracer = with libubpf_tracer; {
       #   version = "7d41354540d812adafcf6e601e3fbfce82360343";

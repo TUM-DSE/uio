@@ -39,7 +39,7 @@
 	path = libs/ubpf_traer_remote
 	url = https://github.com/vandah/uk_ubpf_tracer.git
 [submodule "libs/ubpf"]
-	path = libs/ubpf
+	path = libs/ubpf_remote
 	url = https://github.com/vandah/uk_ubpf.git
 [submodule "repo/ubpf"]
 	path = repo/ubpf

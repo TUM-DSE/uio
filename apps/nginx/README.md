@@ -55,7 +55,7 @@ BPF program returned: 32
 
 - Tracing with BPF
 ```
-> bpf_attach ngx_ngx_http_process_request_line /ushell/bpf/count.bin
+> bpf_attach ngx_http_process_request_line /ushell/bpf/count.bin
 Load /ushell/bpf/count.bin
 Program was attached.
 
@@ -73,11 +73,11 @@ BPF program returned: 1621476
 > bpf_exec /ushell/bpf/loop.bin
 Failed to load code: infinite loop at PC 0
 
-# zero div => result in zero (BPF specification says that)
-> bpf_exec /ushell/bpf/zerodiv.bin
-BPF program returned: 0
+# oob memory access => stop execution
+> bpf_exec /ushell/bpf/oob2.bin
+BPF program execution failed.
 
-# oob memory access => it return zero
-> bpf_exec /ushell/bpf/oob.bin
-BPF program returned: 0
+# loop => stop execution due to instruction limits
+> bpf_exec /ushell/bpf/loop2.bin
+BPF program execution failed.
 ```
