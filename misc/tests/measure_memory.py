@@ -130,11 +130,12 @@ def measure_memory(helpers: confmeasure.Helpers,
 
     sample(lambda: experiment())
 
-    # choose median
+    # choose max
     memstats_ = {}
+    idx = np.argmax(memstats["total_host_mem_with_shell_peak"])
     for k, v in memstats.items():
-        print(f"{k}: {v}, med: {np.median(v)}, mean: {np.mean(v)} std: {np.std(v)}")
-        memstats_[k] = np.median(v)
+        print(f"{k}: {v}")
+        memstats_[k] = v[idx]
 
     stats[name] = memstats_
     util.write_stats(STATS_PATH, stats)
