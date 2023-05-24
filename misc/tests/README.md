@@ -116,6 +116,19 @@ If you want to do quick experiments, set `QUICK=True` in the respective `measure
 ## Robustness (MPK)
 See [apps/mpktest](../../apps/mpktest).
 
+## ushell program size
+```
+cd <path-to-repo>
+nix build .#uk-nginx-ushellmpk-bpf-initrd
+cd result
+objcopy --strip-debug fs1/perf.o /tmp/perf_strip.o
+objcopy --strip-debug libnewlibc.o /tmp/libnewlibc.o_strip.o
+% ls -lh /tmp/*.o
+Permissions Size User Date Modified Name
+.rw-r--r--  605k masa 24 May 03:54  /tmp/libnewlibc.o_strip.o
+.rw-r--r--  4.1k masa 24 May 03:54  /tmp/perf_strip.o
+```
+
 ## Use-cases
 
 ### 1. Interactive debugigng shell

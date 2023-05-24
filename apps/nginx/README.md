@@ -55,7 +55,7 @@ BPF program returned: 32
 
 - Tracing with BPF
 ```
-> bpf_attach ngx_ngx_http_process_request_line /ushell/bpf/count.bin
+> bpf_attach ngx_http_process_request_line /ushell/bpf/count.bin
 Load /ushell/bpf/count.bin
 Program was attached.
 
