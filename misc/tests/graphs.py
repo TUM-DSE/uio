@@ -1586,7 +1586,7 @@ def app4(df: pd.DataFrame, config_names, aspect:float = 4.0) -> Any:
 
         annotate_bar_values_s2_ax(g, fontsize, rotation=90)
         sns.despine(ax=ax)
-        g.set(xticks=[], xticklabels=[], xlabel="(c) SQLite\n60k insertaion")
+        g.set(xticks=[], xticklabels=[], xlabel="(c) SQLite\n60k insertion")
         g.set_title("Lower is better ↓", fontsize=9, color="navy", weight="bold",
                     x = 0.45, y=1, pad=title_pad)
         apply_hatch_ax(ax, patch_legend=True, hatch_list=hatches)
