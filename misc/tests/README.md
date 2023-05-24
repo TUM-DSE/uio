@@ -118,15 +118,18 @@ See [apps/mpktest](../../apps/mpktest).
 
 ## ushell program size
 ```
-cd <path-to-repo>
-nix build .#uk-nginx-ushellmpk-bpf-initrd
-cd result
-objcopy --strip-debug fs1/perf.o /tmp/perf_strip.o
-objcopy --strip-debug libnewlibc.o /tmp/libnewlibc.o_strip.o
+% cd <path-to-repo>
+% nix build .#uk-nginx-ushellmpk-bpf-initrd
+% objcopy --strip-debug ./result/fs1/perf.o /tmp/perf_strip.o
+% objcopy --strip-debug ./result/ libnewlibc.o /tmp/libnewlibc.o_strip.o
 % ls -lh /tmp/*.o
 Permissions Size User Date Modified Name
 .rw-r--r--  605k masa 24 May 03:54  /tmp/libnewlibc.o_strip.o
 .rw-r--r--  4.1k masa 24 May 03:54  /tmp/perf_strip.o
+
+% ls -lh result/fs1/bpf/count.bin
+Permissions Size User Date Modified Name
+.r--r--r--   104 root  1 Jan  1970  result/fs1/bpf/count.bin
 ```
 
 ## Use-cases
