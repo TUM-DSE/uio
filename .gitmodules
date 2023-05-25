@@ -44,3 +44,6 @@
 [submodule "repo/ubpf"]
 	path = repo/ubpf
 	url = https://github.com/iovisor/ubpf
+[submodule "terminal/ebpf-verifier"]
+	path = terminal/ebpf-verifier
+	url = https://github.com/vbpf/ebpf-verifier

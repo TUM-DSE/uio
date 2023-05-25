@@ -12,3 +12,9 @@ misc/tests/measurements/
 
 .ccls-cache/
 .envrc
+
+# Jetbrains
+.idea
+
+# CMake
+cmake-build-*/
