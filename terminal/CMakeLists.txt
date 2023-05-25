@@ -11,6 +11,6 @@ include_directories(.)
 include_directories(./ebpf-verifier/src)
 include_directories(${Boost_INCLUDE_DIR})
 
-add_executable(ushell_terminal UshellTerminal.cpp UshellTerminal.h device/Socat.cpp device/Socat.h device/MockSocat.cpp device/MockSocat.h device/utils/BlockingQueue.h UshellCmdInterceptor.cpp UShellCmdInterceptor.h EBPFVerifier.cpp EBPFVerifier.h)
+add_executable(ushell_terminal UshellTerminal.cpp device/UShellConsoleDeviceFactory.cpp device/UShellConsoleDeviceFactory.h device/UShellConsoleDevice.cpp device/UShellConsoleDevice.h device/utils/BlockingQueue.h UshellCmdInterceptor.cpp UShellCmdInterceptor.h EBPFVerifier.cpp EBPFVerifier.h parameters.h device/MockUShellConsole.cpp device/MockUShellConsole.h)
 
 target_link_libraries(ushell_terminal ${Boost_LIBRARIES} ebpfverifier)

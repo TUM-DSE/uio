@@ -5,103 +5,158 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <thread>
-#include "device/Socat.h"
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/trim.hpp>
+
+#include <csignal>
+
+#include "device/UShellConsoleDeviceFactory.h"
 #include "UShellCmdInterceptor.h"
+#include "parameters.h"
 
 bool running = false;
 
-void socatReader(Socat *socat) {
-    std::string line;
-
-    while (running) {
-        unsigned long read = socat->read(line);
-        if (read > 0) {
-            std::cout << line;
-        }
-    }
+void systemSignalHandler(int signal)
+{
+	exit(signal);
 }
 
-int main(int argc, char **argv) {
+void ushellConsoleReader(UShellConsoleDevice *device)
+{
+	std::string line;
 
-    // setup program options description
-    boost::program_options::options_description ushellTerminalOptions("UShell Terminal Options");
-    ushellTerminalOptions.add_options()
-            ("help,h", "Produce help message")
-            ("ushell,u", boost::program_options::value<std::string>(),
-             "The virtio device UShell lives on (default: /tmp/port0)")
-            ("context,c", boost::program_options::value<std::string>(),
-             "Path to the directory on the host mounted to UShell (default: ./fs0)")
-            ("root,r", boost::program_options::value<std::string>(),
-             "Root directory of the UShell context (default: /ushell");
-    boost::program_options::variables_map mVMap;
+	while (running) {
+		unsigned long read = device->read(line);
+		if (read > 0) {
+			std::cout << line;
+		}
+	}
+}
 
-    try {
-        // parse program options
+int main(int argc, char **argv)
+{
 
-        boost::program_options::store(boost::program_options::parse_command_line(argc, argv, ushellTerminalOptions),
-                                      mVMap);
-        boost::program_options::notify(mVMap);
+	// setup program options description
+	boost::program_options::options_description ushellTerminalOptions(
+	    "UShell Terminal Options");
+	ushellTerminalOptions.add_options()("help,h", "Produce help message")(
+	    "ushell,u", boost::program_options::value<std::string>(),
+	    "The virtio device UShell lives on (default: /tmp/port0)");
 
-        if (mVMap.count("help")) {
-            std::cout << ushellTerminalOptions << std::endl;
-            return 0;
-        }
-    } catch (const std::exception &exception) {
-        std::cerr << "Invalid Usage: " << exception.what() << "\n";
-        std::cerr << ushellTerminalOptions << std::endl;
-        return -1;
-    }
+	boost::program_options::variables_map mVMap;
 
-    // create socat device
-    std::string ushellDevicePath = "/tmp/port0";
-    if (mVMap.count("ushell")) {
-        ushellDevicePath = mVMap["ushell"].as<std::string>();
-    }
+	try {
+		// parse program options
 
-    auto *socat = Socat::create(ushellDevicePath);
+		boost::program_options::store(
+		    boost::program_options::parse_command_line(
+			argc, argv, ushellTerminalOptions),
+		    mVMap);
+		boost::program_options::notify(mVMap);
 
-    // initialize ushell command interceptor
-    std::string ushellRoot = "/ushell";
-    if (mVMap.count("root")) {
-        ushellRoot = mVMap["root"].as<std::string>();
-    }
+		if (mVMap.count("help")) {
+			std::cout << ushellTerminalOptions << std::endl;
+			return 0;
+		}
+	} catch (const std::exception &exception) {
+		std::cerr << "Invalid Usage: " << exception.what() << "\n";
+		std::cerr << ushellTerminalOptions << std::endl;
+		return -1;
+	}
 
-    std::string ushellHostMountPoint = "./fs0";
-    if (mVMap.count("context")) {
-        ushellHostMountPoint = mVMap["context"].as<std::string>();
-    }
+	// create uShellConsoleDevice device
+	std::string ushellDevicePath = "/tmp/port0";
+	if (mVMap.count("ushell")) {
+		ushellDevicePath = mVMap["ushell"].as<std::string>();
+	}
 
-    UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint);
+	auto *uShellConsoleDevice = createUshellConsoleDevice(ushellDevicePath);
+	if (!uShellConsoleDevice->write(MOUNT_INFO_COMMAND)) {
+		std::cerr << "ERROR Failed to write ushell console"
+			  << std::endl;
+		return -1;
+	}
 
-    std::thread reader(socatReader, socat);
+	std::string ushellMountInfo;
+	if (!uShellConsoleDevice->read(ushellMountInfo)) {
+		std::cerr << "ERROR Failed to read ushell mount-info"
+			  << std::endl;
+		return -1;
+	}
 
-    // Define a name (String)
-    std::string userInput;
+	const char *mountInfoResponsePrefix = MOUNT_INFO_RESPONSE_PREFIX "=";
+	if (ushellMountInfo.find(mountInfoResponsePrefix) != 0) {
+		std::cerr << "ERROR Invalid ushell mount-info response: "
+			  << ushellMountInfo << std::endl;
+		return -1;
+	}
 
-    do {
-        std::cout << "UShell> ";
-        std::getline(std::cin, userInput);
-        if (std::cin.eof()) {
-            break;
-        }
+	std::string ushellMountPath =
+	    ushellMountInfo.substr(strlen(mountInfoResponsePrefix));
+	boost::trim_right(ushellMountPath);
 
-        auto interceptResult = interceptor.intercept(userInput);
+	std::vector<std::string> tokens;
+	boost::split(tokens, ushellMountPath, boost::is_any_of(":"));
+	if (tokens.size() != 2) {
+		std::cerr << "ERROR Invalid ushell mount-info response: "
+			  << ushellMountInfo << std::endl;
+		return -1;
+	}
 
-        if (interceptResult.code == 0 && !interceptResult.handled) {
-            socat->write(userInput);
-        } else {
-            continue;
-        }
+	// initialize ushell command interceptor
+	std::string ushellHostMountPoint = tokens.at(0);
+	if (mVMap.count("context")) {
+		ushellHostMountPoint = mVMap["context"].as<std::string>();
+	}
 
-        std::string socatOutput;
-        socat->read(socatOutput);
-        std::cout << "UShell> " << socatOutput;
-    } while (userInput != "exit");
+	std::string ushellRoot = tokens.at(1);
+	if (mVMap.count("root")) {
+		ushellRoot = mVMap["root"].as<std::string>();
+	}
 
-    running = false;
-    reader.join();
+	std::cout << "PREVAIL> DEBUG UShell mounted from "
+		  << ushellHostMountPoint << " to " << ushellRoot << std::endl;
 
-    return 0;
+	UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint);
 
-    //TODO integrate with real socat
+	// initialize signal handler
+	struct sigaction sigIntHandler{};
+	sigIntHandler.sa_handler = systemSignalHandler;
+	sigemptyset(&sigIntHandler.sa_mask);
+	sigIntHandler.sa_flags = 0;
+	sigaction(SIGINT, &sigIntHandler, nullptr);
+
+	// start ushell console reading thread
+	std::thread reader(ushellConsoleReader, uShellConsoleDevice);
+
+	// Define a name (String)
+	std::string userInput;
+
+	do {
+		std::cout << "UShell> ";
+		std::getline(std::cin, userInput);
+		if (std::cin.eof()) {
+			break;
+		}
+
+		auto interceptResult = interceptor.intercept(userInput);
+
+		if (interceptResult.code == 0 && !interceptResult.handled) {
+			uShellConsoleDevice->write(userInput);
+		} else {
+			continue;
+		}
+
+		std::string socatOutput;
+		uShellConsoleDevice->read(socatOutput);
+		std::cout << "UShell> " << socatOutput;
+	} while (userInput != "exit");
+
+	running = false;
+	reader.join();
+
+	return 0;
+
+	// TODO integrate with real uShellConsoleDevice
 }

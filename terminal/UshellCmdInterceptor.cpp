@@ -8,6 +8,8 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
+#include <filesystem>
+
 
 #include "UShellCmdInterceptor.h"
 #include "config.hpp"
@@ -15,8 +17,6 @@
 
 #include "main/utils.hpp"
 #include "EBPFVerifier.h"
-
-#include <filesystem>
 
 //TODO: optimization: cache the result of the last successful verification, e.g., via hash of the file
 UShellCmdInterceptor::UShellCmdInterceptor(std::string ushellRoot, std::string ushellHostMountPoint) :
