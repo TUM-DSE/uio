@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "MockUShellConsole.h"
 #include "parameters.h"
@@ -21,8 +22,6 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 
 	return bytesWritten;
 }
-
-static bool promptOn = false;
 
 [[noreturn]] void MockUShellConsole::start(const std::string &path)
 {
@@ -53,6 +52,8 @@ static bool promptOn = false;
 			    read(clientFd, buffer, sizeof(buffer));
 
 			std::string command(buffer, bytesRead);
+			boost::trim_right(command);
+
 			if (command.find(MOUNT_INFO_COMMAND) == 0) {
 				std::string mockedResponse =
 				    MOUNT_INFO_RESPONSE_PREFIX "=.:/\n";
@@ -71,20 +72,10 @@ static bool promptOn = false;
 					    clientFd, renderedResponse.c_str(),
 					    renderedResponse.size());
 				}
-			} else if (command.find("ushell-prompt on") == 0) {
-				promptOn = true;
-			} else if (command.find("ushell-prompt off") == 0) {
-				promptOn = false;
 			} else {
-				std::string mockedResponse =
-				    "Mocked response for: " + command + "\n";
 				writeByteByBytes(clientFd,
-						 mockedResponse.c_str(),
-						 mockedResponse.size());
-			}
-
-			if(promptOn) {
-				writeByteByBytes(clientFd, "> ", 2);
+						 command.c_str(),
+						 command.size());
 			}
 		}
 	}
