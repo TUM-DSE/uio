@@ -57,21 +57,24 @@
           pkgs.bridge-utils
           pkgs.nettools
           pkgs.nixpkgs-fmt
-          pkgs.glibc
           pkgs.sqlite
           pkgs.time # i dont think this is actually used, but `time` is checked for
-          # pkgs.glibc.static
           pkgs.unzip # needed to make apps/nginx
           pkgs.cpio
           pkgs.libelf
           # to compile BPF
           pkgs.llvmPackages_14.llvm
-          pkgs.llvmPackages_14.clangUseLLVM
+          # TOFIX: ushell terminal will not work with this line
+          # pkgs.llvmPackages_14.clangUseLLVM
           pkgs.libcgroup
+          # to compile ushell terminal
+          pkgs.cmake
+          pkgs.boost
+          pkgs.libyamlcpp
         ];
       in
       {
-        devShell = pkgs.gcc9Stdenv.mkDerivation {
+        devShell = pkgs.gcc11Stdenv.mkDerivation {
           name = "devShell";
           buildInputs = buildDeps ++ [
             pythonEnv
