@@ -7,6 +7,20 @@
 #include "MockUShellConsole.h"
 #include "parameters.h"
 
+ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
+{
+	ssize_t bytesWritten = 0;
+	for (size_t i = 0; i < size; i++) {
+		ssize_t bytesWrittenNow = write(fd, buffer + i, 1);
+		if (bytesWrittenNow < 0) {
+			return bytesWrittenNow;
+		}
+		bytesWritten += bytesWrittenNow;
+	}
+
+	return bytesWritten;
+}
+
 [[noreturn]] void MockUShellConsole::start(const std::string &path)
 {
 	// cleanup socket if exists
@@ -32,17 +46,16 @@
 		int clientFd = accept(socketFd, nullptr, nullptr);
 		while (true) {
 			char buffer[256];
-			ssize_t bytesRead =
-			    ::read(clientFd, buffer, sizeof(buffer));
+			ssize_t bytesRead = read(clientFd, buffer, sizeof(buffer));
 
 			std::string command(buffer, bytesRead);
 			if (command.find(MOUNT_INFO_COMMAND) == 0) {
 				std::string mockedResponse = MOUNT_INFO_RESPONSE_PREFIX "=.:/\n";
-				::write(clientFd, mockedResponse.c_str(), mockedResponse.size());
+				writeByteByBytes(clientFd, mockedResponse.c_str(), mockedResponse.size());
 			} else {
 				std::string mockedResponse =
 				    "Mocked response for: " + command + "\n";
-				::write(clientFd, mockedResponse.c_str(), mockedResponse.size());
+				writeByteByBytes(clientFd, mockedResponse.c_str(), mockedResponse.size());
 			}
 		}
 	}

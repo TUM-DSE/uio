@@ -27,7 +27,7 @@ void ushellConsoleReader(UShellConsoleDevice *device)
 	std::string line;
 
 	while (running) {
-		unsigned long read = device->read(line);
+		unsigned long read = device->readline(line);
 		if (read > 0) {
 			std::cout << line;
 		}
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 	}
 
 	std::string ushellMountInfo;
-	if (!uShellConsoleDevice->read(ushellMountInfo)) {
+	if (!uShellConsoleDevice->readline(ushellMountInfo)) {
 		std::cerr << "ERROR Failed to read ushell mount-info"
 			  << std::endl;
 		return -1;
@@ -121,7 +121,8 @@ int main(int argc, char **argv)
 	UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint);
 
 	// initialize signal handler
-	struct sigaction sigIntHandler{};
+	struct sigaction sigIntHandler {
+	};
 	sigIntHandler.sa_handler = systemSignalHandler;
 	sigemptyset(&sigIntHandler.sa_mask);
 	sigIntHandler.sa_flags = 0;
@@ -143,13 +144,21 @@ int main(int argc, char **argv)
 		auto interceptResult = interceptor.intercept(userInput);
 
 		if (interceptResult.code == 0 && !interceptResult.handled) {
-			uShellConsoleDevice->write(userInput);
+			auto bytesWritten = uShellConsoleDevice->write(userInput);
+			// we can write more bytes than the user actual input
+			// e.g., getline() removes the trailing '\n'
+			// but we need it to trigger the command execution
+			if (bytesWritten < userInput.size()) {
+				throw std::runtime_error(
+				    "FATAL Failed to write to USHell "
+				    "console: Broken pipe");
+			}
 		} else {
 			continue;
 		}
 
 		std::string socatOutput;
-		uShellConsoleDevice->read(socatOutput);
+		uShellConsoleDevice->readline(socatOutput);
 		std::cout << "UShell> " << socatOutput;
 	} while (userInput != "exit");
 
