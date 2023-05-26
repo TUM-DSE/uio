@@ -15,7 +15,7 @@
 #include "UShellCmdInterceptor.h"
 #include "parameters.h"
 
-bool running = false;
+bool running = true;
 
 void systemSignalHandler(int signal)
 {
@@ -24,12 +24,10 @@ void systemSignalHandler(int signal)
 
 void ushellConsoleReader(UShellConsoleDevice *device)
 {
-	std::string line;
-
 	while (running) {
-		unsigned long read = device->readline(line);
-		if (read > 0) {
-			std::cout << line;
+		char feedback = device->read();
+		if (feedback > 0) {
+			std::cout << feedback;
 		}
 	}
 }
@@ -115,7 +113,7 @@ int main(int argc, char **argv)
 		ushellRoot = mVMap["root"].as<std::string>();
 	}
 
-	std::cout << "PREVAIL> DEBUG UShell mounted from "
+	std::cout << "TERMINAL> DEBUG UShell mounted from "
 		  << ushellHostMountPoint << " to " << ushellRoot << std::endl;
 
 	UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint);
@@ -135,7 +133,6 @@ int main(int argc, char **argv)
 	std::string userInput;
 
 	do {
-		std::cout << "UShell> ";
 		std::getline(std::cin, userInput);
 		if (std::cin.eof()) {
 			break;
@@ -144,7 +141,8 @@ int main(int argc, char **argv)
 		auto interceptResult = interceptor.intercept(userInput);
 
 		if (interceptResult.code == 0 && !interceptResult.handled) {
-			auto bytesWritten = uShellConsoleDevice->write(userInput);
+			auto bytesWritten =
+			    uShellConsoleDevice->write(userInput);
 			// we can write more bytes than the user actual input
 			// e.g., getline() removes the trailing '\n'
 			// but we need it to trigger the command execution
@@ -156,10 +154,6 @@ int main(int argc, char **argv)
 		} else {
 			continue;
 		}
-
-		std::string socatOutput;
-		uShellConsoleDevice->readline(socatOutput);
-		std::cout << "UShell> " << socatOutput;
 	} while (userInput != "exit");
 
 	running = false;

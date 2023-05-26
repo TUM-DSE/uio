@@ -5,7 +5,8 @@ class UShellConsoleDevice {
 public:
     explicit UShellConsoleDevice(const std::string& path);
 
-    unsigned long readline(std::string &out) const;
+    [[nodiscard]] char read() const;
+    [[nodiscard]] unsigned long readline(std::string &out) const;
     [[nodiscard]] unsigned long write(const std::string &in) const;
 
     ~UShellConsoleDevice();

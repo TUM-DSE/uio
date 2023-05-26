@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <iostream>
+#include <sstream>
 
 #include "MockUShellConsole.h"
 #include "parameters.h"
@@ -20,6 +21,8 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 
 	return bytesWritten;
 }
+
+static bool promptOn = false;
 
 [[noreturn]] void MockUShellConsole::start(const std::string &path)
 {
@@ -46,16 +49,42 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 		int clientFd = accept(socketFd, nullptr, nullptr);
 		while (true) {
 			char buffer[256];
-			ssize_t bytesRead = read(clientFd, buffer, sizeof(buffer));
+			ssize_t bytesRead =
+			    read(clientFd, buffer, sizeof(buffer));
 
 			std::string command(buffer, bytesRead);
 			if (command.find(MOUNT_INFO_COMMAND) == 0) {
-				std::string mockedResponse = MOUNT_INFO_RESPONSE_PREFIX "=.:/\n";
-				writeByteByBytes(clientFd, mockedResponse.c_str(), mockedResponse.size());
+				std::string mockedResponse =
+				    MOUNT_INFO_RESPONSE_PREFIX "=.:/\n";
+				writeByteByBytes(clientFd,
+						 mockedResponse.c_str(),
+						 mockedResponse.size());
+			} else if (command.find("ls") == 0) {
+				for (int index = 0; index < 10; index++) {
+					std::stringstream mockedResponse;
+					mockedResponse << "test_file" << index
+						       << "\n";
+
+					std::string renderedResponse =
+					    mockedResponse.str();
+					writeByteByBytes(
+					    clientFd, renderedResponse.c_str(),
+					    renderedResponse.size());
+				}
+			} else if (command.find("ushell-prompt on") == 0) {
+				promptOn = true;
+			} else if (command.find("ushell-prompt off") == 0) {
+				promptOn = false;
 			} else {
 				std::string mockedResponse =
 				    "Mocked response for: " + command + "\n";
-				writeByteByBytes(clientFd, mockedResponse.c_str(), mockedResponse.size());
+				writeByteByBytes(clientFd,
+						 mockedResponse.c_str(),
+						 mockedResponse.size());
+			}
+
+			if(promptOn) {
+				writeByteByBytes(clientFd, "> ", 2);
 			}
 		}
 	}

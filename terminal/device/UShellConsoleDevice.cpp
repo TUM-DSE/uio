@@ -19,15 +19,21 @@ UShellConsoleDevice::UShellConsoleDevice(const std::string &path)
 	}
 }
 
+char UShellConsoleDevice::read() const
+{
+	char buffer = 0;
+	ssize_t bytesRead = ::read(socketFd, &buffer, sizeof(buffer));
+
+	return bytesRead < 0 ? (char)-1 : buffer;
+}
+
 unsigned long UShellConsoleDevice::readline(std::string &out) const
 {
 	char buffer = 0;
-	while (buffer != '\n') {
-		ssize_t bytesRead = ::read(socketFd, &buffer, sizeof(buffer));
-
-		if (bytesRead > 0) {
-			out += std::string(&buffer, bytesRead);
-		}
+	ssize_t bytesRead = ::read(socketFd, &buffer, sizeof(buffer));
+	while (bytesRead > 0 && buffer != '\n') {
+		out += std::string(&buffer, bytesRead);
+		bytesRead = ::read(socketFd, &buffer, sizeof(buffer));
 	}
 
 	return out.size();
