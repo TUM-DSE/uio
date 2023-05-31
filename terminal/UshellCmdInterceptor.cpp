@@ -33,7 +33,7 @@ InterceptionResult UShellCmdInterceptor::intercept(const std::string &in) {
         boost::trim(command);
 
         if (command == "cwd") {
-            std::cout << std::filesystem::current_path() << std::endl;
+            std::cout << std::filesystem::current_path().string() << std::endl;
             return {0, true};
         } else if (command == "bpf_exec") {
             if(tokens.size() < 2) {
