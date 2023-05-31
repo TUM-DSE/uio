@@ -46,6 +46,9 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 
 	while (true) {
 		int clientFd = accept(socketFd, nullptr, nullptr);
+
+		writeByteByBytes(clientFd, "> ", 2);
+
 		while (true) {
 			char buffer[256];
 			ssize_t bytesRead =
@@ -77,6 +80,8 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 						 command.c_str(),
 						 command.size());
 			}
+
+			writeByteByBytes(clientFd, "> ", 2);
 		}
 	}
 }
