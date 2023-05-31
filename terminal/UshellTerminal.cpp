@@ -15,26 +15,42 @@
 #include "UShellCmdInterceptor.h"
 #include "parameters.h"
 
-bool running = true;
-
 void systemSignalHandler(int signal)
 {
 	exit(signal);
 }
 
-void ushellConsoleReader(UShellConsoleDevice *device)
+void readUntilPrompt(UShellConsoleDevice *device, bool printPrompt = true)
 {
-	while (running) {
-		char feedback = device->read();
-		if (feedback > 0) {
-			std::cout << feedback;
+	char lastChar = 0;
+	while (true) {
+		char c = device->read();
+		if (c < 0) {
+			throw std::runtime_error(
+			    "Could not read from ushell console: IO error");
 		}
+
+		if (lastChar == '>') {
+			if (c == ' ') {
+				if (printPrompt) {
+					std::cout << USHELL_TERMINAL_PROMPT;
+				}
+				break;
+			} else {
+				std::cout << lastChar;
+			}
+		}
+
+		if (c != '>') {
+			std::cout << c << std::flush;
+		}
+
+		lastChar = c;
 	}
 }
 
 int main(int argc, char **argv)
 {
-
 	// setup program options description
 	boost::program_options::options_description ushellTerminalOptions(
 	    "UShell Terminal Options");
@@ -70,6 +86,8 @@ int main(int argc, char **argv)
 	}
 
 	auto *uShellConsoleDevice = createUshellConsoleDevice(ushellDevicePath);
+	readUntilPrompt(uShellConsoleDevice, false);
+
 	if (!uShellConsoleDevice->write(MOUNT_INFO_COMMAND)) {
 		std::cerr << "ERROR Failed to write ushell console"
 			  << std::endl;
@@ -116,6 +134,9 @@ int main(int argc, char **argv)
 	std::cout << "TERMINAL> DEBUG UShell mounted from "
 		  << ushellHostMountPoint << " to " << ushellRoot << std::endl;
 
+	// Start of the main terminal cycles
+	readUntilPrompt(uShellConsoleDevice);
+
 	UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint);
 
 	// initialize signal handler
@@ -125,9 +146,6 @@ int main(int argc, char **argv)
 	sigemptyset(&sigIntHandler.sa_mask);
 	sigIntHandler.sa_flags = 0;
 	sigaction(SIGINT, &sigIntHandler, nullptr);
-
-	// start ushell console reading thread
-	std::thread reader(ushellConsoleReader, uShellConsoleDevice);
 
 	// Define a name (String)
 	std::string userInput;
@@ -151,15 +169,13 @@ int main(int argc, char **argv)
 				    "FATAL Failed to write to USHell "
 				    "console: Broken pipe");
 			}
+
+			readUntilPrompt(uShellConsoleDevice);
 		} else {
+			std::cout << USHELL_TERMINAL_PROMPT;
 			continue;
 		}
 	} while (userInput != "exit");
 
-	running = false;
-	reader.join();
-
 	return 0;
-
-	// TODO integrate with real uShellConsoleDevice
 }

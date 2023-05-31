@@ -9,7 +9,7 @@
 #include "UShellConsoleMock.h"
 #include "parameters.h"
 
-ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
+ssize_t writeByteByByte(int fd, const char *buffer, size_t size)
 {
 	ssize_t bytesWritten = 0;
 	for (size_t i = 0; i < size; i++) {
@@ -47,7 +47,7 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 	while (true) {
 		int clientFd = accept(socketFd, nullptr, nullptr);
 
-		writeByteByBytes(clientFd, "> ", 2);
+		writeByteByByte(clientFd, "> ", 2);
 
 		while (true) {
 			char buffer[256];
@@ -60,9 +60,9 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 			if (command.find(MOUNT_INFO_COMMAND) == 0) {
 				std::string mockedResponse =
 				    MOUNT_INFO_RESPONSE_PREFIX "=.:/\n";
-				writeByteByBytes(clientFd,
-						 mockedResponse.c_str(),
-						 mockedResponse.size());
+				writeByteByByte(clientFd,
+						mockedResponse.c_str(),
+						mockedResponse.size());
 			} else if (command.find("ls") == 0) {
 				for (int index = 0; index < 10; index++) {
 					std::stringstream mockedResponse;
@@ -71,17 +71,16 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 
 					std::string renderedResponse =
 					    mockedResponse.str();
-					writeByteByBytes(
+					writeByteByByte(
 					    clientFd, renderedResponse.c_str(),
 					    renderedResponse.size());
 				}
 			} else {
-				writeByteByBytes(clientFd,
-						 command.c_str(),
-						 command.size());
+				writeByteByByte(clientFd, ("Unknown command: " + command).c_str(),
+						command.size());
 			}
 
-			writeByteByBytes(clientFd, "> ", 2);
+			writeByteByByte(clientFd, "> ", 2);
 		}
 	}
 }
