@@ -6,7 +6,7 @@
 #include <sstream>
 #include <boost/algorithm/string/trim.hpp>
 
-#include "MockUShellConsole.h"
+#include "UShellConsoleMock.h"
 #include "parameters.h"
 
 ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
@@ -23,7 +23,7 @@ ssize_t writeByteByBytes(int fd, const char *buffer, size_t size)
 	return bytesWritten;
 }
 
-[[noreturn]] void MockUShellConsole::start(const std::string &path)
+[[noreturn]] void UShellConsoleMock::start(const std::string &path)
 {
 	// cleanup socket if exists
 	unlink(path.c_str());

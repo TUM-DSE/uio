@@ -3,7 +3,7 @@
 
 #include "UShellConsoleDeviceFactory.h"
 #include "UShellConsoleDevice.h"
-#include "MockUShellConsole.h"
+#include "device/mock/UShellConsoleMock.h"
 
 #define MOCK_SOCAT
 
@@ -15,7 +15,7 @@ UShellConsoleDevice *createUshellConsoleDevice(const std::string &path)
 		throw std::runtime_error(
 		    "Failed to initialize mocked ushell console server");
 	} else if (pid == 0) {
-		MockUShellConsole::start(path);
+		UShellConsoleMock::start(path);
 	} else {
 		sleep(1);
 		const UShellConsoleDevice *uShellConsoleDevice =
