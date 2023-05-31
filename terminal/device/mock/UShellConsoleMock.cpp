@@ -47,8 +47,6 @@ ssize_t writeByteByByte(int fd, const char *buffer, size_t size)
 	while (true) {
 		int clientFd = accept(socketFd, nullptr, nullptr);
 
-		writeByteByByte(clientFd, "> ", 2);
-
 		while (true) {
 			char buffer[256];
 			ssize_t bytesRead =
@@ -75,9 +73,13 @@ ssize_t writeByteByByte(int fd, const char *buffer, size_t size)
 					    clientFd, renderedResponse.c_str(),
 					    renderedResponse.size());
 				}
+			} else if (command.empty()) {
+
 			} else {
-				writeByteByByte(clientFd, ("Unknown command: " + command).c_str(),
-						command.size());
+				writeByteByByte(
+				    clientFd,
+				    ("Unknown command: " + command).c_str(),
+				    command.size());
 			}
 
 			writeByteByByte(clientFd, "> ", 2);

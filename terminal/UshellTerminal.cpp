@@ -86,6 +86,7 @@ int main(int argc, char **argv)
 	}
 
 	auto *uShellConsoleDevice = createUshellConsoleDevice(ushellDevicePath);
+	uShellConsoleDevice->write("");
 	readUntilPrompt(uShellConsoleDevice, false);
 
 	if (!uShellConsoleDevice->write(MOUNT_INFO_COMMAND)) {
