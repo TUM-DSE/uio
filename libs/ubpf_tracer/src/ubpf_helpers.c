@@ -235,7 +235,11 @@ int bpf_exec(const char *filename, void *args, size_t args_size, int debug,
   }
   char *errmsg;
   int rv;
+#if defined(UBPF_HAS_ELF_H)
+  rv = ubpf_load_elf(vm, code, code_len, &errmsg);
+#else
   rv = ubpf_load(vm, code, code_len, &errmsg);
+#endif
   free(code);
 
   if (rv < 0) {
