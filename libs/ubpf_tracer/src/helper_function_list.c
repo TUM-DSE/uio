@@ -92,21 +92,6 @@ void helper_function_list_remove_elem(HelperFunctionList *self,
 	self->m_length -= removed_elements;
 }
 
-void helper_function_list_apply_function(
-    HelperFunctionList *self, void (*apply)(struct HelperFunctionEntry *))
-{
-	for (HelperFunctionEntry *entry = self->m_head; entry != NULL;
-	     entry = entry->m_next) {
-		apply(entry);
-	}
-}
-
-void helper_function_list_print(HelperFunctionList *self,
-				void (*printer)(struct HelperFunctionEntry *))
-{
-	helper_function_list_apply_function(self, printer);
-}
-
 void helper_function_list_destroy(HelperFunctionList *self)
 {
 	for (HelperFunctionEntry *entry = self->m_head; entry != NULL;) {

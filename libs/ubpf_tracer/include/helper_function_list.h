@@ -62,13 +62,6 @@ bool helper_function_list_emplace_back(
 void helper_function_list_remove_elem(HelperFunctionList *self,
 				      const char *function_name);
 
-void helper_function_list_apply_function(
-    HelperFunctionList *self, void (*apply)(struct HelperFunctionEntry *entry));
-
-void helper_function_list_print(
-    HelperFunctionList *self,
-    void (*printer)(struct HelperFunctionEntry *entry));
-
 void helper_function_list_destroy(HelperFunctionList *self);
 
 #endif /* HELPER_FUNCTION_LIST_H */
