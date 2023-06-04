@@ -468,21 +468,28 @@ void bpf_puts(char *buf)
 	ushell_puts(buf);
 }
 
-void print_helper_specs(void (*print_fn)(const char *)) {
+void print_helper_specs(void (*print_fn)(const char *))
+{
+	char* buffer[8];
+
 	for (HelperFunctionEntry *entry = g_bpf_helper_functions->m_head;
 	     entry != NULL; entry = entry->m_next) {
 		print_fn(entry->m_function_signature.m_function_name);
 		print_fn("->");
-		print_fn(entry->m_function_signature.m_return_type);
+		itoa(buffer, entry->m_function_signature.m_return_type, 16);
+		print_fn(buffer);
 		print_fn(":");
-		for (int index = 0; index < entry->m_function_signature.m_num_args; index++) {
-			print_fn(entry->m_function_signature.m_arg_types[index]);
-			if (index != entry->m_function_signature.m_num_args - 1) {
+		for (int index = 0;
+		     index < entry->m_function_signature.m_num_args; index++) {
+			itoa(buffer, entry->m_function_signature.m_arg_types[index]);
+			print_fn(buffer);
+			if (index
+			    != entry->m_function_signature.m_num_args - 1) {
 				print_fn(",");
 			}
 		}
 
-		if(entry->m_next != NULL) {
+		if (entry->m_next != NULL) {
 			print_fn(";");
 		}
 	}
