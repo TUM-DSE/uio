@@ -67,7 +67,6 @@ struct UbpfTracer *init_tracer() {
   tracer->nop_map = hmap_init(101, destruct_cell, nop_map_init, &map_result);
   tracer->function_names =
       hmap_init(101, destruct_cell, function_names_init, &map_result);
-  tracer->helper_list = init_helper_list();
 
   // register local helpers
   tracer_helpers_add(tracer, "bpf_notify", bpf_notify);
@@ -80,12 +79,10 @@ struct UbpfTracer *init_tracer() {
 
 void tracer_helpers_add(struct UbpfTracer *tracer, const char *label,
                         void *function_ptr) {
-  list_add_elem(tracer->helper_list, label, function_ptr);
   additional_helpers_list_add(label, function_ptr);
 }
 
 void tracer_helpers_del(struct UbpfTracer *tracer, const char *label) {
-  list_remove_elem(tracer->helper_list, label);
   additional_helpers_list_del(label);
 }
 
@@ -164,7 +161,7 @@ int bpf_attach_internal(struct UbpfTracer *tracer, const char *function_name,
   }
   // TODO: verify bpf_program here
 
-  struct ubpf_vm *vm = init_vm(tracer->helper_list, NULL);
+  struct ubpf_vm *vm = init_vm(NULL);
   char *errmsg;
   ubpf_load(vm, bpf_program, code_len, &errmsg);
 

@@ -22,8 +22,6 @@ struct UbpfTracer {
   struct THashMap *nop_map;        // { function_address -> nop_address }
   struct THashMap *vm_map;         // { ret_address -> List<(label, ubpf_vm)> }
   struct THashMap *function_names; // { ret_address -> function_name }
-  struct ArrayListWithLabels
-      *helper_list; // [(function_name, function_address)]
 };
 
 struct UbpfTracerCtx {

@@ -1,8 +1,8 @@
 #ifndef UBPF_HELPERS_H
 #define UBPF_HELPERS_H
 
-#include "arraylist.h"
 #include "hash_chains.h"
+#include "helper_function_list.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -36,10 +36,11 @@ uint64_t bpf_probe_read(uint64_t addr, uint64_t size);
 uint64_t bpf_time_get_ns();
 void bpf_puts(char *buf);
 
-struct ubpf_vm *init_vm(struct ArrayListWithLabels *helper_list, FILE *logfile);
-struct ArrayListWithLabels *init_helper_list();
+HelperFunctionList *get_instance_builtin_bpf_helpers();
 void additional_helpers_list_add(const char *label, void *function_ptr);
 void additional_helpers_list_del(const char *label);
+
+struct ubpf_vm *init_vm(FILE *logfile);
 
 void *readfile(const char *path, size_t maxlen, size_t *len);
 
