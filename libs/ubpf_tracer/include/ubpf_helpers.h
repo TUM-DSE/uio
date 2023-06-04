@@ -19,15 +19,6 @@
     free(buf);                                                                 \
   }
 
-// BPF helperes
-uint64_t bpf_map_get(uint64_t key1, uint64_t key2);
-uint64_t bpf_map_put(uint64_t key1, uint64_t key2, uint64_t value);
-uint64_t bpf_map_del(uint64_t key1, uint64_t key2);
-uint64_t bpf_get_addr(const char *function_name);
-uint64_t bpf_probe_read(uint64_t addr, uint64_t size);
-uint64_t bpf_time_get_ns();
-void bpf_puts(char *buf);
-
 HelperFunctionList *init_builtin_bpf_helpers();
 void additional_helpers_list_add(const char *label, void *function_ptr);
 void additional_helpers_list_del(const char *label);
