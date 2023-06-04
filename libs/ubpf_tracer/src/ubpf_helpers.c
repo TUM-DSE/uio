@@ -50,6 +50,7 @@ void helper_function_entry_destructor(HelperFunctionEntry *entry)
  */
 HelperFunctionList *init_builtin_bpf_helpers()
 {
+	//TODO add mpk protection back
 	if (g_bpf_helper_functions) {
 		return g_bpf_helper_functions;
 	}
