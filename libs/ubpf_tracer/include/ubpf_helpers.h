@@ -19,14 +19,6 @@
     free(buf);                                                                 \
   }
 
-#define register_helper(idx, label, fun_ptr)                                   \
-  {                                                                            \
-    if (logfile != NULL) {                                                     \
-      fprintf(logfile, " - [%lu]: %s\n", idx, label);                          \
-    }                                                                          \
-    ubpf_register(vm, idx, label, fun_ptr);                                    \
-  }
-
 // BPF helperes
 uint64_t bpf_map_get(uint64_t key1, uint64_t key2);
 uint64_t bpf_map_put(uint64_t key1, uint64_t key2, uint64_t value);
@@ -36,7 +28,7 @@ uint64_t bpf_probe_read(uint64_t addr, uint64_t size);
 uint64_t bpf_time_get_ns();
 void bpf_puts(char *buf);
 
-HelperFunctionList *get_instance_builtin_bpf_helpers();
+HelperFunctionList *init_builtin_bpf_helpers();
 void additional_helpers_list_add(const char *label, void *function_ptr);
 void additional_helpers_list_del(const char *label);
 void print_helper_specs(void (*print_fn)(const char *));

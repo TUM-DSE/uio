@@ -191,7 +191,7 @@ void helper_function_entry_destructor(HelperFunctionEntry *entry)
  * ready.
  * @return The helper function list.
  */
-HelperFunctionList *get_instance_builtin_bpf_helpers()
+HelperFunctionList *init_builtin_bpf_helpers()
 {
 	if (g_bpf_helper_functions) {
 		return g_bpf_helper_functions;
@@ -261,6 +261,17 @@ void additional_helpers_list_del(const char *label)
 	 */
 }
 
+static inline void register_helper(FILE *logfile, struct ubpf_vm *vm,
+				   UK_UBPF_INDEX_t index,
+				   const char *function_name,
+				   void *function_ptr)
+{
+	if (logfile != NULL) {
+		fprintf(logfile, " - [%lu]: %s\n", index, function_name);
+	}
+	ubpf_register(vm, index, function_name, function_ptr);
+}
+
 struct ubpf_vm *init_vm(FILE *logfile)
 {
 	struct ubpf_vm *vm = ubpf_create();
@@ -268,28 +279,16 @@ struct ubpf_vm *init_vm(FILE *logfile)
 		fprintf(logfile, "attached BPF helpers:\n");
 	}
 
-	/*
-	uint64_t function_index = 0;
+	HelperFunctionList *builtin_helpers = init_builtin_bpf_helpers();
 
-	/* register generail helper functions */
-	/*
-#define REGISTER_HELPER(name)                                                  \
-	register_helper(function_index, #name, name);                          \
-	function_index++;
-
-	REGISTER_HELPER(bpf_map_noop);
-	REGISTER_HELPER(bpf_map_get);
-	REGISTER_HELPER(bpf_map_put);
-	REGISTER_HELPER(bpf_map_del);
-	REGISTER_HELPER(bpf_get_addr);
-	REGISTER_HELPER(bpf_probe_read);
-	REGISTER_HELPER(bpf_time_get_ns);
-	REGISTER_HELPER(bpf_puts);
-
-	if (helper_list == NULL) {
-		helper_list = additional_helpers;
+	for (HelperFunctionEntry *entry = builtin_helpers->m_head;
+	     entry != NULL; entry = entry->m_next) {
+		register_helper(logfile, vm, entry->m_index,
+				entry->m_function_signature.m_function_name,
+				entry->m_function_addr);
 	}
 
+	/*
 	if (helper_list != NULL) {
 		for (uint64_t i = 0; i < helper_list->m_Length; ++i) {
 			struct LabeledEntry elem = helper_list->m_List[i];
@@ -470,12 +469,11 @@ void bpf_puts(char *buf)
 
 void print_helper_specs(void (*print_fn)(const char *))
 {
+	HelperFunctionList *list = init_builtin_bpf_helpers();
+
 	char buffer[8];
-
-	HelperFunctionList* list = get_instance_builtin_bpf_helpers();
-
-	for (HelperFunctionEntry *entry = list->m_head;
-	     entry != NULL; entry = entry->m_next) {
+	for (HelperFunctionEntry *entry = list->m_head; entry != NULL;
+	     entry = entry->m_next) {
 		print_fn(entry->m_function_signature.m_function_name);
 		print_fn("->");
 		itoa(entry->m_function_signature.m_return_type, buffer, 16);
