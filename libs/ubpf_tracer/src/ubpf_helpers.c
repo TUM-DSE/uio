@@ -211,7 +211,7 @@ struct ubpf_vm *init_vm(FILE *logfile)
 	}*/
 
 	if (unwind_function) {
-		ubpf_set_unwind_function_index(vm, entry->m_index);
+		ubpf_set_unwind_function_index(vm, unwind_function->m_index);
 	}
 
 	return vm;
