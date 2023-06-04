@@ -83,6 +83,7 @@ LIBUBPF_TRACERSRCS-$(CONFIG_LIBUBPF_TRACER_MAIN_FUNCTION) += $(LIBUBPF_TRACER_BA
 ################################################################################
 # LIBUBPF_TRACER_SRCS-y += # Include source files here
 LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/arraylist.c
+LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/helper_function_list.c
 LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/hash_chains.c
 LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/ubpf_helpers.c
 LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/ubpf_tracer.c
