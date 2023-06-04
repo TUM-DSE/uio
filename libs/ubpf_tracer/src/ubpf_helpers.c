@@ -202,12 +202,11 @@ HelperFunctionList *get_instance_builtin_bpf_helpers()
 				      helper_function_entry_destructor);
 	// add builtin helper functions
 	// bpf_map_noop
-	helper_function_list_emplace_back(
-	    g_bpf_helper_functions, 0, "bpf_map_noop", bpf_map_noop,
-	    EBPF_RETURN_TYPE_INTEGER, 0, NULL);
+	helper_function_list_emplace_back(g_bpf_helper_functions, 0,
+					  "bpf_map_noop", bpf_map_noop,
+					  EBPF_RETURN_TYPE_INTEGER, 0, NULL);
 
-
-	//bpf_map_get
+	// bpf_map_get
 	ebpf_argument_type_t args_bpf_map_get[] = {
 	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
 	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
@@ -244,7 +243,7 @@ HelperFunctionList *get_instance_builtin_bpf_helpers()
 
 void additional_helpers_list_add(const char *label, void *function_ptr)
 {
-	//TODO
+	// TODO
 	/*if (additional_helpers == NULL) {
 		additional_helpers = init_helper_list();
 	}
@@ -254,7 +253,7 @@ void additional_helpers_list_add(const char *label, void *function_ptr)
 
 void additional_helpers_list_del(const char *label)
 {
-	//TODO
+	// TODO
 	/*
 	if (additional_helpers != NULL) {
 		list_remove_elem(additional_helpers, label);
@@ -467,4 +466,24 @@ void bpf_puts(char *buf)
 {
 	void ushell_puts(char *);
 	ushell_puts(buf);
+}
+
+void print_helper_specs(void (*print_fn)(const char *)) {
+	for (HelperFunctionEntry *entry = g_bpf_helper_functions->m_head;
+	     entry != NULL; entry = entry->m_next) {
+		print_fn(entry->m_function_signature.m_function_name);
+		print_fn("->");
+		print_fn(entry->m_function_signature.m_return_type);
+		print_fn(":");
+		for (int index = 0; index < entry->m_function_signature.m_num_args; index++) {
+			print_fn(entry->m_function_signature.m_arg_types[index]);
+			if (index != entry->m_function_signature.m_num_args - 1) {
+				print_fn(",");
+			}
+		}
+
+		if(entry->m_next != NULL) {
+			print_fn(";");
+		}
+	}
 }

@@ -39,6 +39,7 @@ void bpf_puts(char *buf);
 HelperFunctionList *get_instance_builtin_bpf_helpers();
 void additional_helpers_list_add(const char *label, void *function_ptr);
 void additional_helpers_list_del(const char *label);
+void print_helper_specs(void (*print_fn)(const char *));
 
 struct ubpf_vm *init_vm(FILE *logfile);
 
