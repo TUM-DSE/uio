@@ -95,15 +95,6 @@ HelperFunctionList *init_builtin_bpf_helpers()
 	    g_bpf_helper_functions, 2, "bpf_map_put", bpf_map_put,
 	    EBPF_RETURN_TYPE_INTEGER, 3, args_bpf_map_put);
 
-	// bpf_map_del
-	ebpf_argument_type_t args_bpf_map_put[] = {
-	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
-	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
-	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
-	};
-	helper_function_list_emplace_back(
-	    g_bpf_helper_functions, 2, "bpf_map_put", bpf_map_put,
-	    EBPF_RETURN_TYPE_INTEGER, 3, args_bpf_map_put);
 	/*
       REGISTER_HELPER(bpf_map_del);
       REGISTER_HELPER(bpf_get_addr);
