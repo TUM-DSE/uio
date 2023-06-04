@@ -472,7 +472,9 @@ void print_helper_specs(void (*print_fn)(const char *))
 {
 	char buffer[8];
 
-	for (HelperFunctionEntry *entry = g_bpf_helper_functions->m_head;
+	HelperFunctionList* list = get_instance_builtin_bpf_helpers();
+
+	for (HelperFunctionEntry *entry = list->m_head;
 	     entry != NULL; entry = entry->m_next) {
 		print_fn(entry->m_function_signature.m_function_name);
 		print_fn("->");
