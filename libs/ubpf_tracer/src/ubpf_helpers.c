@@ -475,10 +475,7 @@ void print_helper_specs(void (*print_fn)(const char *))
 	for (HelperFunctionEntry *entry = list->m_head; entry != NULL;
 	     entry = entry->m_next) {
 		print_fn(entry->m_function_signature.m_function_name);
-		print_fn("->");
-		itoa(entry->m_function_signature.m_return_type, buffer, 16);
-		print_fn(buffer);
-		print_fn(":");
+		print_fn("(");
 		for (int index = 0;
 		     index < entry->m_function_signature.m_num_args; index++) {
 			itoa(entry->m_function_signature.m_arg_types[index],
@@ -489,6 +486,10 @@ void print_helper_specs(void (*print_fn)(const char *))
 				print_fn(",");
 			}
 		}
+
+		print_fn(")->");
+		itoa(entry->m_function_signature.m_return_type, buffer, 16);
+		print_fn(buffer);
 
 		if (entry->m_next != NULL) {
 			print_fn(";");
