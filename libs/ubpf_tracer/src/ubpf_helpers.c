@@ -55,13 +55,15 @@ uint64_t bpf_map_noop()
 	return 0;
 }
 
+#define BPF_MAP_VALUE_UNDEFINED UINT64_MAX // -1
+
 uint64_t bpf_map_get(uint64_t key1, uint64_t key2)
 {
 	if (g_bpf_map == NULL) {
 		g_bpf_map = init_bpf_map();
 	}
 
-	uint64_t value = UINT64_MAX; // -1
+	uint64_t value = BPF_MAP_VALUE_UNDEFINED;
 
 	struct THmapValueResult *hmap_entry_l1 = hmap_get(g_bpf_map, key1);
 	if (hmap_entry_l1->m_Result == HMAP_SUCCESS) {
@@ -115,7 +117,7 @@ uint64_t bpf_map_del(uint64_t key1, uint64_t key2)
 {
 	debug("(DEL) bpf_map[%lu][%lu]", key1, key2);
 	if (g_bpf_map == NULL) {
-		return;
+		return BPF_MAP_VALUE_UNDEFINED;
 	}
 
 	uint64_t originalValue = bpf_map_get(key1, key2);
@@ -236,6 +238,8 @@ HelperFunctionList *get_instance_builtin_bpf_helpers()
 	 register_helper(function_index, "bpf_unwind", bpf_unwind);
       ubpf_set_unwind_function_index(vm, function_index);
 	 */
+
+	return g_bpf_helper_functions;
 }
 
 void additional_helpers_list_add(const char *label, void *function_ptr)
@@ -265,6 +269,7 @@ struct ubpf_vm *init_vm(FILE *logfile)
 		fprintf(logfile, "attached BPF helpers:\n");
 	}
 
+	/*
 	uint64_t function_index = 0;
 
 	/* register generail helper functions */

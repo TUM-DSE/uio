@@ -29,8 +29,8 @@
 
 // BPF helperes
 uint64_t bpf_map_get(uint64_t key1, uint64_t key2);
-void bpf_map_put(uint64_t key1, uint64_t key2, uint64_t value);
-void bpf_map_del(uint64_t key1, uint64_t key2);
+uint64_t bpf_map_put(uint64_t key1, uint64_t key2, uint64_t value);
+uint64_t bpf_map_del(uint64_t key1, uint64_t key2);
 uint64_t bpf_get_addr(const char *function_name);
 uint64_t bpf_probe_read(uint64_t addr, uint64_t size);
 uint64_t bpf_time_get_ns();
