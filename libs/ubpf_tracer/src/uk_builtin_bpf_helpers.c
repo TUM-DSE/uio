@@ -48,7 +48,7 @@ static struct THashMap *init_bpf_map()
 }
 // end of private functions
 
-// implementation of the built in helper functions
+// implementation of the builtin helper functions
 uint64_t bpf_map_noop()
 {
 	return 0;
