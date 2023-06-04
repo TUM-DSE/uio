@@ -470,7 +470,7 @@ void bpf_puts(char *buf)
 
 void print_helper_specs(void (*print_fn)(const char *))
 {
-	char* buffer[8];
+	char *buffer[8];
 
 	for (HelperFunctionEntry *entry = g_bpf_helper_functions->m_head;
 	     entry != NULL; entry = entry->m_next) {
@@ -481,7 +481,9 @@ void print_helper_specs(void (*print_fn)(const char *))
 		print_fn(":");
 		for (int index = 0;
 		     index < entry->m_function_signature.m_num_args; index++) {
-			itoa(buffer, entry->m_function_signature.m_arg_types[index]);
+			itoa(buffer,
+			     entry->m_function_signature.m_arg_types[index],
+			     16);
 			print_fn(buffer);
 			if (index
 			    != entry->m_function_signature.m_num_args - 1) {
