@@ -204,27 +204,27 @@ HelperFunctionList *get_instance_builtin_bpf_helpers()
 	// bpf_map_noop
 	helper_function_list_emplace_back(
 	    g_bpf_helper_functions, 0, "bpf_map_noop", bpf_map_noop,
-	    ebpf_return_type_t.EBPF_RETURN_TYPE_INTEGER, 0, NULL);
+	    EBPF_RETURN_TYPE_INTEGER, 0, NULL);
 
 
 	//bpf_map_get
 	ebpf_argument_type_t args_bpf_map_get[] = {
-	    ebpf_argument_type_t.EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
-	    ebpf_argument_type_t.EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
 	};
 	helper_function_list_emplace_back(
 	    g_bpf_helper_functions, 1, "bpf_map_get", bpf_map_get,
-	    ebpf_return_type_t.EBPF_RETURN_TYPE_INTEGER, 2, args_bpf_map_get);
+	    EBPF_RETURN_TYPE_INTEGER, 2, args_bpf_map_get);
 
 	// bpf_map_put
 	ebpf_argument_type_t args_bpf_map_put[] = {
-	    ebpf_argument_type_t.EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
-	    ebpf_argument_type_t.EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
-	    ebpf_argument_type_t.EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
 	};
 	helper_function_list_emplace_back(
 	    g_bpf_helper_functions, 2, "bpf_map_put", bpf_map_put,
-	    ebpf_return_type_t.EBPF_RETURN_TYPE_INTEGER, 3, args_bpf_map_put);
+	    EBPF_RETURN_TYPE_INTEGER, 3, args_bpf_map_put);
 
 	/*
 	 * REGISTER_HELPER(bpf_map_noop);
