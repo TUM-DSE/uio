@@ -5,19 +5,6 @@
 
 #include "uk_builtin_bpf_helpers.h"
 
-// #define UBPF_DEBUG
-#ifdef UBPF_DEBUG
-#define debug(msg, ...)                                                        \
-	do {                                                                   \
-		printf("[Debug] %s:%d %s(): ", __FILE__, __LINE__, __func__);  \
-		printf(msg "\n", ##__VA_ARGS__);                               \
-	} while (0)
-#else
-#define debug(fmt, ...)                                                        \
-	do {                                                                   \
-	} while (0)
-#endif
-
 HelperFunctionList *g_bpf_helper_functions = NULL;
 HelperFunctionList *g_additional_helpers = NULL;
 
