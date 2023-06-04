@@ -262,9 +262,9 @@ void additional_helpers_list_del(const char *label)
 }
 
 static inline void register_helper(FILE *logfile, struct ubpf_vm *vm,
-				   UK_UBPF_INDEX_t index,
+				   const UK_UBPF_INDEX_t index,
 				   const char *function_name,
-				   void *function_ptr)
+				   const void *function_ptr)
 {
 	if (logfile != NULL) {
 		fprintf(logfile, " - [%lu]: %s\n", index, function_name);
