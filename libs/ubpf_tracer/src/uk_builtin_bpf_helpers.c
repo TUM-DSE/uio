@@ -143,7 +143,7 @@ uint64_t bpf_get_addr(const char *function_name)
 	return fun_addr;
 }
 
-uint64_t bpf_probe_read(uint64_t addr, uint64_t size)
+uint64_t bpf_probe_read(void* addr, uint64_t size)
 {
 	if (size != 1 && size != 4 && size != 8) {
 		debug("bpf_probe_read: invalid size %lu\n", size);
@@ -190,8 +190,10 @@ uint64_t bpf_unwind(uint64_t i)
 // TODO:
 // - check size, null termination
 // - support format string
-void bpf_puts(char *buf)
+uint64_t bpf_puts(const char *buf)
 {
-	void ushell_puts(char *);
+	void ushell_puts(const char *);
 	ushell_puts(buf);
+
+	return 0;
 }

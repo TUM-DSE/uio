@@ -70,7 +70,9 @@ HelperFunctionList *init_builtin_bpf_helpers()
 	};
 	helper_function_list_emplace_back(
 	    g_bpf_helper_functions, 1, "bpf_map_get", bpf_map_get,
-	    EBPF_RETURN_TYPE_INTEGER, 2, args_bpf_map_get);
+	    EBPF_RETURN_TYPE_INTEGER,
+	    sizeof(args_bpf_map_get) / sizeof(ebpf_argument_type_t),
+	    args_bpf_map_get);
 
 	// bpf_map_put
 	ebpf_argument_type_t args_bpf_map_put[] = {
@@ -80,17 +82,66 @@ HelperFunctionList *init_builtin_bpf_helpers()
 	};
 	helper_function_list_emplace_back(
 	    g_bpf_helper_functions, 2, "bpf_map_put", bpf_map_put,
-	    EBPF_RETURN_TYPE_INTEGER, 3, args_bpf_map_put);
+	    EBPF_RETURN_TYPE_INTEGER,
+	    sizeof(args_bpf_map_put) / sizeof(ebpf_argument_type_t),
+	    args_bpf_map_put);
 
-	/*
-      REGISTER_HELPER(bpf_map_del);
-      REGISTER_HELPER(bpf_get_addr);
-      REGISTER_HELPER(bpf_probe_read);
-      REGISTER_HELPER(bpf_time_get_ns);
-      REGISTER_HELPER(bpf_puts);
-	 register_helper(function_index, "bpf_unwind", bpf_unwind);
-      ubpf_set_unwind_function_index(vm, function_index);
-	 */
+	// bpf_map_del
+	ebpf_argument_type_t args_bpf_map_del[] = {
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
+	};
+	helper_function_list_emplace_back(
+	    g_bpf_helper_functions, 3, "bpf_map_del", bpf_map_del,
+	    EBPF_RETURN_TYPE_INTEGER,
+	    sizeof(args_bpf_map_del) / sizeof(ebpf_argument_type_t),
+	    args_bpf_map_del);
+
+	// bpf_get_addr
+	ebpf_argument_type_t args_bpf_get_addr[] = {
+	    EBPF_ARGUMENT_TYPE_PTR_TO_CTX,
+	};
+	helper_function_list_emplace_back(
+	    g_bpf_helper_functions, 4, "bpf_get_addr", bpf_get_addr,
+	    EBPF_RETURN_TYPE_INTEGER,
+	    sizeof(args_bpf_get_addr) / sizeof(ebpf_argument_type_t),
+	    args_bpf_get_addr);
+
+	// bpf_probe_read
+	ebpf_argument_type_t args_bpf_probe_read[] = {
+	    EBPF_ARGUMENT_TYPE_PTR_TO_READABLE_MEM,
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE,
+	};
+	helper_function_list_emplace_back(
+	    g_bpf_helper_functions, 5, "bpf_probe_read", bpf_probe_read,
+	    EBPF_RETURN_TYPE_INTEGER,
+	    sizeof(args_bpf_probe_read) / sizeof(ebpf_argument_type_t),
+	    args_bpf_probe_read);
+
+	// bpf_time_get_ns
+	helper_function_list_emplace_back(g_bpf_helper_functions, 3,
+					  "bpf_time_get_ns", bpf_time_get_ns,
+					  EBPF_RETURN_TYPE_INTEGER, 0, NULL);
+
+	// bpf_unwind
+	ebpf_argument_type_t args_bpf_unwind[] = {
+	    EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
+	};
+	helper_function_list_emplace_back(
+	    g_bpf_helper_functions, 6, "bpf_unwind", bpf_unwind,
+	    EBPF_RETURN_TYPE_INTEGER_OR_NO_RETURN_IF_SUCCEED,
+	    sizeof(args_bpf_unwind) / sizeof(ebpf_argument_type_t),
+	    args_bpf_unwind);
+
+	// bpf_puts
+	ebpf_argument_type_t args_bpf_puts[] = {
+	    EBPF_ARGUMENT_TYPE_PTR_TO_CTX,
+	};
+	helper_function_list_emplace_back(
+	    g_bpf_helper_functions, 7, "bpf_puts", bpf_puts,
+	    EBPF_RETURN_TYPE_INTEGER,
+	    sizeof(args_bpf_puts) / sizeof(ebpf_argument_type_t),
+	    args_bpf_puts);
 
 	return g_bpf_helper_functions;
 }
@@ -134,15 +185,21 @@ struct ubpf_vm *init_vm(FILE *logfile)
 	}
 
 	HelperFunctionList *builtin_helpers = init_builtin_bpf_helpers();
+	HelperFunctionEntry *unwind_function = NULL;
 
 	for (HelperFunctionEntry *entry = builtin_helpers->m_head;
 	     entry != NULL; entry = entry->m_next) {
 		register_helper(logfile, vm, entry->m_index,
 				entry->m_function_signature.m_function_name,
 				entry->m_function_addr);
+
+		if (entry->m_function_signature.m_return_type
+		    == EBPF_RETURN_TYPE_INTEGER_OR_NO_RETURN_IF_SUCCEED) {
+			unwind_function = entry;
+		}
 	}
 
-	/*
+	/* TODO add additional helpers
 	if (helper_list != NULL) {
 		for (uint64_t i = 0; i < helper_list->m_Length; ++i) {
 			struct LabeledEntry elem = helper_list->m_List[i];
@@ -150,10 +207,12 @@ struct ubpf_vm *init_vm(FILE *logfile)
 					elem.m_Value);
 			function_index++;
 		}
+	}*/
+
+	if (unwind_function) {
+		ubpf_set_unwind_function_index(vm, entry->m_index);
 	}
 
-	register_helper(function_index, "bpf_unwind", bpf_unwind);
-	ubpf_set_unwind_function_index(vm, function_index);*/
 	return vm;
 }
 
@@ -265,7 +324,6 @@ int bpf_exec(const char *filename, void *args, size_t args_size, int debug,
 	}
 	return 0;
 }
-
 
 void print_helper_specs(void (*print_fn)(const char *))
 {
