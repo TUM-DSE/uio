@@ -24,7 +24,7 @@ char UShellConsoleDevice::read() const
 	char buffer = 0;
 	ssize_t bytesRead = ::read(socketFd, &buffer, sizeof(buffer));
 
-	return bytesRead < 0 ? (char)-1 : buffer;
+	return bytesRead >= 1 ? buffer : (char)-1;
 }
 
 unsigned long UShellConsoleDevice::readline(std::string &out) const
