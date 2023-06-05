@@ -21,8 +21,10 @@ static inline void register_helper(FILE *logfile, struct ubpf_vm *vm,
 	}
 	ubpf_register(vm, index, function_name, (void *)function_ptr);
 }
+// end of private helper functions
 
-static void *readfile(const char *path, size_t maxlen, size_t *len)
+
+void *readfile(const char *path, size_t maxlen, size_t *len)
 {
 	FILE *file = fopen(path, "r");
 
@@ -63,7 +65,6 @@ static void *readfile(const char *path, size_t maxlen, size_t *len)
 	}
 	return (void *)data;
 }
-// end of private helper functions
 
 
 struct ubpf_vm *init_vm(FILE *logfile)
