@@ -1,7 +1,7 @@
 UK_ROOT ?= $(PWD)/../../unikraft
 UK_LIBS ?= $(PWD)/../../libs
 LIBS := $(UK_LIBS)/pthread-embedded:$(UK_LIBS)/newlib:$(UK_LIBS)/nginx:$(UK_LIBS)/lwip
-LIBS := $(LIBS):$(UK_LIBS)/ubpf:$(UK_LIBS)/ubpf_tracer
+LIBS := $(LIBS):$(UK_LIBS)/uk_bpf_helper:$(UK_LIBS)/ubpf:$(UK_LIBS)/ubpf_tracer
 KVM_BINARY  := build/nginx_kvm-x86_64
 SYMFILE     := $(KVM_BINARY).sym
 DBGFILE     := $(KVM_BINARY).dbg
