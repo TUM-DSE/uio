@@ -5,15 +5,11 @@ config APPREDIS
 if APPREDIS
 	config APPREDIS_TRACING
 		bool "Enable tracing"
-		select LIBUBPF if LIBUSHELL
-		select LIBUBPF_TRACER if LIBUSHELL
 		select LIBUSHELL_BPF if LIBUSHELL
 		default n
 
 	config APPREDIS_TRACING_NOMCOUNT
 		bool "Enable tracing w/o mcount"
-		select LIBUBPF
-		select LIBUBPF_TRACER
 		select LIBUSHELL_BPF
 		default n
 endif
