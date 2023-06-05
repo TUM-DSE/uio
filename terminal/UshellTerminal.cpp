@@ -11,9 +11,13 @@
 
 #include <csignal>
 
-#include "device/UShellConsoleDeviceFactory.h"
-#include "UShellCmdInterceptor.h"
+#include "device/UShellConsoleDeviceFactory.hpp"
+#include "UShellCmdInterceptor.hpp"
 #include "parameters.h"
+
+extern "C" {
+#include "uk_bpf_helper_utils.h"
+}
 
 void systemSignalHandler(int signal)
 {
@@ -86,25 +90,30 @@ int main(int argc, char **argv)
 	}
 
 	auto *uShellConsoleDevice = createUshellConsoleDevice(ushellDevicePath);
-	uShellConsoleDevice->write("");
+	if (!uShellConsoleDevice->write("")) {
+		std::cerr
+		    << "Fatal Could not connect to ushell console: IO error"
+		    << std::endl;
+		return -1;
+	}
 	readUntilPrompt(uShellConsoleDevice, false);
 
 	if (!uShellConsoleDevice->write(MOUNT_INFO_COMMAND)) {
-		std::cerr << "ERROR Failed to write ushell console"
+		std::cerr << "Fatal Failed to write ushell console"
 			  << std::endl;
 		return -1;
 	}
 
 	std::string ushellMountInfo;
 	if (!uShellConsoleDevice->readline(ushellMountInfo)) {
-		std::cerr << "ERROR Failed to read ushell mount-info"
+		std::cerr << "Fatal Failed to read ushell mount-info"
 			  << std::endl;
 		return -1;
 	}
 
 	const char *mountInfoResponsePrefix = MOUNT_INFO_RESPONSE_PREFIX "=";
 	if (ushellMountInfo.find(mountInfoResponsePrefix) != 0) {
-		std::cerr << "ERROR Invalid ushell mount-info response: "
+		std::cerr << "Fatal Invalid ushell mount-info response: "
 			  << ushellMountInfo << std::endl;
 		return -1;
 	}
@@ -116,8 +125,48 @@ int main(int argc, char **argv)
 	std::vector<std::string> tokens;
 	boost::split(tokens, ushellMountPath, boost::is_any_of(":"));
 	if (tokens.size() != 2) {
-		std::cerr << "ERROR Invalid ushell mount-info response: "
+		std::cerr << "Fatal Invalid ushell mount-info response: "
 			  << ushellMountInfo << std::endl;
+		return -1;
+	}
+
+	// read bpf helper function definitions
+	readUntilPrompt(uShellConsoleDevice, false);
+	if (!uShellConsoleDevice->write(BPF_HELPER_INFO_COMMAND)) {
+		std::cerr << "Fatal Failed to write ushell console"
+			  << std::endl;
+		return -1;
+	}
+
+	std::string ushellBpfHelperInfoRaw;
+	if (!uShellConsoleDevice->readline(ushellBpfHelperInfoRaw)) {
+		std::cerr << "Fatal Failed to read ushell bpf-helper-info"
+			  << std::endl;
+		return -1;
+	}
+
+	const char *helperInfoResponsePrefix =
+	    BPF_HELPER_FUNCTION_INFO_RESPONSE_PREFIX "=";
+	if (ushellBpfHelperInfoRaw.find(helperInfoResponsePrefix) != 0) {
+		std::cerr << "Fatal Invalid ushell bpf-helper-info response: "
+			  << ushellBpfHelperInfoRaw << std::endl;
+		return -1;
+	}
+
+	std::string ushellBpfHelperInfo =
+	    ushellBpfHelperInfoRaw.substr(strlen(mountInfoResponsePrefix));
+	boost::trim_right(ushellBpfHelperInfo);
+
+	const auto *ushellBpfHelperList =
+	    unmarshall_bpf_helper_definitions(ushellBpfHelperInfo.c_str());
+	if (ushellBpfHelperList) {
+		std::cout << "TERMINAL> Loaded "
+			  << ushellBpfHelperList->m_length
+			  << " bpf helper function definitions." << std::endl;
+	} else {
+		std::cerr << "Fatal Failed to load UShell bpf helper function "
+			     "definitions."
+			  << std::endl;
 		return -1;
 	}
 

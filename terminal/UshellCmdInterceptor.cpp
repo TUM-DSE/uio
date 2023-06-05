@@ -11,12 +11,12 @@
 #include <filesystem>
 
 
-#include "UShellCmdInterceptor.h"
+#include "UShellCmdInterceptor.hpp"
 #include "config.hpp"
 #include "ebpf_verifier.hpp"
 
 #include "main/utils.hpp"
-#include "EBPFVerifier.h"
+#include "EBPFVerifier.hpp"
 
 //TODO: optimization: cache the result of the last successful verification, e.g., via hash of the file
 UShellCmdInterceptor::UShellCmdInterceptor(std::string ushellRoot, std::string ushellHostMountPoint) :
@@ -63,14 +63,14 @@ InterceptionResult UShellCmdInterceptor::intercept(const std::string &in) {
             }
 
             // initialize verifier
-            EBPFVerifier verifier(ushellHostMountPoint / "symbols.txt", ushellHostMountPoint / "helpers.txt",
-                                  ebpf_verifier_default_options);
+            EBPFVerifier verifier(ebpf_verifier_default_options); //TODO add options: assert termination, assert dived not by zero, etc.
 
-            // verify bpf file
+	    // verify bpf file
             bool allOK = true;
             try {
                 auto bpfFileSections = verifier.getSections(bpfFileHost);
                 std::cout << "PREVAIL> Verifying " << bpfFileSections.size() << " sections..." << std::endl;
+
 
                 int successCount = 0;
                 for(const auto& section : bpfFileSections) {

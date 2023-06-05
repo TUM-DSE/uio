@@ -13,6 +13,6 @@ include_directories(./ebpf-verifier/src)
 include_directories(./uk_bpf_helper)
 include_directories(${Boost_INCLUDE_DIR})
 
-add_executable(ushell_terminal UshellTerminal.cpp device/UShellConsoleDeviceFactory.cpp device/UShellConsoleDeviceFactory.h device/UShellConsoleDevice.cpp device/UShellConsoleDevice.h device/utils/BlockingQueue.h UshellCmdInterceptor.cpp UShellCmdInterceptor.h EBPFVerifier.cpp EBPFVerifier.h parameters.h device/mock/UShellConsoleMock.cpp device/mock/UShellConsoleMock.h)
+add_executable(ushell_terminal UshellTerminal.cpp device/UShellConsoleDeviceFactory.cpp device/UShellConsoleDeviceFactory.hpp device/UShellConsoleDevice.cpp device/UShellConsoleDevice.hpp device/utils/BlockingQueue.h UshellCmdInterceptor.cpp UShellCmdInterceptor.hpp EBPFVerifier.cpp EBPFVerifier.hpp parameters.h device/mock/UShellConsoleMock.cpp device/mock/UShellConsoleMock.hpp)
 
-target_link_libraries(ushell_terminal ${Boost_LIBRARIES} ebpfverifier)
+target_link_libraries(ushell_terminal ${Boost_LIBRARIES} ebpfverifier uk_bpf_helper)

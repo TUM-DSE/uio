@@ -1,9 +1,9 @@
 #include <unistd.h>
 #include <iostream>
 
-#include "UShellConsoleDeviceFactory.h"
-#include "UShellConsoleDevice.h"
-#include "device/mock/UShellConsoleMock.h"
+#include "UShellConsoleDeviceFactory.hpp"
+#include "UShellConsoleDevice.hpp"
+#include "device/mock/UShellConsoleMock.hpp"
 
 #define MOCK_SOCAT
 
