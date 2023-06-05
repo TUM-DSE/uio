@@ -8,41 +8,6 @@
 HelperFunctionList *g_bpf_helper_functions = NULL;
 HelperFunctionList *g_additional_helpers = NULL;
 
-HelperFunctionEntry *helper_function_entry_constructor(
-    const UK_UBPF_INDEX_t index, const char *function_name,
-    const void *function_addr, const ebpf_return_type_t ret_type,
-    const UK_EBPF_HELPER_ARG_TYPE_NUM_t arg_type_count,
-    const ebpf_argument_type_t arg_types[])
-{
-	HelperFunctionEntry *entry =
-	    malloc(sizeof(HelperFunctionEntry)
-		   + arg_type_count * sizeof(ebpf_argument_type_t));
-	if (entry == NULL) {
-		return NULL;
-	}
-
-	entry->m_index = index;
-	entry->m_function_addr = function_addr;
-
-	entry->m_function_signature.m_function_name =
-	    malloc(strlen(function_name) + 1);
-	strncpy(entry->m_function_signature.m_function_name, function_name,
-		strlen(function_name) + 1);
-	entry->m_function_signature.m_return_type = ret_type;
-	entry->m_function_signature.m_num_args = arg_type_count;
-	for (int i = 0; i < arg_type_count; ++i) {
-		entry->m_function_signature.m_arg_types[i] = arg_types[i];
-	}
-
-	return entry;
-}
-
-void helper_function_entry_destructor(HelperFunctionEntry *entry)
-{
-	free(entry->m_function_signature.m_function_name);
-	free(entry);
-}
-
 /**
  * This function initializes the builtin helper function list if it is not
  * ready.
@@ -50,14 +15,13 @@ void helper_function_entry_destructor(HelperFunctionEntry *entry)
  */
 HelperFunctionList *init_builtin_bpf_helpers()
 {
-	//TODO add mpk protection back
+	// TODO add mpk protection back
 	if (g_bpf_helper_functions) {
 		return g_bpf_helper_functions;
 	}
 
-	g_bpf_helper_functions =
-	    helper_function_list_init(helper_function_entry_constructor,
-				      helper_function_entry_destructor);
+	g_bpf_helper_functions = helper_function_list_init();
+
 	// add builtin helper functions
 	// bpf_map_noop
 	helper_function_list_emplace_back(g_bpf_helper_functions, 0,
@@ -138,11 +102,11 @@ HelperFunctionList *init_builtin_bpf_helpers()
 	ebpf_argument_type_t args_bpf_puts[] = {
 	    EBPF_ARGUMENT_TYPE_PTR_TO_CTX,
 	};
-	helper_function_list_emplace_back(
-	    g_bpf_helper_functions, 7, "bpf_puts", bpf_puts,
-	    EBPF_RETURN_TYPE_INTEGER,
-	    sizeof(args_bpf_puts) / sizeof(ebpf_argument_type_t),
-	    args_bpf_puts);
+	helper_function_list_emplace_back(g_bpf_helper_functions, 7, "bpf_puts",
+					  bpf_puts, EBPF_RETURN_TYPE_INTEGER,
+					  sizeof(args_bpf_puts)
+					      / sizeof(ebpf_argument_type_t),
+					  args_bpf_puts);
 
 	return g_bpf_helper_functions;
 }

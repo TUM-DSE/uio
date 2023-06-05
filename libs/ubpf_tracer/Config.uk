@@ -1,5 +1,7 @@
 menuconfig LIBUBPF_TRACER
 	bool "ubpf_tracer Unikraft library"
+	select LIBUBPF
+	select LIBUKBPFHELPER
 	default n
 
 if LIBUBPF_TRACER

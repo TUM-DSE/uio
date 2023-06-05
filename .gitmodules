@@ -36,10 +36,10 @@
 	path = libs/mimalloc
 	url = https://github.com/unikraft/lib-mimalloc
 [submodule "libs/ubpf_tracer"]
-	path = libs/ubpf_tracer_remote
+	path = repo/ubpf_tracer_remote
 	url = https://github.com/vandah/uk_ubpf_tracer.git
 [submodule "libs/ubpf"]
-	path = libs/ubpf_remote
+	path = repo/ubpf_remote
 	url = https://github.com/vandah/uk_ubpf.git
 [submodule "repo/ubpf"]
 	path = repo/ubpf
