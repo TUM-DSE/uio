@@ -7,6 +7,7 @@
 
 #include <ubpf.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #define ERR(st) "\033[0m\033[1;31m" st "\033[0m"
 #define YAY(st) "\033[0m\033[1;32m" st "\033[0m"

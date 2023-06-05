@@ -1,14 +1,13 @@
 #include "ubpf_runtime.h"
 
 #include <ubpf.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <errno.h>
 #include <string.h>
 
 #include <helper_function_list.h>
-#include "ubpf_runtime.h"
+#include "uk_builtin_bpf_helpers.h"
 
 // private helper functions
 static inline void register_helper(FILE *logfile, struct ubpf_vm *vm,

@@ -10,6 +10,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static const uint8_t nopl[] = {0x0f, 0x1f, 0x44, 0x00, 0x00};
@@ -109,10 +110,9 @@ void load_debug_symbols(struct UbpfTracer *tracer) {
   char *sym_list[] = { "/symbol.txt", "/ushell/symbol.txt", "/debug.sym", "/ushell/debug.sym" };
   FILE *file_debug_sym = NULL;
   uint32_t symbols_size = 1;
-  int i;
   int format_nm = 0;
 
-  for (i = 0; i < sizeof(sym_list) / sizeof(sym_list[0]); i++) {
+  for (size_t i = 0; i < sizeof(sym_list) / sizeof(sym_list[0]); i++) {
     file_debug_sym = fopen(sym_list[i], "r");
     if (file_debug_sym != NULL) {
       if (i >= 2) {
