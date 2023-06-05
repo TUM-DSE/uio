@@ -82,8 +82,8 @@ LIBUKBPFRUNTIMESRCS-$(CONFIG_LIBUKBPFRUNTIME_MAIN_FUNCTION) += $(LIBUKBPFRUNTIME
 # Library sources
 ################################################################################
 # LIBUKBPFRUNTIME_SRCS-y += # Include source files here
-LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/arraylist.c
-LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/uk_builtin_bpf_helpers.c
-LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/hash_chains.c
-LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/ubpf_helpers.c
-LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/ubpf_runtime.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/arraylist.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/uk_builtin_bpf_helpers.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/hash_chains.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/ubpf_helpers.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/ubpf_runtime.c
