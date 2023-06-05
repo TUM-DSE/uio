@@ -1,11 +1,7 @@
 #ifndef HASH_CHAINS_H
 #define HASH_CHAINS_H
 
-#include <errno.h>
-#include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 struct THashCell {
   uint64_t m_Key;

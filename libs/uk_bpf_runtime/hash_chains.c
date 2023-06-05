@@ -1,5 +1,7 @@
 #include "hash_chains.h"
 
+#include <stdlib.h>
+
 struct THashMap *hmap_init(uint64_t size,
                            void (*destruct_cell)(struct THashCell *),
                            void *(*create_cell)(), int *errcode) {
