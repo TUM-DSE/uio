@@ -36,7 +36,7 @@
 	path = libs/mimalloc
 	url = https://github.com/unikraft/lib-mimalloc
 [submodule "libs/ubpf_tracer"]
-	path = libs/ubpf_tracer_remote
+	path = libs/ubpf_traer_remote
 	url = https://github.com/vandah/uk_ubpf_tracer.git
 [submodule "libs/ubpf"]
 	path = libs/ubpf_remote
@@ -47,3 +47,7 @@
 [submodule "terminal/ebpf-verifier"]
 	path = terminal/ebpf-verifier
 	url = https://github.com/vbpf/ebpf-verifier
+[submodule "terminal/uk_bpf_helper"]
+	path = terminal/uk_bpf_helper
+	url = https://github.com/hsiehken/uk_bpf_helper.git
+
