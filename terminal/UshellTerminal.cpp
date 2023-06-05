@@ -187,7 +187,8 @@ int main(int argc, char **argv)
 	// Start of the main terminal cycles
 	readUntilPrompt(uShellConsoleDevice);
 
-	UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint);
+	UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint,
+					 ushellBpfHelperList);
 
 	// initialize signal handler
 	struct sigaction sigIntHandler {

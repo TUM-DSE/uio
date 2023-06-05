@@ -2,8 +2,8 @@
 // Created by ken on 22.05.23.
 //
 
-#ifndef USHELL_TERMINAL_EBPFVERIFIER_H
-#define USHELL_TERMINAL_EBPFVERIFIER_H
+#ifndef USHELL_TERMINAL_EBPFVERIFIER_HPP
+#define USHELL_TERMINAL_EBPFVERIFIER_HPP
 
 #include <string>
 #include <vector>
@@ -32,4 +32,4 @@ private:
 };
 
 
-#endif //USHELL_TERMINAL_EBPFVERIFIER_H
+#endif // USHELL_TERMINAL_EBPFVERIFIER_HPP
