@@ -3,6 +3,7 @@
 #include "arraylist.h"
 #include "hash_chains.h"
 #include "ubpf_helpers.h"
+#include <ubpf_runtime.h>
 
 #include <ubpf.h>
 #include <ubpf_config.h>

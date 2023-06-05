@@ -3,8 +3,10 @@
 # ubpf_tracer Unikraft library
 #
 # Authors: Vanda Hendrychova <vandah3@gmail.com>
+#          Kai-Chun Hsieh <k.hsieh@tum.de>
 #
 # Copyright (c) 2023, Vanda Hendrychova <vandah3@gmail.com>. All rights reserved.
+# Copyright (c) 2023, Kai-Chun Hsieh <k.hsieh@tum.de>. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,53 +36,54 @@
 ################################################################################
 # Library registration
 ################################################################################
-$(eval $(call addlib_s,libubpf_tracer,$(CONFIG_LIBUBPF_TRACER)))
+$(eval $(call addlib_s,libukbpfruntime,$(CONFIG_LIBUKBPFRUNTIME)))
 
 ################################################################################
 # Sources
 ################################################################################]
-#LIBUBPF_TRACER_VERSION = dev
-#LIBUBPF_TRACER_URL = https://github.com/vandah/ubpf_tracer/archive/refs/heads/$(LIBUBPF_TRACER_VERSION).zip
-#LIBUBPF_TRACER_VERSION = 7d41354540d812adafcf6e601e3fbfce82360343
-#LIBUBPF_TRACER_URL = https://github.com/vandah/ubpf_tracer/archive/$(LIBUBPF_TRACER_VERSION).zip
-#LIBUBPF_TRACER_SUBDIR = ubpf_tracer-$(LIBUBPF_TRACER_VERSION)
-#LIBUBPF_TRACER_PATCHDIR = $(LIBUBPF_TRACER_BASE)/patches
-#$(eval $(call fetch,libubpf_tracer,$(LIBUBPF_TRACER_URL)))
-#$(eval $(call patch,libubpf_tracer,$(LIBUBPF_TRACER_PATCHDIR),$(LIBUBPF_TRACER_SUBDIR)))
+#LIBUKBPFRUNTIME_VERSION = dev
+#LIBUKBPFRUNTIME_URL = https://github.com/vandah/ubpf_tracer/archive/refs/heads/$(LIBUKBPFRUNTIME_VERSION).zip
+#LIBUKBPFRUNTIME_VERSION = 7d41354540d812adafcf6e601e3fbfce82360343
+#LIBUKBPFRUNTIME_URL = https://github.com/vandah/ubpf_tracer/archive/$(LIBUKBPFRUNTIME_VERSION).zip
+#LIBUKBPFRUNTIME_SUBDIR = ubpf_tracer-$(LIBUKBPFRUNTIME_VERSION)
+#LIBUKBPFRUNTIME_PATCHDIR = $(LIBUKBPFRUNTIME_BASE)/patches
+#$(eval $(call fetch,libubpf_tracer,$(LIBUKBPFRUNTIME_URL)))
+#$(eval $(call patch,libubpf_tracer,$(LIBUKBPFRUNTIME_PATCHDIR),$(LIBUKBPFRUNTIME_SUBDIR)))
 
 ################################################################################
 # Helpers
 ################################################################################
-LIBUBPF_TRACER_SRC = $(LIBUBPF_TRACER_BASE)
+LIBUKBPFRUNTIME_SRC = $(LIBUKBPFRUNTIME_BASE)
 
 ################################################################################
 # Library includes
 ################################################################################
-CINCLUDES-y += -I$(LIBUBPF_TRACER_BASE)/include
+CINCLUDES-y += -I$(LIBUKBPFRUNTIME_BASE)/include
 
 ################################################################################
 # Flags
 ################################################################################
-LIBUBPF_TRACER_FLAGS =
+LIBUKBPFRUNTIME_FLAGS =
 
 # Suppress some warnings to make the build process look neater
-LIBUBPF_TRACER_FLAGS_SUPPRESS =
+LIBUKBPFRUNTIME_FLAGS_SUPPRESS =
 
-LIBUBPF_TRACER_CFLAGS-y += $(LIBUBPF_TRACER_FLAGS)
-LIBUBPF_TRACER_CFLAGS-y += $(LIBUBPF_TRACER_FLAGS_SUPPRESS)
+LIBUKBPFRUNTIME_CFLAGS-y += $(LIBUKBPFRUNTIME_FLAGS)
+LIBUKBPFRUNTIME_CFLAGS-y += $(LIBUKBPFRUNTIME_FLAGS_SUPPRESS)
 
 ################################################################################
 # Glue code
 ################################################################################
 # Include paths
-# LIBUBPF_TRACER_CINCLUDES-y   += $(LIBUBPF_TRACER_COMMON_INCLUDES-y)
-LIBUBPF_TRACER_CINCLUDES-y   += -I$(LIBUBPF_TRACER_SRC)/include
-# LIBUBPF_TRACER_CXXINCLUDES-y += $(LIBUBPF_TRACER_COMMON_INCLUDES-y)
-LIBUBPF_TRACERSRCS-$(CONFIG_LIBUBPF_TRACER_MAIN_FUNCTION) += $(LIBUBPF_TRACER_BASE)/main.c|unikraft
+LIBUKBPFRUNTIME_CINCLUDES-y   += -I$(LIBUKBPFRUNTIME_SRC)/
+LIBUKBPFRUNTIMESRCS-$(CONFIG_LIBUKBPFRUNTIME_MAIN_FUNCTION) += $(LIBUKBPFRUNTIME_BASE)/main.c|unikraft
 
 ################################################################################
 # Library sources
 ################################################################################
-# LIBUBPF_TRACER_SRCS-y += # Include source files here
-LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/ubpf_tracer.c
-LIBUBPF_TRACER_SRCS-y += $(LIBUBPF_TRACER_SRC)/src/ubpf_tracer_trampoline.S
+# LIBUKBPFRUNTIME_SRCS-y += # Include source files here
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/arraylist.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/uk_builtin_bpf_helpers.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/hash_chains.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/ubpf_helpers.c
+LIBUKBPFRUNTIME_SRCS-y += $(LIBUKBPFRUNTIME_SRC)/src/ubpf_runtime.c

@@ -1,0 +1,8 @@
+menuconfig LIBUKBPFRUNTIME
+	bool "libukbpfruntime A BPF runtime library for Unikraft powered by uBPF"
+	select LIBUBPF
+	select LIBUKBPFHELPER
+	default n
+
+if LIBUKBPFRUNTIME
+endif
