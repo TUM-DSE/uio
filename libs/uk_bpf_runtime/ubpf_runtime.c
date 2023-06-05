@@ -83,7 +83,7 @@ struct ubpf_vm *init_vm(FILE *logfile)
 				entry->m_function_addr);
 
 		if (entry->m_function_signature.m_return_type
-		    == EBPF_RETURN_TYPE_INTEGER_OR_NO_RETURN_IF_SUCCEED) {
+		    == UK_EBPF_RETURN_TYPE_INTEGER_OR_NO_RETURN_IF_SUCCEED) {
 			unwind_function = entry;
 		}
 	}
