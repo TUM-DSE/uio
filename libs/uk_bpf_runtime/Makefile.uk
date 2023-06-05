@@ -58,7 +58,7 @@ LIBUKBPFRUNTIME_SRC = $(LIBUKBPFRUNTIME_BASE)
 ################################################################################
 # Library includes
 ################################################################################
-CINCLUDES-y += -I$(LIBUKBPFRUNTIME_BASE)/include
+CINCLUDES-y += -I$(LIBUKBPFRUNTIME_BASE)/
 
 ################################################################################
 # Flags

@@ -1,7 +1,3 @@
-//
-// Created by ken on 04.06.23.
-//
-
 #ifndef USHELL_TERMINAL_UK_BUILTIN_BPF_HELPERS_H
 #define USHELL_TERMINAL_UK_BUILTIN_BPF_HELPERS_H
 

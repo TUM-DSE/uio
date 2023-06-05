@@ -1,6 +1,6 @@
 #include "ubpf_helpers.h"
 
-#include "uk_bpf_helper_utils.h"
+#include <uk_bpf_helper_utils.h>
 #include "uk_builtin_bpf_helpers.h"
 
 HelperFunctionList *g_bpf_helper_functions = NULL;

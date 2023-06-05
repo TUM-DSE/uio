@@ -1,5 +1,17 @@
 #include "ubpf_tracer.h"
 
+#include <arraylist.h>
+#include <hash_chains.h>
+#include <ubpf_helpers.h>
+#include <ubpf_runtime.h>
+
+#include <ubpf.h>
+#include <ubpf_config.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+
 static const uint8_t nopl[] = {0x0f, 0x1f, 0x44, 0x00, 0x00};
 
 void bpf_notify(void *function_id) {

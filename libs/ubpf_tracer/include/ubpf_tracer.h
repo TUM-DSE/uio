@@ -1,18 +1,8 @@
 #ifndef UBPF_TRACER_H
 #define UBPF_TRACER_H
-#include "arraylist.h"
-#include "hash_chains.h"
-#include "ubpf_helpers.h"
-#include <ubpf_runtime.h>
 
-#include <ubpf.h>
-#include <ubpf_config.h>
-
-#include <errno.h>
-#include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#include <stddef.h>
 
 #define CALL_OPCODE 0xe8
 #define CALL_INSTRUCTION_SIZE 5

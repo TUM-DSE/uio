@@ -7,7 +7,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include "helper_function_list.h"
+#include <helper_function_list.h>
+#include "ubpf_runtime.h"
 
 // private helper functions
 static inline void register_helper(FILE *logfile, struct ubpf_vm *vm,
@@ -16,9 +17,9 @@ static inline void register_helper(FILE *logfile, struct ubpf_vm *vm,
 				   const void *function_ptr)
 {
 	if (logfile != NULL) {
-		fprintf(logfile, " - [%lu]: %s\n", index, function_name);
+		fprintf(logfile, " - [%u]: %s\n", index, function_name);
 	}
-	ubpf_register(vm, index, function_name, function_ptr);
+	ubpf_register(vm, index, function_name, (void *)function_ptr);
 }
 
 static void *readfile(const char *path, size_t maxlen, size_t *len)
