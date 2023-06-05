@@ -1,9 +1,13 @@
 #include "uk_builtin_bpf_helpers.h"
 
+#include <stdlib.h>
+#include <stddef.h>
+
 #include "hash_chains.h"
 
 // #define UBPF_DEBUG
 #ifdef UBPF_DEBUG
+#include <stdio.h>
 #define debug(msg, ...)                                                        \
 	do {                                                                   \
 		printf("[Debug] %s:%d %s(): ", __FILE__, __LINE__, __func__);  \
@@ -14,7 +18,6 @@
 	do {                                                                   \
 	} while (0)
 #endif
-
 
 struct THashMap *g_bpf_map = NULL;
 
@@ -143,7 +146,7 @@ uint64_t bpf_get_addr(const char *function_name)
 	return fun_addr;
 }
 
-uint64_t bpf_probe_read(void* addr_to_read, uint64_t size)
+uint64_t bpf_probe_read(void *addr_to_read, uint64_t size)
 {
 	uint64_t addr = (uint64_t)addr_to_read;
 	if (size != 1 && size != 4 && size != 8) {
