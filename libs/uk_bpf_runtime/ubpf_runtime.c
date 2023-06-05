@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include <helper_function_list.h>
-#include "uk_builtin_bpf_helpers.h"
+#include "ubpf_helpers.h"
 
 // private helper functions
 static inline void register_helper(FILE *logfile, struct ubpf_vm *vm,
