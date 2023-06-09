@@ -1,7 +1,3 @@
-//
-// Created by ken on 25.05.23.
-//
-
 #ifndef USHELL_TERMINAL_PARAMETERS_H
 #define USHELL_TERMINAL_PARAMETERS_H
 
