@@ -82,7 +82,7 @@ HelperFunctionList *init_builtin_bpf_helpers()
 	    args_bpf_probe_read);
 
 	// bpf_time_get_ns
-	helper_function_list_emplace_back(g_bpf_helper_functions, 3,
+	helper_function_list_emplace_back(g_bpf_helper_functions, 6,
 					  "bpf_time_get_ns", bpf_time_get_ns,
 					  UK_EBPF_RETURN_TYPE_INTEGER, 0, NULL);
 
@@ -91,7 +91,7 @@ HelperFunctionList *init_builtin_bpf_helpers()
 	    UK_EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
 	};
 	helper_function_list_emplace_back(
-	    g_bpf_helper_functions, 6, "bpf_unwind", bpf_unwind,
+	    g_bpf_helper_functions, 7, "bpf_unwind", bpf_unwind,
 	    UK_EBPF_RETURN_TYPE_INTEGER_OR_NO_RETURN_IF_SUCCEED,
 	    sizeof(args_bpf_unwind) / sizeof(uk_ebpf_argument_type_t),
 	    args_bpf_unwind);
@@ -100,7 +100,7 @@ HelperFunctionList *init_builtin_bpf_helpers()
 	uk_ebpf_argument_type_t args_bpf_puts[] = {
 	    UK_EBPF_ARGUMENT_TYPE_PTR_TO_CTX,
 	};
-	helper_function_list_emplace_back(g_bpf_helper_functions, 7, "bpf_puts",
+	helper_function_list_emplace_back(g_bpf_helper_functions, 8, "bpf_puts",
 					  bpf_puts, UK_EBPF_RETURN_TYPE_INTEGER,
 					  sizeof(args_bpf_puts)
 					      / sizeof(uk_ebpf_argument_type_t),
