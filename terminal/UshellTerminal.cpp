@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 	}
 
 	std::string ushellBpfHelperInfo =
-	    ushellBpfHelperInfoRaw.substr(strlen(mountInfoResponsePrefix));
+	    ushellBpfHelperInfoRaw.substr(strlen(helperInfoResponsePrefix));
 	boost::trim_right(ushellBpfHelperInfo);
 
 	const auto *ushellBpfHelperList =
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 			// but we need it to trigger the command execution
 			if (bytesWritten < userInput.size()) {
 				throw std::runtime_error(
-				    "FATAL Failed to write to USHell "
+				    "FATAL Failed to write to UShell "
 				    "console: Broken pipe");
 			}
 
