@@ -1,7 +1,3 @@
-//
-// Created by Ken on 2023/5/22.
-//
-
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <thread>
@@ -169,6 +165,37 @@ int main(int argc, char **argv)
 			  << std::endl;
 		return -1;
 	}
+
+    // no readUntilPrompt here since prog-type info is provided within the same command as the helper info
+    std::string ushellBpfProgTypeInfoRaw;
+    if (!uShellConsoleDevice->readline(ushellBpfProgTypeInfoRaw)) {
+        std::cerr << "Fatal Failed to read ushell bpf-prog-type-info"
+                  << std::endl;
+        return -1;
+    }
+
+    const char *ProgTypeInfoResponsePrefix =
+            BPF_PROG_TYPE_INFO_RESPONSE_PREFIX "=";
+    if (ushellBpfProgTypeInfoRaw.find(ProgTypeInfoResponsePrefix) != 0) {
+        std::cerr << "Fatal Invalid ushell bpf-prog-type-info response: "
+                  << ushellBpfProgTypeInfoRaw << std::endl;
+        return -1;
+    }
+
+    std::string ushellBpfProgTypeInfo =
+            ushellBpfProgTypeInfoRaw.substr(strlen(ProgTypeInfoResponsePrefix));
+    boost::trim_right(ushellBpfProgTypeInfo);
+
+    const auto *ushellBpfProgTypeList = unmarshall_bpf_prog_types(ushellBpfProgTypeInfo.c_str());
+    if (ushellBpfProgTypeList) {
+        std::cout << "TERMINAL> Loaded "
+                  << ushellBpfProgTypeList->m_length
+                  << " bpf program types." << std::endl;
+    } else {
+        std::cerr << "Fatal Failed to load UShell bpf program types."
+                  << std::endl;
+        return -1;
+    }
 
 	// initialize ushell command interceptor
 	std::string ushellHostMountPoint = tokens.at(0);

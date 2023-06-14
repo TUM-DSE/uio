@@ -83,7 +83,13 @@ ssize_t writeByteByByte(int fd, const char *buffer, size_t size) {
                         "5:bpf_probe_read(9,2)->0;"
                         "6:bpf_time_get_ns()->0;"
                         "7:bpf_unwind(3)->2;"
-                        "8:bpf_puts(4)->0\n";
+                        "8:bpf_puts(4)->0"
+                        "\n"
+                        BPF_PROG_TYPE_INFO_RESPONSE_PREFIX
+                        "="
+                        "no_fun:;"
+                        "tracer:0,1,2,3,4,5,6,7,8"
+                        "\n";
                 writeByteByByte(clientFd, mockedResponse,
                                 strlen(mockedResponse));
             } else if (command.find("close") == 0) {
