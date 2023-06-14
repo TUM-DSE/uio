@@ -82,21 +82,13 @@ struct UbpfTracer *init_tracer() {
       hmap_init(101, destruct_cell, function_names_init, &map_result);
 
   // register local helpers
-  tracer_helpers_add(tracer, "bpf_notify", bpf_notify);
-  tracer_helpers_add(tracer, "bpf_get_ret_addr", bpf_get_ret_addr);
+  // TODO
+  //tracer_helpers_add(tracer, "bpf_notify", bpf_notify);
+  //tracer_helpers_add(tracer, "bpf_get_ret_addr", bpf_get_ret_addr);
 
   load_debug_symbols(tracer);
 
   return tracer;
-}
-
-void tracer_helpers_add(struct UbpfTracer *tracer, const char *label,
-                        void *function_ptr) {
-  additional_helpers_list_add(label, function_ptr);
-}
-
-void tracer_helpers_del(struct UbpfTracer *tracer, const char *label) {
-  additional_helpers_list_del(label);
 }
 
 struct UbpfTracer *get_tracer() {
