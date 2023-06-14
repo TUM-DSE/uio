@@ -17,15 +17,17 @@ HelperFunctionList *init_builtin_bpf_helpers() {
     }
 
     g_bpf_helper_functions = helper_function_list_init();
+    g_bpf_prog_types = bpf_prog_type_list_init();
 
     // add builtin helper functions
     // bpf_map_noop
-    helper_function_list_emplace_back(g_bpf_helper_functions, 0,
-                                      "bpf_map_noop", bpf_map_noop,
-                                      UK_EBPF_RETURN_TYPE_INTEGER, 0, NULL);
+    HelperFunctionEntry *helper_bpf_map_noop = helper_function_list_emplace_back(g_bpf_helper_functions, 0,
+                                                                                 "bpf_map_noop", bpf_map_noop,
+                                                                                 UK_EBPF_RETURN_TYPE_INTEGER, 0, NULL);
 
     // bpf_map_get
-    uk_ebpf_argument_type_t args_bpf_map_get[] = {
+    HelperFunctionEntry *helper_bpf_map_get = uk_ebpf_argument_type_t
+    args_bpf_map_get[] = {
             UK_EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
             UK_EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
     };
@@ -41,7 +43,7 @@ HelperFunctionList *init_builtin_bpf_helpers() {
             UK_EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
             UK_EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
     };
-    helper_function_list_emplace_back(
+    HelperFunctionEntry *helper_bpf_map_put = helper_function_list_emplace_back(
             g_bpf_helper_functions, 2, "bpf_map_put", bpf_map_put,
             UK_EBPF_RETURN_TYPE_INTEGER,
             sizeof(args_bpf_map_put) / sizeof(uk_ebpf_argument_type_t),
@@ -52,7 +54,7 @@ HelperFunctionList *init_builtin_bpf_helpers() {
             UK_EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
             UK_EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
     };
-    helper_function_list_emplace_back(
+    HelperFunctionEntry *helper_bpf_map_del = helper_function_list_emplace_back(
             g_bpf_helper_functions, 3, "bpf_map_del", bpf_map_del,
             UK_EBPF_RETURN_TYPE_INTEGER,
             sizeof(args_bpf_map_del) / sizeof(uk_ebpf_argument_type_t),
@@ -62,7 +64,7 @@ HelperFunctionList *init_builtin_bpf_helpers() {
     uk_ebpf_argument_type_t args_bpf_get_addr[] = {
             UK_EBPF_ARGUMENT_TYPE_PTR_TO_CTX,
     };
-    helper_function_list_emplace_back(
+    HelperFunctionEntry *helper_bpf_get_addr = helper_function_list_emplace_back(
             g_bpf_helper_functions, 4, "bpf_get_addr", bpf_get_addr,
             UK_EBPF_RETURN_TYPE_INTEGER,
             sizeof(args_bpf_get_addr) / sizeof(uk_ebpf_argument_type_t),
@@ -73,22 +75,23 @@ HelperFunctionList *init_builtin_bpf_helpers() {
             UK_EBPF_ARGUMENT_TYPE_PTR_TO_READABLE_MEM,
             UK_EBPF_ARGUMENT_TYPE_CONST_SIZE,
     };
-    helper_function_list_emplace_back(
+    HelperFunctionEntry *helper_bpf_probe_read = helper_function_list_emplace_back(
             g_bpf_helper_functions, 5, "bpf_probe_read", bpf_probe_read,
             UK_EBPF_RETURN_TYPE_INTEGER,
             sizeof(args_bpf_probe_read) / sizeof(uk_ebpf_argument_type_t),
             args_bpf_probe_read);
 
     // bpf_time_get_ns
-    helper_function_list_emplace_back(g_bpf_helper_functions, 6,
-                                      "bpf_time_get_ns", bpf_time_get_ns,
-                                      UK_EBPF_RETURN_TYPE_INTEGER, 0, NULL);
+    HelperFunctionEntry *helper_bpf_time_get_ns = helper_function_list_emplace_back(g_bpf_helper_functions, 6,
+                                                                                    "bpf_time_get_ns", bpf_time_get_ns,
+                                                                                    UK_EBPF_RETURN_TYPE_INTEGER, 0,
+                                                                                    NULL);
 
     // bpf_unwind
     uk_ebpf_argument_type_t args_bpf_unwind[] = {
             UK_EBPF_ARGUMENT_TYPE_CONST_SIZE_OR_ZERO,
     };
-    helper_function_list_emplace_back(
+    HelperFunctionEntry *helper_bpf_unwind = helper_function_list_emplace_back(
             g_bpf_helper_functions, 7, "bpf_unwind", bpf_unwind,
             UK_EBPF_RETURN_TYPE_INTEGER_OR_NO_RETURN_IF_SUCCEED,
             sizeof(args_bpf_unwind) / sizeof(uk_ebpf_argument_type_t),
@@ -98,11 +101,21 @@ HelperFunctionList *init_builtin_bpf_helpers() {
     uk_ebpf_argument_type_t args_bpf_puts[] = {
             UK_EBPF_ARGUMENT_TYPE_PTR_TO_CTX,
     };
-    helper_function_list_emplace_back(g_bpf_helper_functions, 8, "bpf_puts",
-                                      bpf_puts, UK_EBPF_RETURN_TYPE_INTEGER,
-                                      sizeof(args_bpf_puts)
-                                      / sizeof(uk_ebpf_argument_type_t),
-                                      args_bpf_puts);
+    HelperFunctionEntry *helper_bpf_puts = helper_function_list_emplace_back(g_bpf_helper_functions, 8, "bpf_puts",
+                                                                             bpf_puts, UK_EBPF_RETURN_TYPE_INTEGER,
+                                                                             sizeof(args_bpf_puts)
+                                                                             / sizeof(uk_ebpf_argument_type_t),
+                                                                             args_bpf_puts);
+
+    bpf_prog_type_list_emplace_back(g_bpf_prog_types, "no_fun", 0, NULL);
+
+    UK_UBPF_INDEX_t no_fun_helpers[] = {
+            helper_bpf_map_noop->m_index, bpf_map_get->m_index, bpf_map_put->m_index, bpf_map_del->m_index,
+            bpf_get_addr->m_index, bpf_probe_read->m_index, bpf_time_get_ns->m_index, bpf_unwind->m_index,
+            bpf_puts->m_index};
+    bpf_prog_type_list_emplace_back(g_bpf_prog_types, "tracer", sizeof(no_fun_helpers) / sizeof(UK_UBPF_INDEX_t),
+                                    no_fun_helpers);
+
 
     return g_bpf_helper_functions;
 }
