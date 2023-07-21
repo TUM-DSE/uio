@@ -24,9 +24,9 @@ HelperFunctionList *init_builtin_bpf_helpers() {
     uint64_t counter = 1;
     bpf_prog_type_list_emplace_back(g_bpf_prog_types, counter++, "tracer", false,
                                     sizeof(prog_with_argument_t),
-                                    offsetof(prog_with_argument_t, data_ptr),
-                                    offsetof(prog_with_argument_t, data_end_ptr),
-                                    offsetof(prog_with_argument_t, ctx_metadata));
+                                    offsetof(prog_with_argument_t, data),
+                                    offsetof(prog_with_argument_t, data_end),
+                                    offsetof(prog_with_argument_t, data_meta));
 
     // add builtin helper functions
     // bpf_map_noop
@@ -36,8 +36,8 @@ HelperFunctionList *init_builtin_bpf_helpers() {
 
     // bpf_map_get
     uk_ebpf_argument_type_t args_bpf_map_get[] = {
-            EBPF_ARGUMENT_TYPE_ANYTHING,
-            EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
     };
     helper_function_list_emplace_back(
             g_bpf_helper_functions, 1, UK_EBPF_PROG_TYPE_UNSPECIFIED, "bpf_map_get", bpf_map_get,
@@ -47,9 +47,9 @@ HelperFunctionList *init_builtin_bpf_helpers() {
 
     // bpf_map_put
     uk_ebpf_argument_type_t args_bpf_map_put[] = {
-            EBPF_ARGUMENT_TYPE_ANYTHING,
-            EBPF_ARGUMENT_TYPE_ANYTHING,
-            EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
     };
     helper_function_list_emplace_back(
             g_bpf_helper_functions, 2, UK_EBPF_PROG_TYPE_UNSPECIFIED, "bpf_map_put", bpf_map_put,
@@ -59,8 +59,8 @@ HelperFunctionList *init_builtin_bpf_helpers() {
 
     // bpf_map_del
     uk_ebpf_argument_type_t args_bpf_map_del[] = {
-            EBPF_ARGUMENT_TYPE_ANYTHING,
-            EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
     };
     helper_function_list_emplace_back(
             g_bpf_helper_functions, 3, UK_EBPF_PROG_TYPE_UNSPECIFIED, "bpf_map_del", bpf_map_del,
@@ -102,7 +102,7 @@ HelperFunctionList *init_builtin_bpf_helpers() {
 
     // bpf_unwind
     uk_ebpf_argument_type_t args_bpf_unwind[] = {
-            EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
     };
     helper_function_list_emplace_back(
             g_bpf_helper_functions, 7, UK_EBPF_PROG_TYPE_UNSPECIFIED,
