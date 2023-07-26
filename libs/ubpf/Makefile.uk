@@ -66,6 +66,7 @@ UK_PREPARE-$(CONFIG_LIBUBPF) += $(LIBUBPF_SRC)/vm/inc/ubpf_config.h
 ################################################################################
 CINCLUDES-y += -I$(LIBUBPF_BASE)/include
 CINCLUDES-$(CONFIG_LIBUBPF) += -I$(LIBUBPF_SRC)/vm/inc
+CINCLUDES-$(CONFIG_LIBUBPF) += -I$(LIBUBPF_SRC)/vm
 
 ################################################################################
 # Flags
