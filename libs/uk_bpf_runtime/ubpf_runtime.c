@@ -3,6 +3,7 @@
 #include <uk/plat/time.h>
 
 #include <ubpf.h>
+#include <ubpf_int.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <errno.h>
@@ -11,6 +12,7 @@
 #include <helper_function_list.h>
 #include <uk_program_types.h>
 #include <uk/essentials.h>
+#include <uk/assert.h>
 #include "ubpf_helpers.h"
 
 // private helper functions
@@ -186,7 +188,7 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     print_fn(buf);
     print_fn("\n");
     print_fn(YAY("TEST: page nums: "));
-    snprintf(buf, sizeof(buf), "%lx", size_to_num_pages(jitted_bpf));
+    snprintf(buf, sizeof(buf), "%lx", size_to_num_pages(vm->jitted_size));
     print_fn(buf);
     print_fn("\n");
     print_fn(YAY("TEST: page size: "));
@@ -194,9 +196,23 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     print_fn(buf);
     print_fn("\n");
 
-
+    UK_ASSERT(((size_t)jitted_bpf) % __PAGE_SIZE == 0);
     // end of TODO
 
+    struct uk_pagetable *page_table = ukplat_pt_get_active();
+    unsigned long pages = size_to_num_pages(vm->jitted_size);
+    int set_page_attr_result = ukplat_page_set_attr(page_table, (__vaddr_t)jitted_bpf, pages, PAGE_ATTR_PROT_READ | PAGE_ATTR_PROT_EXEC, 0);
+    if(set_page_attr_result < 0) {
+        print_fn(ERR("BPF program page set attr failed: "));
+        snprintf(buf, sizeof(buf), "%d", set_page_attr_result);
+        print_fn(buf);
+        print_fn("\n");
+        if (logfile != NULL) {
+            fprintf(logfile, "BPF program page set attr failed: %d\n", set_page_attr_result);
+        }
+
+        goto clean_up;
+    }
 
     if(!jitted_bpf) {
         print_fn(ERR("BPF program compile failed: "));
