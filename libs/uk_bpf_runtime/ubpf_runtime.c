@@ -10,6 +10,7 @@
 
 #include <helper_function_list.h>
 #include <uk_program_types.h>
+#include <uk/essentials.h>
 #include "ubpf_helpers.h"
 
 // private helper functions
@@ -166,15 +167,36 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     uint64_t begin = ukplat_monotonic_clock();
     ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError);
     uint64_t end = ukplat_monotonic_clock();
-    char buf[10];
-    uint64_t took = (end - begin) / 1e6;
-    snprintf(buf, 10, "%lu", took);
+    char buf[16];
+    double took = (end - begin) / 1e6;
+    snprintf(buf, sizeof(buf), "%0.2lf", took);
     print_fn(YAY("BPF program compile took: "));
     print_fn(buf);
-    print_fn(" ns\n");
+    print_fn(" ms\n");
     if (logfile != NULL) {
         fprintf(logfile, "BPF program compile took: %lu\n", end - begin);
     }
+
+    // TODO remove these, for debug only
+#define size_to_num_pages(size) \
+	(ALIGN_UP((unsigned long)(size), __PAGE_SIZE) / __PAGE_SIZE)
+
+    print_fn(YAY("TEST: addr: "));
+    snprintf(buf, sizeof(buf), "%lx", jitted_bpf);
+    print_fn(buf);
+    print_fn("\n");
+    print_fn(YAY("TEST: page nums: "));
+    snprintf(buf, sizeof(buf), "%lx", size_to_num_pages(jitted_bpf));
+    print_fn(buf);
+    print_fn("\n");
+    print_fn(YAY("TEST: page size: "));
+    snprintf(buf, sizeof(buf), "%lx", __PAGE_SIZE);
+    print_fn(buf);
+    print_fn("\n");
+
+
+    // end of TODO
+
 
     if(!jitted_bpf) {
         print_fn(ERR("BPF program compile failed: "));
@@ -188,8 +210,7 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
         goto clean_up;
     }
 
-    ret = -1;
-    //ret = jitted_bpf(&context, sizeof(context));
+    ret = jitted_bpf(&context, sizeof(context));
 
 #else
     if (ubpf_exec(vm, &context, sizeof(context), &ret) < 0) {
@@ -206,7 +227,7 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
         fprintf(logfile, "BPF program returned: %lu\n", ret);
     }
 
-clean_up:
+    clean_up:
     ubpf_destroy(vm);
 
     if (logfile != NULL) {
