@@ -18,6 +18,7 @@ add_executable(ushell_terminal UshellTerminal.cpp
         device/UShellConsoleDevice.cpp device/UShellConsoleDevice.hpp device/utils/BlockingQueue.h
         UshellCmdInterceptor.cpp UShellCmdInterceptor.hpp
         EBPFVerifier.cpp EBPFVerifier.hpp parameters.h
-        device/mock/UShellConsoleMock.cpp device/mock/UShellConsoleMock.hpp platform/EBPFPlatformUnikernel.cpp platform/EBPFPlatformUnikernel.h)
+        device/mock/UShellConsoleMock.cpp device/mock/UShellConsoleMock.hpp
+        platform/EBPFPlatformUnikernel.cpp platform/EBPFPlatformUnikernel.h)
 
 target_link_libraries(ushell_terminal ${Boost_LIBRARIES} ebpfverifier uk_bpf_helper)

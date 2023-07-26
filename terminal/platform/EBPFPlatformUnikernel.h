@@ -2,9 +2,9 @@
 #define USHELL_TERMINAL_EBPFPLATFORMUNIKERNEL_H
 
 
-#include "prog_type_list.h"
-#include "uk_program_types.h"
-#include "platform.hpp"
+#include <prog_type_list.h>
+#include <uk_program_types.h>
+#include <platform.hpp>
 
 class EBPFPlatformUnikernel {
 public:
