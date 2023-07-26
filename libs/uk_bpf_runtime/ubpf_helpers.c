@@ -23,10 +23,10 @@ HelperFunctionList *init_builtin_bpf_helpers() {
     // add program types
     uint64_t counter = 1;
     BpfProgType *prog_type_executable = bpf_prog_type_list_emplace_back(g_bpf_prog_types, counter++, "executable", false,
-                                    sizeof(uk_bpf_type_executable),
-                                    offsetof(uk_bpf_type_executable, data),
-                                    offsetof(uk_bpf_type_executable, data_end),
-                                    offsetof(uk_bpf_type_executable, data_meta));
+                                    sizeof(uk_bpf_type_executable_t),
+                                    offsetof(uk_bpf_type_executable_t, data),
+                                    offsetof(uk_bpf_type_executable_t, data_end),
+                                    offsetof(uk_bpf_type_executable_t, data_meta));
 
     // add builtin helper functions
     // bpf_map_noop
