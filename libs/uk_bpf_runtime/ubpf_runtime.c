@@ -167,7 +167,8 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError);
     uint64_t end = ukplat_monotonic_clock();
     char buf[10];
-    snprintf(buf, 10, "%lu", end - begin);
+    uint64_t took = (end - begin) / 1e6;
+    snprintf(buf, 10, "%lu", took);
     print_fn(YAY("BPF program compile took: "));
     print_fn(buf);
     print_fn(" ns\n");
@@ -187,7 +188,8 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
         goto clean_up;
     }
 
-    ret = jitted_bpf(&context, sizeof(context));
+    ret = -1;
+    //ret = jitted_bpf(&context, sizeof(context));
 
 #else
     if (ubpf_exec(vm, &context, sizeof(context), &ret) < 0) {
