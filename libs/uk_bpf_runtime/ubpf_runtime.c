@@ -1,5 +1,7 @@
 #include "ubpf_runtime.h"
 
+#include <uk/plat/time.h>
+
 #include <ubpf.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -161,7 +163,15 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
 #define UK_JITTED_BPF
 #ifdef UK_JITTED_BPF
     char* compileError;
-    ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError)
+    uint64_t begin = ukplat_monotonic_clock();
+    ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError);
+    uint64_t end = ukplat_monotonic_clock();
+    char buf[10];
+    snprintf(buf, 10, "%lu", end - begin);
+    print_fn(YAY("BPF program compile took: "));
+    print_fn(buf);
+    print_fn(" ns\n");
+
     if(!jitted_bpf) {
         print_fn(ERR("BPF program compile failed: "));
         print_fn(compileError);
