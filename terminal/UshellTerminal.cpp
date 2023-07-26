@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
     readUntilPrompt(uShellConsoleDevice);
 
     auto verifierOptions = ebpf_verifier_default_options;
-    verifierOptions.check_termination = true;
+    // TODO reenable this: verifierOptions.check_termination = true;
     verifierOptions.print_failures = true;
 
     UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint,

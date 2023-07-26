@@ -167,7 +167,7 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
 
     char buf[16];
     uint64_t begin;
-    uint64_t end
+    uint64_t end;
 
     uint64_t ret;
 #define UK_JITTED_BPF
