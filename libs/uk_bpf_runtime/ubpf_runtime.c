@@ -142,18 +142,19 @@ int bpf_exec(const char *filename, const char* function_name, void *args, size_t
     }
 
     // create context on local stack
-    const size_t max_data_size = sizeof(context.storage);
-    const size_t data_size = args_size > max_data_size ? max_data_size - 1 : args_size);
-
-    uk_bpf_type_executable_t context = {
-            .data = &context.storage,
-            .data_end = data_size,
-            .data_meta = 0,
+    uk_bpf_type_executable_t context {
+        .data = context.storage,
+        .data_meta = 0,
     };
 
+    const size_t max_data_size = sizeof(context.storage);
+    const size_t data_size = args_size > max_data_size ? max_data_size - 1 : args_size;
+
+    context.data_end = (size_t)context.storage + data_size - 1;
+
     strncpy(context.storage, args, data_size);
-    if (data_size == max_args_size - 1) {
-        context.storage[max_args_size - 1] = '\0';
+    if (data_size == max_data_size - 1) {
+        context.storage[data_size] = '\0';
     }
     // start bpf program
 

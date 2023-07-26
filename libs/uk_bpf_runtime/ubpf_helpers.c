@@ -22,7 +22,7 @@ HelperFunctionList *init_builtin_bpf_helpers() {
 
     // add program types
     uint64_t counter = 1;
-    bpf_prog_type_list_emplace_back(g_bpf_prog_types, counter++, "tracer", false,
+    BpfProgType *prog_type_executable = bpf_prog_type_list_emplace_back(g_bpf_prog_types, counter++, "executable", false,
                                     sizeof(uk_bpf_type_executable),
                                     offsetof(uk_bpf_type_executable, data),
                                     offsetof(uk_bpf_type_executable, data_end),
@@ -73,22 +73,22 @@ HelperFunctionList *init_builtin_bpf_helpers() {
             UK_EBPF_ARGUMENT_TYPE_PTR_TO_READABLE_MEM,
     };
     helper_function_list_emplace_back(
-            g_bpf_helper_functions, 4, "bpf_get_addr", bpf_get_addr,
+            g_bpf_helper_functions, 4, prog_type_executable->prog_type_id, "bpf_get_addr", bpf_get_addr,
             UK_EBPF_RETURN_TYPE_INTEGER,
             sizeof(args_bpf_get_addr) / sizeof(uk_ebpf_argument_type_t),
             args_bpf_get_addr);
 
     // bpf_probe_read
     uk_ebpf_argument_type_t args_bpf_probe_read[] = {
-            EBPF_ARGUMENT_TYPE_ANYTHING,
-            EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
     };
     helper_function_list_emplace_back(
-            g_bpf_helper_functions, 5, "bpf_probe_read", bpf_probe_read,
+            g_bpf_helper_functions, 5, UK_EBPF_PROG_TYPE_UNSPECIFIED, "bpf_probe_read", bpf_probe_read,
             UK_EBPF_RETURN_TYPE_INTEGER,
             sizeof(args_bpf_probe_read) / sizeof(uk_ebpf_argument_type_t),
             args_bpf_probe_read);
-    */
+
     // bpf_time_get_ns
     helper_function_list_emplace_back(g_bpf_helper_functions, 6,
                                       UK_EBPF_PROG_TYPE_UNSPECIFIED,
@@ -101,7 +101,7 @@ HelperFunctionList *init_builtin_bpf_helpers() {
             UK_EBPF_ARGUMENT_TYPE_ANYTHING,
     };
     helper_function_list_emplace_back(
-            g_bpf_helper_functions, 7, UK_EBPF_PROG_TYPE_UNSPECIFIED,
+            g_bpf_helper_functions, 7, prog_type_executable->prog_type_id,
             "bpf_unwind", bpf_unwind,
             UK_EBPF_RETURN_TYPE_INTEGER_OR_NO_RETURN_IF_SUCCEED,
             sizeof(args_bpf_unwind) / sizeof(uk_ebpf_argument_type_t),
