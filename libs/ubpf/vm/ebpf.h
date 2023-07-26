@@ -1,3 +1,6 @@
+// Copyright (c) 2015 Big Switch Networks, Inc
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * Copyright 2015 Big Switch Networks, Inc
  *
@@ -28,6 +31,22 @@ struct ebpf_inst
     uint8_t src : 4;
     int16_t offset;
     int32_t imm;
+};
+
+enum bpf_register
+{
+    BPF_REG_0 = 0,
+    BPF_REG_1,
+    BPF_REG_2,
+    BPF_REG_3,
+    BPF_REG_4,
+    BPF_REG_5,
+    BPF_REG_6,
+    BPF_REG_7,
+    BPF_REG_8,
+    BPF_REG_9,
+    BPF_REG_10,
+    _BPF_REG_MAX,
 };
 
 #define EBPF_CLS_MASK 0x07

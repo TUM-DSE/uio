@@ -1,3 +1,6 @@
+// Copyright (c) 2015 Big Switch Networks, Inc
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * Copyright 2015 Big Switch Networks, Inc
  * Copyright 2017 Google Inc.
@@ -15,6 +18,8 @@
  * limitations under the License.
  */
 
+#include "ebpf.h"
+#include <stdint.h>
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,10 +36,6 @@
 #define _countof(array) (sizeof(array) / sizeof(array[0]))
 #endif
 
-/* Special values for target_pc in struct jump */
-#define TARGET_PC_EXIT -1
-#define TARGET_PC_DIV_BY_ZERO -2
-
 static void
 muldivmod(struct jit_state* state, uint8_t opcode, int src, int dst, int32_t imm);
 
@@ -43,18 +44,21 @@ muldivmod(struct jit_state* state, uint8_t opcode, int src, int dst, int32_t imm
 /*
  * There are two common x86-64 calling conventions, as discussed at
  * https://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_calling_conventions
+ *
+ * Please Note: R12 is special and we are *not* using it. As a result, it is omitted
+ * from the list of non-volatile registers for both platforms (even though it is, in
+ * fact, non-volatile).
+ *
+ * BPF R0-R4 are "volatile"
+ * BPF R5-R10 are "non-volatile"
+ * In general, we attempt to map BPF volatile registers to x64 volatile and BPF non-
+ * volatile to x64 non-volatile.
  */
 
 #if defined(_WIN32)
-static int platform_nonvolatile_registers[] = {RBP, RBX, RDI, RSI, R12, R13, R14, R15};
+static int platform_nonvolatile_registers[] = {RBP, RBX, RDI, RSI, R13, R14, R15};
 static int platform_parameter_registers[] = {RCX, RDX, R8, R9};
 #define RCX_ALT R10
-// Register assignments:
-// BPF R0-R4 are "volatile"
-// BPF R5-R10 are "non-volatile"
-// Map BPF volatile registers to x64 volatile and map BPF non-volatile to
-// x64 non-volatile.
-// Avoid R12 as we don't support encoding modrm modifier for using R12.
 static int register_map[REGISTER_MAP_SIZE] = {
     RAX,
     R10,
@@ -91,8 +95,105 @@ static int register_map[REGISTER_MAP_SIZE] = {
 static int
 map_register(int r)
 {
-    assert(r < REGISTER_MAP_SIZE);
-    return register_map[r % REGISTER_MAP_SIZE];
+    assert(r < _BPF_REG_MAX);
+    return register_map[r % _BPF_REG_MAX];
+}
+
+static inline void
+emit_local_call(struct jit_state* state, uint32_t target_pc)
+{
+    /*
+     * Pushing 4 * 8 = 32 bytes will maintain the invariant
+     * that the stack is 16-byte aligned.
+     */
+    emit_push(state, map_register(BPF_REG_6));
+    emit_push(state, map_register(BPF_REG_7));
+    emit_push(state, map_register(BPF_REG_8));
+    emit_push(state, map_register(BPF_REG_9));
+#if defined(_WIN32)
+    /* Windows x64 ABI requires home register space */
+    /* Allocate home register space - 4 registers */
+    emit_alu64_imm32(state, 0x81, 5, RSP, 4 * sizeof(uint64_t));
+#endif
+    emit1(state, 0xe8); // e8 is the opcode for a CALL
+    emit_jump_target_address(state, target_pc);
+#if defined(_WIN32)
+    /* Deallocate home register space - 4 registers */
+    emit_alu64_imm32(state, 0x81, 0, RSP, 4 * sizeof(uint64_t));
+#endif
+    emit_pop(state, map_register(BPF_REG_9));
+    emit_pop(state, map_register(BPF_REG_8));
+    emit_pop(state, map_register(BPF_REG_7));
+    emit_pop(state, map_register(BPF_REG_6));
+}
+
+static uint32_t
+emit_retpoline(struct jit_state* state)
+{
+    uint32_t retpoline_target = state->offset;
+
+    /*
+     * When we enter, the return value is on the top of the stack and means (by invariant
+     * [see emit_call]) that we are not 16-byte aligned. Regain that alignment.
+     */
+    emit_alu64_imm32(state, 0x81, 5, RSP, sizeof(uint64_t));
+
+    /*
+     * Using retpolines to mitigate spectre/meltdown. Adapting the approach
+     * from
+     * https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/technical-documentation/retpoline-branch-target-injection-mitigation.html
+     */
+
+    /* jmp label2 */
+    emit1(state, 0xe9);
+    uint32_t label2_jump_offset = state->offset;
+    emit4(state, 0x00);
+
+    /* label0: */
+    /* call label1 */
+    uint32_t label0 = state->offset;
+    emit1(state, 0xe8);
+    uint32_t label1_call_offset = state->offset;
+    emit4(state, 0x00);
+
+    /* capture_ret_spec: */
+    /* pause */
+    uint32_t capture_ret_spec = state->offset;
+    emit1(state, 0xf3);
+    emit1(state, 0x90);
+    /* jmp  capture_ret_spec */
+    emit1(state, 0xe9);
+    emit_jump_target_offset(state, state->offset, capture_ret_spec);
+    emit4(state, 0x00);
+
+    /* label1: */
+    /* mov rax, (rsp) */
+    uint32_t label1 = state->offset;
+    emit1(state, 0x48);
+    emit1(state, 0x89);
+    emit1(state, 0x04);
+    emit1(state, 0x24);
+
+    /* ret */
+    emit1(state, 0xc3);
+
+    /* label2: */
+    /* call label0 */
+    uint32_t label2 = state->offset;
+    emit1(state, 0xe8);
+    emit_jump_target_offset(state, state->offset, label0);
+    emit4(state, 0x00);
+
+    /*
+     * Before leaving this mini-function, restore the proper alignment (see above).
+     */
+    emit_alu64_imm32(state, 0x81, 0, RSP, sizeof(uint64_t));
+    emit_ret(state);
+
+    emit_jump_target_offset(state, label1_call_offset, label1);
+    emit_jump_target_offset(state, label2_jump_offset, label2);
+
+    return retpoline_target;
 }
 
 /* For testing, this changes the mapping between x86 and eBPF registers */
@@ -130,14 +231,51 @@ translate(struct ubpf_vm* vm, struct jit_state* state, char** errmsg)
 
     /* Move first platform parameter register into register 1 */
     if (map_register(1) != platform_parameter_registers[0]) {
-        emit_mov(state, platform_parameter_registers[0], map_register(1));
+        emit_mov(state, platform_parameter_registers[0], map_register(BPF_REG_1));
     }
 
-    /* Copy stack pointer to R10 */
-    emit_mov(state, RSP, map_register(10));
+    /*
+     * Assuming that the stack is 16-byte aligned right before
+     * the call insn that brought us to this code, when
+     * we start executing the jit'd code, we need to regain a 16-byte
+     * alignment. The UBPF_STACK_SIZE is guaranteed to be
+     * divisible by 16. However, if we pushed an even number of
+     * registers on the stack when we are saving state (see above),
+     * then we have to add an additional 8 bytes to get back
+     * to a 16-byte alignment.
+     */
+    if (!(_countof(platform_nonvolatile_registers) % 2)) {
+        emit_alu64_imm32(state, 0x81, 5, RSP, 0x8);
+    }
+
+    /*
+     * Set BPF R10 (the way to access the frame in eBPF) to match RSP.
+     */
+    emit_mov(state, RSP, map_register(BPF_REG_10));
 
     /* Allocate stack space */
     emit_alu64_imm32(state, 0x81, 5, RSP, UBPF_STACK_SIZE);
+
+#if defined(_WIN32)
+    /* Windows x64 ABI requires home register space */
+    /* Allocate home register space - 4 registers */
+    emit_alu64_imm32(state, 0x81, 5, RSP, 4 * sizeof(uint64_t));
+#endif
+
+    /*
+     * Use a call to set up a place where we can land after eBPF program's
+     * final EXIT call. This makes it appear to the ebpf programs
+     * as if they are called like a function. It is their responsibility
+     * to deal with the non-16-byte aligned stack pointer that goes along
+     * with this pretense.
+     */
+    emit1(state, 0xe8);
+    emit4(state, 5);
+    /*
+     * We jump over this instruction in the first place; return here
+     * after the eBPF program is finished executing.
+     */
+    emit_jmp(state, TARGET_PC_EXIT);
 
     for (i = 0; i < vm->num_insts; i++) {
         struct ebpf_inst inst = ubpf_fetch_instruction(vm, i);
@@ -146,6 +284,13 @@ translate(struct ubpf_vm* vm, struct jit_state* state, char** errmsg)
         int dst = map_register(inst.dst);
         int src = map_register(inst.src);
         uint32_t target_pc = i + inst.offset + 1;
+
+        if (i == 0 || vm->int_funcs[i]) {
+            /* When we are the subject of a call, we have to properly align our
+             * stack pointer.
+             */
+            emit_alu64_imm32(state, 0x81, 5, RSP, 8);
+        }
 
         switch (inst.opcode) {
         case EBPF_OP_ADD_IMM:
@@ -486,17 +631,24 @@ translate(struct ubpf_vm* vm, struct jit_state* state, char** errmsg)
             break;
         case EBPF_OP_CALL:
             /* We reserve RCX for shifts */
-            emit_mov(state, RCX_ALT, RCX);
-            emit_call(state, vm->ext_funcs[inst.imm]);
-            if (inst.imm == vm->unwind_stack_extension_index) {
-                emit_cmp_imm32(state, map_register(0), 0);
-                emit_jcc(state, 0x84, TARGET_PC_EXIT);
+            if (inst.src == 0) {
+                emit_mov(state, RCX_ALT, RCX);
+                emit_call(state, vm->ext_funcs[inst.imm]);
+                if (inst.imm == vm->unwind_stack_extension_index) {
+                    emit_cmp_imm32(state, map_register(BPF_REG_0), 0);
+                    emit_jcc(state, 0x84, TARGET_PC_EXIT);
+                }
+            } else if (inst.src == 1) {
+                target_pc = i + inst.imm + 1;
+                emit_local_call(state, target_pc);
             }
             break;
         case EBPF_OP_EXIT:
-            if (i != vm->num_insts - 1) {
-                emit_jmp(state, TARGET_PC_EXIT);
-            }
+            /* On entry to every local function we add an additional 8 bytes.
+             * Undo that here!
+             */
+            emit_alu64_imm32(state, 0x81, 0, RSP, 8);
+            emit_ret(state);
             break;
 
         case EBPF_OP_LDXW:
@@ -555,12 +707,16 @@ translate(struct ubpf_vm* vm, struct jit_state* state, char** errmsg)
     state->exit_loc = state->offset;
 
     /* Move register 0 into rax */
-    if (map_register(0) != RAX) {
-        emit_mov(state, map_register(0), RAX);
+    if (map_register(BPF_REG_0) != RAX) {
+        emit_mov(state, map_register(BPF_REG_0), RAX);
     }
 
-    /* Deallocate stack space */
-    emit_alu64_imm32(state, 0x81, 0, RSP, UBPF_STACK_SIZE);
+    /* Deallocate stack space by restoring RSP from BPF R10. */
+    emit_mov(state, map_register(BPF_REG_10), RSP);
+
+    if (!(_countof(platform_nonvolatile_registers) % 2)) {
+        emit_alu64_imm32(state, 0x81, 0, RSP, 0x8);
+    }
 
     /* Restore platform non-volatile registers */
     for (i = 0; i < _countof(platform_nonvolatile_registers); i++) {
@@ -568,6 +724,8 @@ translate(struct ubpf_vm* vm, struct jit_state* state, char** errmsg)
     }
 
     emit1(state, 0xc3); /* ret */
+
+    state->retpoline_loc = emit_retpoline(state);
 
     return 0;
 }
@@ -704,10 +862,12 @@ resolve_jumps(struct jit_state* state)
         struct jump jump = state->jumps[i];
 
         int target_loc;
-        if (jump.target_pc == TARGET_PC_EXIT) {
+        if (jump.target_offset != 0) {
+            target_loc = jump.target_offset;
+        } else if (jump.target_pc == TARGET_PC_EXIT) {
             target_loc = state->exit_loc;
-        } else if (jump.target_pc == TARGET_PC_DIV_BY_ZERO) {
-            target_loc = state->div_by_zero_loc;
+        } else if (jump.target_pc == TARGET_PC_RETPOLINE) {
+            target_loc = state->retpoline_loc;
         } else {
             target_loc = state->pc_locs[jump.target_pc];
         }
