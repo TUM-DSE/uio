@@ -40,9 +40,9 @@ InterceptionResult UShellCmdInterceptor::intercept(const std::string &in) {
                       << std::endl;
             return {0, true};
         } else if (command == "bpf_exec") {
-            if (tokens.size() < 2) {
+            if (tokens.size() < 3) {
                 std::cout << "PREVAIL> ERROR: Invalid usage, "
-                             "expected: bpf_exec <bpf_file> "
+                             "expected: bpf_exec <bpf_file> <bpf_function_name> "
                              "(<args> <number of args>)"
                           << std::endl;
                 return {400, true};
