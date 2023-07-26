@@ -11,8 +11,6 @@
 
 #include <helper_function_list.h>
 #include <uk_program_types.h>
-#include <uk/essentials.h>
-#include <uk/assert.h>
 #include <uk/plat/paging.h>
 #include "ubpf_helpers.h"
 
@@ -99,6 +97,10 @@ struct ubpf_vm *init_vm(FILE *logfile) {
     return vm;
 }
 
+#include <uk/assert.h>
+#include <uk/essentials.h>
+#define size_to_num_pages(size) \
+	(ALIGN_UP((unsigned long)(size), __PAGE_SIZE) / __PAGE_SIZE)
 
 int bpf_exec(const char *filename, const char *function_name, void *args, size_t args_size, int debug,
              void (*print_fn)(char *str)) {
@@ -163,53 +165,42 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     }
     // start bpf program
 
+    char buf[16];
+    uint64_t begin;
+    uint64_t end
+
     uint64_t ret;
 #define UK_JITTED_BPF
 #ifdef UK_JITTED_BPF
     char* compileError;
-    uint64_t begin = ukplat_monotonic_clock();
+    begin = ukplat_monotonic_clock();
     ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError);
-    uint64_t end = ukplat_monotonic_clock();
-    char buf[16];
-    double took = (end - begin) / 1e6;
-    snprintf(buf, sizeof(buf), "%0.2lf", took);
-    print_fn(YAY("BPF program compile took: "));
-    print_fn(buf);
-    print_fn(" ms\n");
+    end = ukplat_monotonic_clock();
+
+    wrap_print_fn(128, YAY("BPF program compile took: %lu ns\n"), end - begin)
     if (logfile != NULL) {
-        fprintf(logfile, "BPF program compile took: %lu\n", end - begin);
+        fprintf(logfile, "BPF program compile took: %lu ns\n", end - begin);
     }
 
     // TODO remove these, for debug only
-#define size_to_num_pages(size) \
-	(ALIGN_UP((unsigned long)(size), __PAGE_SIZE) / __PAGE_SIZE)
 
-    print_fn(YAY("TEST: addr: "));
-    snprintf(buf, sizeof(buf), "%lx", jitted_bpf);
-    print_fn(buf);
-    print_fn("\n");
-    print_fn(YAY("TEST: page nums: "));
-    snprintf(buf, sizeof(buf), "%lx", size_to_num_pages(vm->jitted_size));
-    print_fn(buf);
-    print_fn("\n");
-    print_fn(YAY("TEST: page size: "));
-    snprintf(buf, sizeof(buf), "%lx", __PAGE_SIZE);
-    print_fn(buf);
-    print_fn("\n");
+
+    wrap_print_fn(128, ERR("TEST: addr: %lx\n"), jitted_bpf)
+    wrap_print_fn(128, ERR("TEST: jit size: %lx\n"), vm->jitted_size)
+    wrap_print_fn(128, ERR("TEST: page nums: %lx\n"), size_to_num_pages(vm->jitted_size))
+    wrap_print_fn(128, ERR("TEST: page size: %lx\n"), __PAGE_SIZE)
+    // end of TODO
 
     UK_ASSERT(((size_t)jitted_bpf) % __PAGE_SIZE == 0);
-    // end of TODO
 
     struct uk_pagetable *page_table = ukplat_pt_get_active();
     unsigned long pages = size_to_num_pages(vm->jitted_size);
     int set_page_attr_result = ukplat_page_set_attr(page_table, (__vaddr_t)jitted_bpf, pages, PAGE_ATTR_PROT_READ | PAGE_ATTR_PROT_WRITE | PAGE_ATTR_PROT_EXEC, 0);
     if(set_page_attr_result < 0) {
-        print_fn(ERR("BPF program page set attr failed: "));
-        snprintf(buf, sizeof(buf), "%d", set_page_attr_result);
-        print_fn(buf);
-        print_fn("\n");
+        wrap_print_fn(128, ERR("BPF program page jitted code executable failed (%d)\n"), set_page_attr_result)
+
         if (logfile != NULL) {
-            fprintf(logfile, "BPF program page set attr failed: %d\n", set_page_attr_result);
+            fprintf(logfile, "BPF program page jitted code executable failed (%d)\n", set_page_attr_result);
         }
 
         goto clean_up;
@@ -227,10 +218,16 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
         goto clean_up;
     }
 
+    begin = ukplat_monotonic_clock();
     ret = jitted_bpf(&context, sizeof(context));
+    end = ukplat_monotonic_clock();
 
 #else
-    if (ubpf_exec(vm, &context, sizeof(context), &ret) < 0) {
+    begin = ukplat_monotonic_clock();
+    int interpret_result = ubpf_exec(vm, &context, sizeof(context), &ret);
+    end = ukplat_monotonic_clock();
+
+    if (interpret_result < 0) {
         print_fn(ERR("BPF program interpretation failed.\n"));
         if (logfile != NULL) {
             fprintf(logfile, "BPF program interpretation failed.\n");
@@ -239,9 +236,9 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
         goto clean_up;
     }
 #endif
-    wrap_print_fn(100, YAY("BPF program returned: %lu\n"), ret);
+    wrap_print_fn(128, YAY("BPF program returned: %lu. Took: %d ns\n"), ret, end - begin)
     if (logfile != NULL) {
-        fprintf(logfile, "BPF program returned: %lu\n", ret);
+        fprintf(logfile, "BPF program returned: %lu. Took: %d ns\n", ret, end - begin);
     }
 
     clean_up:
