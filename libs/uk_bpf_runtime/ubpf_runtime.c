@@ -202,7 +202,7 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
 
     struct uk_pagetable *page_table = ukplat_pt_get_active();
     unsigned long pages = size_to_num_pages(vm->jitted_size);
-    int set_page_attr_result = ukplat_page_set_attr(page_table, (__vaddr_t)jitted_bpf, pages, PAGE_ATTR_PROT_READ | PAGE_ATTR_PROT_EXEC, 0);
+    int set_page_attr_result = ukplat_page_set_attr(page_table, (__vaddr_t)jitted_bpf, pages, PAGE_ATTR_PROT_READ | PAGE_ATTR_PROT_WRITE | PAGE_ATTR_PROT_EXEC, 0);
     if(set_page_attr_result < 0) {
         print_fn(ERR("BPF program page set attr failed: "));
         snprintf(buf, sizeof(buf), "%d", set_page_attr_result);
