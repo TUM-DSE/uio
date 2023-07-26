@@ -171,15 +171,16 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     print_fn(YAY("BPF program compile took: "));
     print_fn(buf);
     print_fn(" ns\n");
+    if (logfile != NULL) {
+        fprintf(logfile, "BPF program compile took: %lu\n", end - begin);
+    }
 
     if(!jitted_bpf) {
         print_fn(ERR("BPF program compile failed: "));
         print_fn(compileError);
         print_fn("\n");
         if (logfile != NULL) {
-            fprintf(logfile, "BPF program compile failed: ");
-            fprintf(logfile, compileError);
-            fprintf(logfile, "\n");
+            fprintf(logfile, "BPF program compile failed: %s\n", compileError);
         }
 
         free(compileError);
