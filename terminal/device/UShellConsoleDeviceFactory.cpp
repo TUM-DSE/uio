@@ -5,7 +5,7 @@
 #include "UShellConsoleDevice.hpp"
 #include "device/mock/UShellConsoleMock.hpp"
 
-#define MOCK_SOCAT
+//#define MOCK_SOCAT
 
 UShellConsoleDevice *createUshellConsoleDevice(const std::string &path)
 {
