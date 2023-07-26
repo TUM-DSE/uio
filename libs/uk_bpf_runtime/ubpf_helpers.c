@@ -23,10 +23,10 @@ HelperFunctionList *init_builtin_bpf_helpers() {
     // add program types
     uint64_t counter = 1;
     bpf_prog_type_list_emplace_back(g_bpf_prog_types, counter++, "tracer", false,
-                                    sizeof(prog_with_argument_t),
-                                    offsetof(prog_with_argument_t, data),
-                                    offsetof(prog_with_argument_t, data_end),
-                                    offsetof(prog_with_argument_t, data_meta));
+                                    sizeof(uk_bpf_type_executable),
+                                    offsetof(uk_bpf_type_executable, data),
+                                    offsetof(uk_bpf_type_executable, data_end),
+                                    offsetof(uk_bpf_type_executable, data_meta));
 
     // add builtin helper functions
     // bpf_map_noop
@@ -69,8 +69,6 @@ HelperFunctionList *init_builtin_bpf_helpers() {
             args_bpf_map_del);
 
     // bpf_get_addr
-    /*
-    // TODO
     uk_ebpf_argument_type_t args_bpf_get_addr[] = {
             UK_EBPF_ARGUMENT_TYPE_PTR_TO_READABLE_MEM,
     };
@@ -79,13 +77,11 @@ HelperFunctionList *init_builtin_bpf_helpers() {
             UK_EBPF_RETURN_TYPE_INTEGER,
             sizeof(args_bpf_get_addr) / sizeof(uk_ebpf_argument_type_t),
             args_bpf_get_addr);
-    */
+
     // bpf_probe_read
-    /*
-    // TODO
     uk_ebpf_argument_type_t args_bpf_probe_read[] = {
-            EBPF_ARGUMENT_TYPE_PTR_TO_CTX,
-            UK_EBPF_ARGUMENT_TYPE_CONST_SIZE,
+            EBPF_ARGUMENT_TYPE_ANYTHING,
+            EBPF_ARGUMENT_TYPE_ANYTHING,
     };
     helper_function_list_emplace_back(
             g_bpf_helper_functions, 5, "bpf_probe_read", bpf_probe_read,

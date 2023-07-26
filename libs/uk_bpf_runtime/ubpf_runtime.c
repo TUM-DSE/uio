@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <helper_function_list.h>
+#include <uk_program_types.h>
 #include "ubpf_helpers.h"
 
 // private helper functions
@@ -92,6 +93,7 @@ struct ubpf_vm *init_vm(FILE *logfile) {
     return vm;
 }
 
+
 int bpf_exec(const char *filename, void *args, size_t args_size, int debug,
              void (*print_fn)(char *str)) {
     FILE *logfile = NULL;
@@ -139,8 +141,24 @@ int bpf_exec(const char *filename, void *args, size_t args_size, int debug,
         return 1;
     }
 
+    // create context on local stack
+    const size_t max_data_size = sizeof(context.storage);
+    const size_t data_size = args_size > max_data_size ? max_data_size - 1 : args_size);
+
+    uk_bpf_type_executable_t context = {
+            .data = &context.storage,
+            .data_end = data_size,
+            .data_meta = 0,
+    };
+
+    strncpy(context.storage, args, data_size);
+    if (data_size == max_args_size - 1) {
+        context.storage[max_args_size - 1] = '\0';
+    }
+    // start bpf program
+
     uint64_t ret;
-    if (ubpf_exec(vm, args, args_size, &ret) < 0) {
+    if (ubpf_exec(vm, &context, sizeof(context), &ret) < 0) {
         print_fn(ERR("BPF program execution failed.\n"));
         if (logfile != NULL) {
             fprintf(logfile, "BPF program execution failed.\n");
@@ -152,8 +170,10 @@ int bpf_exec(const char *filename, void *args, size_t args_size, int debug,
         }
     }
     ubpf_destroy(vm);
+
     if (logfile != NULL) {
         fclose(logfile);
     }
+
     return 0;
 }
