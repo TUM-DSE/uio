@@ -149,7 +149,7 @@ int bpf_exec(const char *filename, const char* function_name, void *args, size_t
     const size_t max_data_size = sizeof(context.storage);
     const size_t data_size = args_size > max_data_size ? max_data_size - 1 : args_size;
 
-    context.data_end = (size_t)context.storage + data_size - 1;
+    context.data_end = context.storage + data_size - 1;
 
     strncpy(context.storage, args, data_size);
     if (data_size == max_data_size - 1) {
