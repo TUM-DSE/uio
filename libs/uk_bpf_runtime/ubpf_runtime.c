@@ -94,7 +94,7 @@ struct ubpf_vm *init_vm(FILE *logfile) {
 }
 
 
-int bpf_exec(const char *filename, const char* function_name, void *args, size_t args_size, int debug,
+int bpf_exec(const char *filename, const char *function_name, void *args, size_t args_size, int debug,
              void (*print_fn)(char *str)) {
     FILE *logfile = NULL;
     if (debug != 0) {
@@ -158,17 +158,42 @@ int bpf_exec(const char *filename, const char* function_name, void *args, size_t
     // start bpf program
 
     uint64_t ret;
-    if (ubpf_exec(vm, &context, sizeof(context), &ret) < 0) {
-        print_fn(ERR("BPF program execution failed.\n"));
+#define UK_JITTED_BPF
+#ifdef UK_JITTED_BPF
+    char* compileError;
+    ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError)
+    if(!jitted_bpf) {
+        print_fn(ERR("BPF program compile failed: "));
+        print_fn(compileError);
+        print_fn("\n");
         if (logfile != NULL) {
-            fprintf(logfile, "BPF program execution failed.\n");
+            fprintf(logfile, "BPF program compile failed: ");
+            fprintf(logfile, compileError);
+            fprintf(logfile, "\n");
         }
-    } else {
-        wrap_print_fn(100, YAY("BPF program returned: %lu\n"), ret);
-        if (logfile != NULL) {
-            fprintf(logfile, "BPF program returned: %lu\n", ret);
-        }
+
+        free(compileError);
+        goto clean_up;
     }
+
+    ret = jitted_bpf(&context, sizeof(context));
+
+#else
+    if (ubpf_exec(vm, &context, sizeof(context), &ret) < 0) {
+        print_fn(ERR("BPF program interpretation failed.\n"));
+        if (logfile != NULL) {
+            fprintf(logfile, "BPF program interpretation failed.\n");
+        }
+
+        goto clean_up;
+    }
+#endif
+    wrap_print_fn(100, YAY("BPF program returned: %lu\n"), ret);
+    if (logfile != NULL) {
+        fprintf(logfile, "BPF program returned: %lu\n", ret);
+    }
+
+clean_up:
     ubpf_destroy(vm);
 
     if (logfile != NULL) {
