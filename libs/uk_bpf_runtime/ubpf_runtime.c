@@ -142,10 +142,9 @@ int bpf_exec(const char *filename, const char* function_name, void *args, size_t
     }
 
     // create context on local stack
-    uk_bpf_type_executable_t context {
-        .data = context.storage,
-        .data_meta = 0,
-    };
+    uk_bpf_type_executable_t context;
+    context.data = context.storage;
+    context.data_meta = 0;
 
     const size_t max_data_size = sizeof(context.storage);
     const size_t data_size = args_size > max_data_size ? max_data_size - 1 : args_size;
