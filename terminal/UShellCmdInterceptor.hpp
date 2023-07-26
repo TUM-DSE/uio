@@ -7,29 +7,32 @@
 
 #include <string>
 #include <filesystem>
+#include "prog_type_list.h"
+#include "EBPFVerifier.hpp"
 
 extern "C" {
 #include <helper_function_list.h>
 }
 
 struct InterceptionResult {
-	int code;
-	bool handled;
+    int code;
+    bool handled;
 };
 
-class UShellCmdInterceptor
-{
-      public:
-	UShellCmdInterceptor(std::string ushellRoot,
-			     std::string ushellHostMountPoint,
-			     const HelperFunctionList *helperFunctionList);
+class UShellCmdInterceptor {
+public:
+    UShellCmdInterceptor(std::string ushellRoot,
+                         std::string ushellHostMountPoint,
+                         const HelperFunctionList *helperFunctionList,
+                         const BpfProgTypeList *progTypes,
+                         const ebpf_verifier_options_t& verifierOptions);
 
-	InterceptionResult intercept(const std::string &in);
+    InterceptionResult intercept(const std::string &in);
 
-      private:
-	const std::filesystem::path ushellRoot;
-	const std::filesystem::path ushellHostMountPoint;
-	const HelperFunctionList *helperFunctionList;
+private:
+    const std::filesystem::path ushellRoot;
+    const std::filesystem::path ushellHostMountPoint;
+    EBPFVerifier mVerifier;
 };
 
 #endif // USHELL_TERMINAL_USHELLCMDINTERCEPTOR_HPP

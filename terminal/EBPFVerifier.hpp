@@ -10,6 +10,7 @@
 #include <filesystem>
 #include "config.hpp"
 #include "platform.hpp"
+#include "prog_type_list.h"
 
 struct eBPFVerifyResult {
     bool ok;
@@ -19,7 +20,8 @@ struct eBPFVerifyResult {
 
 class EBPFVerifier {
 public:
-    explicit EBPFVerifier(ebpf_verifier_options_t verifierOptions);
+    explicit EBPFVerifier(const ebpf_verifier_options_t verifierOptions,
+                          const HelperFunctionList *helperFunctionList, const BpfProgTypeList *progTypes);
 
     std::vector<std::string> getSections(const std::filesystem::path &bpfFile);
 

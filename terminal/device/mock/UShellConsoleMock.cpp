@@ -75,20 +75,17 @@ ssize_t writeByteByByte(int fd, const char *buffer, size_t size) {
                 const char *mockedResponse =
                         BPF_HELPER_FUNCTION_INFO_RESPONSE_PREFIX
                         "="
-                        "0:bpf_map_noop()->0;"
-                        "1:bpf_map_get(3,3)->0;"
-                        "2:bpf_map_put(3,3,3)->0;"
-                        "3:bpf_map_del(3,3)->0;"
-                        "4:bpf_get_addr(4)->0;"
-                        "5:bpf_probe_read(9,2)->0;"
-                        "6:bpf_time_get_ns()->0;"
-                        "7:bpf_unwind(3)->2;"
-                        "8:bpf_puts(4)->0"
+                        "0,0:bpf_map_noop()->0;"
+                        "1,0:bpf_map_get(1,1)->0;"
+                        "2,0:bpf_map_put(1,1,1)->0;"
+                        "3,0:bpf_map_del(1,1)->0;"
+                        "6,0:bpf_time_get_ns()->0;"
+                        "7,0:bpf_unwind(1)->2;"
+                        "8,0:bpf_puts(9)->0"
                         "\n"
                         BPF_PROG_TYPE_INFO_RESPONSE_PREFIX
                         "="
-                        "no_fun:;"
-                        "tracer:0,1,2,3,4,5,6,7,8"
+                        "1,tracer:0,14,0,8,10"
                         "\n";
                 writeByteByByte(clientFd, mockedResponse,
                                 strlen(mockedResponse));
