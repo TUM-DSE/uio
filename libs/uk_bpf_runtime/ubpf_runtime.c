@@ -94,7 +94,7 @@ struct ubpf_vm *init_vm(FILE *logfile) {
 }
 
 
-int bpf_exec(const char *filename, void *args, size_t args_size, int debug,
+int bpf_exec(const char *filename, const char* function_name, void *args, size_t args_size, int debug,
              void (*print_fn)(char *str)) {
     FILE *logfile = NULL;
     if (debug != 0) {
@@ -119,7 +119,7 @@ int bpf_exec(const char *filename, void *args, size_t args_size, int debug,
     char *errmsg;
     int rv;
 #if defined(UBPF_HAS_ELF_H)
-    rv = ubpf_load_elf(vm, code, code_len, &errmsg);
+    rv = ubpf_load_elf_ex(vm, code, code_len, function_name, &errmsg);
 #else
     rv = ubpf_load(vm, code, code_len, &errmsg);
 #endif
