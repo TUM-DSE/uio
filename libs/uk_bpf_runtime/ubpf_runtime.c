@@ -13,6 +13,7 @@
 #include <uk_program_types.h>
 #include <uk/essentials.h>
 #include <uk/assert.h>
+#include <uk/plat/paging.h>
 #include "ubpf_helpers.h"
 
 // private helper functions
