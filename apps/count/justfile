@@ -7,13 +7,28 @@ run:
     sudo taskset -c 0 qemu-system-x86_64 \
         -cpu host \
         -enable-kvm \
-        -m 500M \
+        -m 512M \
         -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
         -device virtio-serial \
         -device virtconsole,chardev=char0,id=ushell,nr=0 \
         -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
         -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
         -kernel build/count_kvm-x86_64 -nographic
+
+run_virtiofs:
+    sudo taskset -c 0 qemu-system-x86_64 \
+        -cpu host \
+        -enable-kvm \
+        -m 512M \
+        -object memory-backend-memfd,id=mem,size=512M,share=on \
+        -numa node,memdev=mem \
+        -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
+        -device virtio-serial \
+        -device virtconsole,chardev=char0,id=ushell,nr=0 \
+        -chardev socket,id=char1,path=/tmp/virtiofs.sock \
+        -device vhost-user-fs-pci,queue-size=1024,chardev=char1,tag=fs0 \
+        -kernel build/count_kvm-x86_64 -nographic
+
 
 debug:
     sudo taskset -c 0 qemu-system-x86_64 \

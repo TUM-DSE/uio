@@ -43,6 +43,7 @@
           pkgs.pkg-config
           pkgs.qemu
           pkgs.qemu_kvm
+          pkgs.virtiofsd
           pkgs.bear
           pkgs.gcc
           pkgs.libclang.python
