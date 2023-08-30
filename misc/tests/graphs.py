@@ -50,7 +50,8 @@ hatch_ushell = hatches[1]
 hatch_ushellmpk = hatches[2]
 barheight = 0.5
 app_height = 1.8
-sysname = "ᴜSʜᴇʟʟ"
+#sysname = "ᴜSʜᴇʟʟ"
+sysname = "ᴜIO"
 
 ROW_ALIASES.update(
     {
@@ -1812,7 +1813,7 @@ def main() -> None:
 
         if name.startswith("console"):
             responsiveness = console(df, "ushell-console", aspect=aspect,
-                                     names=["qemu_ssh_console",
+                                     names=[ #"qemu_ssh_console",
                                             "ushell-bpf-console",
                                             "ushell-bpf-console-nginx",
                                             "ushellmpk-bpf-console",
