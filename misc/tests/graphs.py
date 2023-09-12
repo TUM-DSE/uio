@@ -474,7 +474,8 @@ def console(df: pd.DataFrame, name: str, aspect: float = 2.0, names: List[str] =
     hatch_list_run = ["...", "/...", "**", "/**"]
     offsets = None
     if name == "ushell-console": 
-        offsets = [7, 3, 3, 3, 3]
+        # offsets = [7, 3, 3, 3, 3]
+        offsets = [4, 8, 4, 7]
         apply_hatch2(g, patch_legend=False, hatch_list=hatch_list_console)
         bar_colors(g, palette_console)
         # bar_colors(g, [col_base, col_ushell, col_ushellmpk, col_ushell, col_ushellmpk])
@@ -2124,5 +2125,5 @@ def plot_fs2() -> None:
 
 if __name__ == "__main__":
     # main_old()
-    # main()
-    plot_fs2()
+    main()
+    # plot_fs2()
