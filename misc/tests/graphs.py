@@ -1949,11 +1949,12 @@ def main() -> None:
         graph.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
 
 
-def compute_median_throughput(file_name, operation):
+def compute_median_throughput(file_name, operation, system=sysname):
     df = pd.read_csv(file_name, names=['file_size', 'buffer_size', 'total_time'])
     df['throughput'] = df['file_size'] / df['total_time']
     df['buffer_size'] //= 1024
     df['operation'] = operation
+    df['system'] = system
     return df
 
 def plot_fs() -> None:
@@ -1965,12 +1966,24 @@ def plot_fs() -> None:
     # medians = df.groupby('buffer_size')['throughput'].median().reset_index(name='median')
     # print(medians)
 
-
     csvs = sys.argv[1:]
-    df = pd.concat([compute_median_throughput(file, Path(file).stem.replace("_","-")) for file in csvs])
-    medians = df.groupby(['buffer_size', 'operation'])['throughput'].median().reset_index(name='median')
+    dfs = []
+    for csv in csvs:
+        file = Path(csv)
+        system = sysname
+        print(csv)
+        if csv.find("linux") != -1:
+            system = "linux"
+        operation = Path(file).stem.replace("_","-")
+        df = compute_median_throughput(file, operation, system)
+        dfs.append(df)
+
+    df = pd.concat(dfs)
+    # df = pd.concat([compute_median_throughput(file, Path(file).stem.replace("_","-"),) for file in csvs])
+    medians = df.groupby(['buffer_size', 'operation', 'system'])['throughput'].median().reset_index(name='median')
 
     print(medians)
+    return
 
     aspect = 2.0
     width = 3.3
@@ -2010,7 +2023,106 @@ def plot_fs() -> None:
     fname = "9pfs_throughput.pdf"
     g.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
 
+
+def plot_fs2() -> None:
+    """
+    python3.9 graphs.py ./measurements/uio/fs/direct/linux/{read_seq.csv, write_seq.csv} ./measurements/uio/fs/direct/{read_seq.csv,write_seq.csv}
+    """
+
+    csvs = sys.argv[1:]
+    dfs = []
+    for csv in csvs:
+        file = Path(csv)
+        system = sysname
+        print(csv)
+        if csv.find("linux") != -1:
+            system = "linux"
+        operation = Path(file).stem.replace("_","-")
+        df = compute_median_throughput(file, operation, system)
+        dfs.append(df)
+
+    df = pd.concat(dfs)
+    medians = df.groupby(['buffer_size', 'operation', 'system'])['throughput'].median().reset_index(name='median')
+
+    # select rows with buffersize 4, 16, 64, 256
+    # medians = medians[medians['buffer_size'].isin([4, 16, 64, 256])]
+    medians = medians[medians['buffer_size'].isin([16, 64])]
+
+    read_seq = medians[medians['operation'].isin(['read-seq'])]
+    write_seq = medians[medians['operation'].isin(['write-seq'])]
+
+    aspect = 2.0
+    width = 3.3
+    # height = width/aspect,
+    height = 1.8
+    fig, axs = plt.subplots(ncols=2, gridspec_kw={'width_ratios': [1, 1]},
+                            sharey=True, figsize=(width, height))
+    # fig.set_size_inches(width, height)
+
+    def plot_sub(df, ax, title):
+
+        g = sns.barplot(
+            ax=ax,
+            data=df,
+            y="median",
+            x="buffer_size",
+            hue="system",
+            edgecolor="k",
+            # kind="bar",
+            # height=width/aspect,
+            # aspect=aspect,
+            # palette=palette,
+            # palette=[col_ushellmpk, palette[0]],
+            palette=[palette[0], col_ushellmpk],
+        )
+
+        # hatches = ["", hatch_ushellmpk, "", hatch_ushellmpk]
+        hatches = ["", "**"]
+        # apply_hatch_ax(g, patch_legend=False, hatch_list=hatches)
+        for idx, bar in enumerate(g.containers[1]):
+            bar.set_hatch("**")
+
+        if title == "seq read":
+            g.set_ylabel("Throughput [GB/s]")
+            g.set_yticks([0,1,2,3])
+        else:
+            g.set_ylabel("")
+        g.set_xlabel("Buffer size [KB]")
+        g.set_title(title, fontsize=7)
+        g.legend([], [], frameon=False) # remove legend
+        sns.despine()
+
+        # put values on bars
+        for c in g.containers:
+            labels = [f' {(v.get_height()):.2f}' for v in c]
+            g.bar_label(c, labels=labels, label_type='edge', fontsize=7,
+                           # rotation=90
+                        )
+
+    plot_sub(read_seq, axs[0], "seq read")
+    plot_sub(write_seq, axs[1], "seq write")
+
+    # fig.set_ylabel("Throughput [GB/s]")
+    # fig.set_xlabel("Buffer size [KB]")
+
+    p1 = mpl.patches.Patch(facecolor=palette[0], edgecolor="k",
+                           label="linux (ZFS)")
+    p2 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch=hatch_ushellmpk,
+                           edgecolor="k", label=f"{sysname}-fs (VirtIO-9p)")
+    # fig.legend(handles=[p1, p2], loc="lower center", labelspacing=.2,
+    #            bbox_to_anchor=(0.5, -0.28), frameon=False, ncol=2)
+    # fig.suptitle("Higher is better ↑", fontsize=9, color="navy", weight="bold",
+    #             x = 0.50, y=1.1)
+    fig.legend(handles=[p1, p2], loc="lower center", labelspacing=.2,
+               bbox_to_anchor=(0.5, -0.11), frameon=False, ncol=2)
+    fig.suptitle("Higher is better ↑", fontsize=9, color="navy", weight="bold",
+                x = 0.50, y=0.93)
+
+    fig.tight_layout()
+    fname = "fs_throughput.pdf"
+    fig.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
+
 if __name__ == "__main__":
     # main_old()
     # main()
-    plot_fs()
+    plot_fs2()
