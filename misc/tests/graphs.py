@@ -1948,6 +1948,69 @@ def main() -> None:
         print(f"write {fname}")
         graph.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
 
+
+def compute_median_throughput(file_name, operation):
+    df = pd.read_csv(file_name, names=['file_size', 'buffer_size', 'total_time'])
+    df['throughput'] = df['file_size'] / df['total_time']
+    df['buffer_size'] //= 1024
+    df['operation'] = operation
+    return df
+
+def plot_fs() -> None:
+
+    ## for 1 file
+    # csvs = sys.argv[1:]
+    # df = pd.read_csv(csvs[0], names=['file_size', 'buffer_size', 'total_time'])
+    # df['throughput'] = df['file_size'] / df['total_time']
+    # medians = df.groupby('buffer_size')['throughput'].median().reset_index(name='median')
+    # print(medians)
+
+
+    csvs = sys.argv[1:]
+    df = pd.concat([compute_median_throughput(file, Path(file).stem.replace("_","-")) for file in csvs])
+    medians = df.groupby(['buffer_size', 'operation'])['throughput'].median().reset_index(name='median')
+
+    print(medians)
+
+    aspect = 2.0
+    width = 3.3
+    g = catplot(
+        data=medians,
+        y="median",
+        x="buffer_size",
+        hue="operation",
+        kind="bar",
+        height=width/aspect,
+        aspect=aspect,
+        # palette=[col_ushellmpk],
+        palette=palette,
+        legend=None,
+    )
+
+    g.ax.set_ylabel("Throughput [GB/s]")
+    g.ax.set_xlabel("Buffer size [KB]")
+
+    # put values on bars
+    for c in g.ax.containers:
+        labels = [f' {(v.get_height()):.2f}' for v in c]
+        g.ax.bar_label(c, labels=labels, label_type='edge', fontsize=7,
+                       rotation=90)
+
+    p1 = mpl.patches.Patch(facecolor=palette[0], hatch=hatches[0], edgecolor="k", label='seq read')
+    p2 = mpl.patches.Patch(facecolor=palette[1], edgecolor="k", label="seq write")
+    g.ax.legend(handles=[p1, p2], loc="lower center", labelspacing=.2,
+               bbox_to_anchor=(0.5, -0.63), frameon=False, ncol=2)
+    # sns.move_legend(g, "lower center", labelspacing=.2,
+    #                 bbox_to_anchor=(0.0, -0.1), frameon=False, ncol=2)
+    g.ax.set_title("Higher is better ↑", fontsize=9, color="navy", weight="bold",
+                x = 0.50, y=0.9, pad=10)
+
+    g.despine()
+    # g.tight_layout()
+    fname = "9pfs_throughput.pdf"
+    g.savefig(MEASURE_RESULTS / fname, bbox_inches='tight')
+
 if __name__ == "__main__":
     # main_old()
-    main()
+    # main()
+    plot_fs()
