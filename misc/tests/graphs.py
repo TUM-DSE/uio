@@ -2090,7 +2090,7 @@ def plot_fs2() -> None:
         for idx, bar in enumerate(g.containers[1]):
             bar.set_hatch("**")
 
-        if title == "seq read":
+        if title == "read":
             g.set_ylabel("Throughput [GB/s]")
             g.set_yticks([0,1,2,3])
         else:
@@ -2101,14 +2101,18 @@ def plot_fs2() -> None:
         sns.despine()
 
         # put values on bars
-        for c in g.containers:
+        for i, c in enumerate(g.containers):
+            pad = 0
+            if title == "write" and (i % 2 == 0):
+                pad = 4
             labels = [f' {(v.get_height()):.2f}' for v in c]
             g.bar_label(c, labels=labels, label_type='edge', fontsize=7,
+                        padding=pad,
                            # rotation=90
                         )
 
-    plot_sub(read_seq, axs[0], "seq read")
-    plot_sub(write_seq, axs[1], "seq write")
+    plot_sub(read_seq, axs[0], "read")
+    plot_sub(write_seq, axs[1], "write")
 
     # fig.set_ylabel("Throughput [GB/s]")
     # fig.set_xlabel("Buffer size [KB]")
