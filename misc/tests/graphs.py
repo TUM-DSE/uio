@@ -2043,14 +2043,18 @@ def plot_fs2() -> None:
         dfs.append(df)
 
     df = pd.concat(dfs)
-    medians = df.groupby(['buffer_size', 'operation', 'system'])['throughput'].median().reset_index(name='median')
+
+    ## chosoe median
+    # df = df.groupby(['buffer_size', 'operation', 'system'])['throughput'].median().reset_index(name='median')
 
     # select rows with buffersize 4, 16, 64, 256
-    # medians = medians[medians['buffer_size'].isin([4, 16, 64, 256])]
-    medians = medians[medians['buffer_size'].isin([16, 64])]
+    # df = df[medians['buffer_size'].isin([4, 16, 64, 256])]
+    df = df[df['buffer_size'].isin([16, 64])]
 
-    read_seq = medians[medians['operation'].isin(['read-seq'])]
-    write_seq = medians[medians['operation'].isin(['write-seq'])]
+    read_seq = df[df['operation'].isin(['read-seq'])]
+    write_seq = df[df['operation'].isin(['write-seq'])]
+
+    print(read_seq)
 
     aspect = 2.0
     width = 3.3
@@ -2065,10 +2069,13 @@ def plot_fs2() -> None:
         g = sns.barplot(
             ax=ax,
             data=df,
-            y="median",
+            y="throughput",
             x="buffer_size",
             hue="system",
             edgecolor="k",
+            errcolor="black",
+            errwidth=1,
+            capsize=0.2,
             # kind="bar",
             # height=width/aspect,
             # aspect=aspect,
@@ -2125,5 +2132,5 @@ def plot_fs2() -> None:
 
 if __name__ == "__main__":
     # main_old()
-    main()
-    # plot_fs2()
+    # main()
+    plot_fs2()
