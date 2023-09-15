@@ -2118,7 +2118,7 @@ def plot_fs2() -> None:
     # fig.set_xlabel("Buffer size [KB]")
 
     p1 = mpl.patches.Patch(facecolor=palette[0], edgecolor="k",
-                           label="linux (ZFS)")
+                           label="Linux VirtIO-blk")
     p2 = mpl.patches.Patch(facecolor=col_ushellmpk, hatch=hatch_ushellmpk,
                            edgecolor="k", label=f"{sysname}-fs (VirtIO-9p)")
     # fig.legend(handles=[p1, p2], loc="lower center", labelspacing=.2,
