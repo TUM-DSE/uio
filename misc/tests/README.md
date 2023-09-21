@@ -116,6 +116,22 @@ If you want to do quick experiments, set `QUICK=True` in the respective `measure
 ## Robustness (MPK)
 See [apps/mpktest](../../apps/mpktest).
 
+## Disk performance evaluation
+- Use https://github.com/mmisono/unikraft_9p_measure/tree/dev
+- For unikraft evaluation
+    - `just run`
+    - The result is in `./fs0/fs_unikraft`
+- For Linux virtio evaluation
+    - Compile binary for Linux by `just build-linux-static`
+    - Create disk image for virtio-blk
+        - Check ../../justfile for the detail (`just bukld_qcow2`)
+        - `just run_vm` start a vm
+            - This vm uses 9p to share the folder in the host
+        - Mount virtio-blk and format if necessary
+        - Copy benchmarking binary from 9p and run it
+    - Run benchmark
+    - The result is in `./fs_linux`
+
 ## ushell program size
 ```
 % cd <path-to-repo>
