@@ -5,4 +5,9 @@ menuconfig LIBUKBPFRUNTIME
 	default n
 
 if LIBUKBPFRUNTIME
+
+config LIB_UNIBPF_JIT_COMPILE
+	bool "Enable JiT compilation before execute BPF program. Extra compliation overhead may result in."
+	default y
+
 endif

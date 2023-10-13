@@ -170,8 +170,7 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     uint64_t end;
 
     uint64_t ret;
-#define UK_JITTED_BPF
-#ifdef UK_JITTED_BPF
+#ifdef CONFIG_LIB_UNIBPF_JIT_COMPILE
     char* compileError;
     begin = ukplat_monotonic_clock();
     ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError);
@@ -181,15 +180,6 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     if (logfile != NULL) {
         fprintf(logfile, "BPF program compile took: %lu ns\n", end - begin);
     }
-
-    // TODO remove these, for debug only
-
-
-    wrap_print_fn(128, ERR("TEST: addr: %lx\n"), jitted_bpf)
-    wrap_print_fn(128, ERR("TEST: jit size: %lx\n"), vm->jitted_size)
-    wrap_print_fn(128, ERR("TEST: page nums: %lx\n"), size_to_num_pages(vm->jitted_size))
-    wrap_print_fn(128, ERR("TEST: page size: %lx\n"), __PAGE_SIZE)
-    // end of TODO
 
     UK_ASSERT(((size_t)jitted_bpf) % __PAGE_SIZE == 0);
 
@@ -223,6 +213,7 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     end = ukplat_monotonic_clock();
 
 #else
+    print_fn(ERR("Using BPF Interpreter\n"));
     begin = ukplat_monotonic_clock();
     int interpret_result = ubpf_exec(vm, &context, sizeof(context), &ret);
     end = ukplat_monotonic_clock();
@@ -235,7 +226,7 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
 
         goto clean_up;
     }
-#endif
+#endif // endof if LIB_UNIBPF_JIT_COMPILE
     wrap_print_fn(128, YAY("BPF program returned: %lu. Took: %d ns\n"), ret, end - begin)
     if (logfile != NULL) {
         fprintf(logfile, "BPF program returned: %lu. Took: %d ns\n", ret, end - begin);
