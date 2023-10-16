@@ -1,0 +1,5 @@
+fs0/symbol.txt
+fs0/bpf/*.txt
+fs0/bpf/*.asm
+fs0/bpf/*.csv
+

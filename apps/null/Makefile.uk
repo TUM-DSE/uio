@@ -1,0 +1,5 @@
+$(eval $(call addlib,appcount))
+
+APPCOUNT_SRCS-y += $(APPCOUNT_BASE)/main.c
+
+APPCOUNT_CFLAGS-$(CONFIG_APPCOUNT_TRACING) += -mno-red-zone -pg -mrecord-mcount -mnop-mcount

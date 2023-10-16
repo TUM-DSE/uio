@@ -1,0 +1,58 @@
+# vim: set ft=make et :
+
+default:
+    @just --choose
+
+run:
+    sudo taskset -c 0 qemu-system-x86_64 \
+        -cpu host \
+        -enable-kvm \
+        -m 500M \
+        -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
+        -device virtio-serial \
+        -device virtconsole,chardev=char0,id=ushell,nr=0 \
+        -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
+        -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
+        -kernel build/count_kvm-x86_64 -nographic
+
+debug:
+    sudo taskset -c 0 qemu-system-x86_64 \
+        -gdb tcp::5678 \
+        -cpu host \
+        -enable-kvm \
+        -m 500M \
+        -chardev socket,path=/tmp/port0,server=on,wait=off,id=char0 \
+        -device virtio-serial \
+        -device virtconsole,chardev=char0,id=ushell,nr=0 \
+        -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
+        -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
+        -kernel build/count_kvm-x86_64 -nographic
+
+gdb:
+     gdb --eval-command="target remote :5678" \
+         build/count_kvm-x86_64.dbg
+
+attach:
+    sudo socat /tmp/port0 -
+
+compile_cmd target:
+    gcc -I../common/include -DHAS_MPK -fPIC -c -o fs0/{{target}} fs0/{{target}}.c
+
+compile_hello:
+    @just compile_cmd 'hello'
+
+compile_progs:
+    @just compile_cmd 'hello'
+    @just compile_cmd 'empty'
+    @just compile_cmd 'set_count'
+    @just compile_cmd 'set_count_func'
+    @just compile_cmd 'perf'
+
+gen_sym_txt:
+    nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 > ./fs0/symbol.txt
+
+gen_sym_txt_mini:
+    nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 | grep ushell_puts > ./fs0/symbol_mini.txt
+    nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 | grep ushell_loader_test_func >> ./fs0/symbol_mini.txt
+    nm ./build/count_kvm-x86_64.dbg | cut -d ' ' -f1,3 | grep ushell_loader_test_data >> ./fs0/symbol_mini.txt
+
