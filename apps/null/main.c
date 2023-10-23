@@ -7,6 +7,8 @@
 #include "../common/include/memstat.h"
 #endif
 
+unsigned int the_flag = 0x42;
+
 int count;
 
 #ifdef CONFIG_LIBUSHELL

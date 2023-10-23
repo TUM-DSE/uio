@@ -84,7 +84,7 @@ def do_test(test_name: str, test_filename: str, extentsion_name: str):
     with open(f"{test_filename}-{test_name}-report.txt", mode="w", encoding="utf8") as report_file:
         for count in range(ROUNDS):
             print(f">>>>> INFO Measuring {test_filename}.{extentsion_name} {count+1}/{ROUNDS}")
-            report_file.write(communicate_with_debug_interface(f"bpf_exec bpf/{test_filename}.{extentsion_name} {test_filename}"))
+            report_file.write(communicate_with_debug_interface(f"bpf_exec bpf-microbenchmark/{test_filename}.{extentsion_name} {test_filename}"))
             report_file.write("\n")
 
             sleep(1)
