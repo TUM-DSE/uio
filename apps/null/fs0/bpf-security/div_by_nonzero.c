@@ -1,4 +1,4 @@
-#include "bpf_helpers.h"
+#include "../../../bpf_prog/bpf_helpers.h"
 
 // bpf_exec bpf-security/div_by_nonzero.o div_by_nonzero
 

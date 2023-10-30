@@ -64,7 +64,7 @@
           pkgs.libelf
           # to compile BPF
           pkgs.llvmPackages_14.llvm
-          # TOFIX: ushell terminal will not work with this line
+          # TOFIX: ushell terminal will not work with the following line
           pkgs.llvmPackages_14.clangUseLLVM
           pkgs.libcgroup
           # to compile ushell terminal

@@ -1,18 +1,13 @@
-#include "bpf_helpers.h"
+#include "../../../bpf_prog/bpf_helpers.h"
 
-__attribute__((section("no_context"), used))
-long long int invalid_context(uk_bpf_type_executable_t* context) {
+__attribute__((section("executable"), used))
+__u64 invalid_context(uk_bpf_type_executable_t* context) {
 
-    long long int checksum = 0;
-
-    char* first_char = context->data;
-    if(first_char >= context->data_end) {
+     if (context->data_end - context->data < 1) {
         return -1;
     }
 
-    checksum += *first_char;
-
-    return checksum;
+    return *context->data;
 }
 
 // bpf_exec bpf-security/invalid_context.o invalid_context

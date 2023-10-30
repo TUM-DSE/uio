@@ -1,10 +1,10 @@
-#include "bpf_helpers.h"
+#include "../../../bpf_prog/bpf_helpers.h"
 
 
 __attribute__((section("tracer"), used))
 int bpf_tracer(bpf_tracer_ctx_descriptor_t *ctx_descr)
 {
-	if(ctx_descr->data_end - ctx_descr->data < sizeof(UbpfTracerCtx)) {
+	if(ctx_descr->data_end - ctx_descr->data != sizeof(struct UbpfTracerCtx)) {
 		return -1;
 	}
 

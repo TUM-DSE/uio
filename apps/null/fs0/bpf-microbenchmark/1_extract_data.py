@@ -18,19 +18,18 @@ def parse_data(label: str, data_type: str):
             if line.find("Took: ") > 0:
                 statistics.append(get_statistic(line))
 
+        return statistics
 
-        return sum(statistics) / len(statistics)
-
-def write_data(statistics, type_name, keys, substract_base=True):
-    with open(f"data-{type_name}.csv", mode="w", encoding="utf8") as data_file:
+def write_data(statistics, csv_name, program_names):
+    with open(f"data-{csv_name}.csv", mode="w", encoding="utf8") as data_file:
         data_file.write("Instruction Interpretation JiT\n")
         
-        keys.reverse()
-        for key in keys:
-            inter = statistics[f'test_{key}']['interpreter'] - (statistics[f'test_for_loop']['interpreter'] if substract_base else 0)
-            jit = statistics[f'test_{key}']['jit'] - (statistics[f'test_for_loop']['jit'] if substract_base else 0)
-            data_file.write(f"{key.upper()} {round(inter, 1)} {round(jit, 1)}\n")
-        data_file.write("DUMMY 0 0")
+        for program_name in program_names:
+            jits = statistics[program_name]["jit"]
+            interpreters = statistics[program_name]["interpreter"]
+
+            for index in range(len(jits)):
+                data_file.write(f"{program_name} {interpreters[index]} {jits[index]}\n")
 
 if __name__ == "__main__":
     result = {}
@@ -40,16 +39,17 @@ if __name__ == "__main__":
             if file.endswith(".txt"):
                 filenames = file.split("-")
                 
-                label = filenames[0]
+                filename = filenames[0]
+                key = filename.split("test_")[1]
                 data_type = filenames[1]
 
-                if label not in result:
-                    result[label] = {}
+                if key not in result:
+                    result[key] = {}
                 
-                result[label][data_type] = parse_data(label, data_type)
+                result[key][data_type] = parse_data(filename, data_type)
     
-    write_data(result, "base-case", ["for_loop"], False)
-    write_data(result, "arithmetic", ["add", "sub", "mul", "div", "mod"])
-    write_data(result, "others", ["or", "and", "xor", "left_shift", "right_shift", "neg", "assign"])
-
     print(result)
+    write_data(result, "microbenchmark", ["for_loop",
+                                      "add", "sub", "mul", "div", "mod", "or", "and", "xor", "assign", "left_shift", "right_shift", "neg",
+                                      "load_8", "load_16", "load_32", "load_64", "store_8", "store_16", "store_32", "store_64"])
+

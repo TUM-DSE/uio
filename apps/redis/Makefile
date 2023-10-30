@@ -1,7 +1,7 @@
 UK_ROOT ?= $(PWD)/../../unikraft
 UK_LIBS ?= $(PWD)/../../libs
 LIBS := $(UK_LIBS)/pthread-embedded:$(UK_LIBS)/newlib:$(UK_LIBS)/lwip:$(UK_LIBS)/redis
-LIBS := $(LIBS):$(UK_LIBS)/ubpf:$(UK_LIBS)/ubpf_tracer
+LIBS := $(LIBS):$(UK_LIBS)/ubpf:$(UK_LIBS)/uk_bpf_helper:$(UK_LIBS)/uk_bpf_runtime:$(UK_LIBS)/ubpf_tracer
 KVM_BINARY  := build/redis_kvm-x86_64
 SYMFILE     := $(KVM_BINARY).sym
 DBGFILE     := $(KVM_BINARY).dbg
@@ -12,13 +12,16 @@ PROG_OBJ    := $(patsubst $(USHELLDIR)/%.c, $(USHELLDIR)/%.o, $(PROG_SRC))
 $(USHELLDIR)/%.o: $(USHELLDIR)/%.c
 	gcc -I../common/include -DHAS_MPK -fPIC -fno-stack-protector -c -o $@ $<
 
-all: $(PROG_OBJ)
+all: $(PROG_OBJ) bpfs
 	@mkdir -p ./build
 	@pushd fs0 && find . | cpio --format=newc -o > ../build/fs0.cpio && popd
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS)
 	if [[ -f $(SYMFILE) ]]; then cp $(SYMFILE) fs1/debug.sym; fi
 	if [[ -f $(DBGFILE) ]]; then nm $(DBGFILE) | cut -d ' ' -f1,3 > ./$(USHELLDIR)/symbol.txt; fi
 	if [[ ! -d build/$(USHELLDIR) ]]; then cp -r $(USHELLDIR) build/$(USHELLDIR); fi
+
+bpfs:
+	$(MAKE) -C ./$(USHELLDIR)/bpf/ all
 
 $(MAKECMDGOALS):
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS) $(MAKECMDGOALS)

@@ -10,6 +10,7 @@
 #include "device/UShellConsoleDeviceFactory.hpp"
 #include "UShellCmdInterceptor.hpp"
 #include "parameters.h"
+#include "memsize_linux.hpp"
 
 extern "C" {
 #include "uk_bpf_helper_utils.h"
@@ -232,8 +233,11 @@ int main(int argc, char **argv) {
     readUntilPrompt(uShellConsoleDevice);
 
     auto verifierOptions = ebpf_verifier_default_options;
-    // TODO reenable this: verifierOptions.check_termination = true;
+    //verifierOptions.check_termination = true;
+    verifierOptions.print_invariants = true;
     verifierOptions.print_failures = true;
+    verifierOptions.print_line_info = true;
+    verifierOptions.allow_division_by_zero = false;
 
     UShellCmdInterceptor interceptor(ushellRoot, ushellHostMountPoint,
                                      ushellBpfHelperList, ushellBpfProgTypeList, verifierOptions);
@@ -256,6 +260,7 @@ int main(int argc, char **argv) {
         }
 
         auto interceptResult = interceptor.intercept(userInput);
+        std::cout << "TERMINAL> Max stack size: " << resident_set_size_kb() << " kb" << std::endl;
 
         if (interceptResult.code == 0 && !interceptResult.handled) {
             auto bytesWritten =
@@ -274,6 +279,7 @@ int main(int argc, char **argv) {
             std::cout << USHELL_TERMINAL_PROMPT;
             continue;
         }
+        
     } while (userInput != "exit");
 
     return 0;

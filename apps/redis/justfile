@@ -55,3 +55,6 @@ attach:
 
 gen_sym_txt:
     nm {{APP}}.dbg | cut -d ' ' -f1,3 > ./fs1/symbol.txt
+
+benchmark:
+    redis-benchmark -h 172.44.0.2 -p 6379 -c 30 -n 1000000 -t set,get,incr -q 

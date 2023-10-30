@@ -49,10 +49,14 @@ EBPFVerifier::verify(const std::filesystem::path &bpfFile,
 
     // verify with domain: zoneCrab
     ebpf_verifier_stats_t verifier_stats{};
-    const auto [res, seconds] = timed_execution([&] {
-        return ebpf_verify_program(std::cout, prog, raw_prog.info,
+
+    clock_t begin = clock();
+    const auto result = ebpf_verify_program(std::cout, prog, raw_prog.info,
                                    &mVerifierOptions, &verifier_stats);
-    });
+    clock_t end = clock();
+    
+    double elapsed_ns = (double(end) * 1e9  - double(begin) * 1e9) / CLOCKS_PER_SEC;
+
     if (mVerifierOptions.check_termination
         && (mVerifierOptions.print_failures
             || mVerifierOptions.print_invariants)) {
@@ -61,5 +65,5 @@ EBPFVerifier::verify(const std::filesystem::path &bpfFile,
                   << " instructions\n";
     }
 
-    return {.ok = res, .took = seconds};
+    return {.ok = result, .took = elapsed_ns};
 }

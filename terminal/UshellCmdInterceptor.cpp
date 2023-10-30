@@ -1,7 +1,3 @@
-//
-// Created by ken on 22.05.23.
-//
-
 #include <utility>
 #include <vector>
 #include <boost/algorithm/string/split.hpp>
@@ -9,6 +5,7 @@
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
 #include <filesystem>
+#include <iomanip>
 
 #include "UShellCmdInterceptor.hpp"
 #include "ebpf_verifier.hpp"
@@ -100,8 +97,7 @@ InterceptionResult UShellCmdInterceptor::intercept(const std::string &in) {
                               << section;
                     auto verifyResult = mVerifier.verify(bpfFileHost, section);
                     std::cout
-                            << " (took: " << verifyResult.took
-                            << " seconds)" << std::endl;
+                            << " (took: " << std::setprecision (15) <<  verifyResult.took << " ns)" << std::endl;
 
                     if (verifyResult.ok) {
                         successCount++;

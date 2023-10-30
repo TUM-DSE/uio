@@ -1,4 +1,4 @@
-#include "bpf_helpers.h"
+#include "../../../bpf_prog/bpf_helpers.h"
 
 __attribute__((section("executable"), used))
 int infinity_loop(uk_bpf_type_executable_t* context) {
