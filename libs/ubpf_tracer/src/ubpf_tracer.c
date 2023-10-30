@@ -15,31 +15,6 @@
 
 static const uint8_t nopl[] = {0x0f, 0x1f, 0x44, 0x00, 0x00};
 
-void bpf_notify(void *function_id) {
-  struct THmapValueResult *hmap_entry =
-      hmap_get(get_tracer()->function_names, (uint64_t)function_id);
-  if (hmap_entry->m_Result == HMAP_SUCCESS) {
-    printf(YAY("notify: %s\n"), (char *)hmap_entry->m_Value);
-  } else {
-    printf(ERR("notify: Unknown function at %p\n"), function_id);
-  }
-}
-
-uint64_t bpf_get_ret_addr(const char *function_name) {
-  if (function_name == NULL) {
-    return 0;
-  }
-  struct UbpfTracer *tracer = get_tracer();
-  uint64_t fun_addr = get_function_address(tracer, function_name);
-  if (fun_addr == 0)
-    return 0;
-  uint64_t nop_addr = get_nop_address(tracer, fun_addr);
-  if (nop_addr == 0)
-    return 0;
-  uint64_t result = nop_addr + CALL_INSTRUCTION_SIZE;
-  return result;
-}
-
 void destruct_cell(struct THashCell *elem) {
   free(elem->m_Value);
   elem->m_Value = NULL;
@@ -66,14 +41,22 @@ void vm_map_destruct_cell(struct THashCell *elem) {
 }
 
 void vm_map_destruct_entry(struct LabeledEntry *entry) {
-  ubpf_destroy(entry->m_Value);
+  struct bpf_vm_setup_result* bpf_runtime = entry->m_Value;
+  destroy_bpf_runtime(*bpf_runtime);
+  free(bpf_runtime);
+
   destruct_entry(entry);
 }
 
 void *init_arraylist() { return (void *)list_init(10, &vm_map_destruct_entry); }
 
-struct UbpfTracer *init_tracer() {
-  struct UbpfTracer *tracer = malloc(sizeof(struct UbpfTracer));
+static struct UbpfTracer *tracer = NULL;
+struct UbpfTracer *get_tracer() {
+  if(tracer != NULL) {
+    return tracer;
+  }
+
+  tracer = malloc(sizeof(struct UbpfTracer));
   int map_result;
   tracer->vm_map =
       hmap_init(101, vm_map_destruct_cell, init_arraylist, &map_result);
@@ -81,21 +64,39 @@ struct UbpfTracer *init_tracer() {
   tracer->function_names =
       hmap_init(101, destruct_cell, function_names_init, &map_result);
 
-  // register local helpers
-  // TODO
-  //tracer_helpers_add(tracer, "bpf_notify", bpf_notify);
-  //tracer_helpers_add(tracer, "bpf_get_ret_addr", bpf_get_ret_addr);
-
   load_debug_symbols(tracer);
 
   return tracer;
 }
 
-struct UbpfTracer *get_tracer() {
-  static struct UbpfTracer *tracer = NULL;
-  if (tracer == NULL)
-    tracer = init_tracer();
-  return tracer;
+void register_tracer_bpf_helpers(HelperFunctionList* helper_list, BpfProgTypeList *prog_type_list) {
+
+    // add program types
+    BpfProgType *prog_type_tracer = bpf_prog_type_list_emplace_back(prog_type_list, 0x100, "tracer", false,
+                                    sizeof(bpf_tracer_ctx_descriptor_t),
+                                    offsetof(bpf_tracer_ctx_descriptor_t, data),
+                                    offsetof(bpf_tracer_ctx_descriptor_t, data_end),
+                                    offsetof(bpf_tracer_ctx_descriptor_t, data_meta));
+
+    // uint64_t bpf_notify(void *function_id)
+    uk_ebpf_argument_type_t args_bpf_notify[] = {
+            UK_EBPF_ARGUMENT_TYPE_ANYTHING,
+    };
+    helper_function_list_emplace_back(
+            helper_list, 30, prog_type_tracer->prog_type_id, "bpf_notify", bpf_notify,
+            UK_EBPF_RETURN_TYPE_INTEGER,
+            sizeof(args_bpf_notify) / sizeof(uk_ebpf_argument_type_t),
+            args_bpf_notify);
+
+    // uint64_t bpf_get_ret_addr(const char *function_name) {
+    uk_ebpf_argument_type_t args_bpf_get_ret_addr[] = {
+            UK_EBPF_ARGUMENT_TYPE_PTR_TO_CTX,
+    };
+    helper_function_list_emplace_back(
+            helper_list, 31, prog_type_tracer->prog_type_id, "bpf_get_ret_addr", bpf_get_ret_addr,
+            UK_EBPF_RETURN_TYPE_INTEGER,
+            sizeof(args_bpf_get_ret_addr) / sizeof(uk_ebpf_argument_type_t),
+            args_bpf_get_ret_addr);
 }
 
 void load_debug_symbols(struct UbpfTracer *tracer) {
@@ -145,30 +146,44 @@ void load_debug_symbols(struct UbpfTracer *tracer) {
   }
 }
 
-int bpf_attach_internal(struct UbpfTracer *tracer, const char *function_name,
-                        const char *bpf_filename, void (*print_fn)(char *str)) {
-  if (function_name == NULL || bpf_filename == NULL)
+int bpf_attach_internal(struct UbpfTracer *tracer, const char *target_function_name,
+                        const char *bpf_filename, const char* bpf_tracer_function_name,
+                        void (*print_fn)(char *str)) {
+  if (target_function_name == NULL || bpf_filename == NULL || bpf_tracer_function_name == NULL) {
     return 1;
+  }
+    
   wrap_print_fn(128, YAY("Load %s\n"), bpf_filename);
 
-  uint64_t nop_addr = find_nop_address(tracer, function_name, print_fn);
+  uint64_t nop_addr = find_nop_address(tracer, target_function_name, print_fn);
   if (nop_addr == 0) {
     print_fn(ERR("Can't insert BPF program (no nop).\n"));
     return 2;
   }
 
-  size_t code_len;
-  void *bpf_program = readfile(bpf_filename, 1024 * 1024, &code_len);
-  if (bpf_program == NULL) {
-    print_fn(ERR("Can't insert BPF program (file doesn't exist).\n"));
+  struct bpf_vm_setup_result bpf_runtime = setup_bpf_vm(NULL, bpf_filename, bpf_tracer_function_name, print_fn);
+  if (bpf_runtime.vm == NULL) {
+    print_fn(ERR("Failed to init BPF runtime.\n"));
     return 3;
   }
-  // TODO: verify bpf_program here
 
-  struct ubpf_vm *vm = init_vm(NULL);
-  char *errmsg;
-  ubpf_load(vm, bpf_program, code_len, &errmsg);
+#ifdef CONFIG_LIB_UNIBPF_JIT_COMPILE
+  if (bpf_runtime.vm == NULL) {
+    print_fn(ERR("Failed to init BPF runtime (jit compile failed).\n"));
+    return 3;
+  }
+#endif
 
+  struct bpf_vm_setup_result* bpf_runtime_handle = (struct bpf_vm_setup_result* )malloc(sizeof(struct bpf_vm_setup_result));
+  if(bpf_runtime_handle == NULL) {
+    destroy_bpf_runtime(bpf_runtime);
+
+    print_fn(ERR("Failed to malloc for bpf runtime.\n"));
+    return 4;
+  }
+  *bpf_runtime_handle = bpf_runtime;
+
+  // setup tracer
   struct THmapValueResult *hmap_entry = hmap_get_or_create(
       tracer->vm_map, (uint64_t)nop_addr + CALL_INSTRUCTION_SIZE);
   if (hmap_entry->m_Result == HMAP_SUCCESS) {
@@ -177,7 +192,7 @@ int bpf_attach_internal(struct UbpfTracer *tracer, const char *function_name,
 
     char *label = malloc(strlen(bpf_filename));
     strcpy(label, bpf_filename);
-    list_add_elem(list, label, vm);
+    list_add_elem(list, label, bpf_runtime_handle);
 
     if (!nop_already_replaced) {
       extern void _run_bpf_program();
@@ -194,6 +209,7 @@ int bpf_attach_internal(struct UbpfTracer *tracer, const char *function_name,
   } else {
     print_fn(ERR("Can't access vm_map.\n"));
   }
+
   return 0;
 }
 
@@ -272,8 +288,7 @@ uint64_t find_nop_address(struct UbpfTracer *tracer, const char *function_name,
 
 uint64_t ubpf_tracer_save_rax;
 uint64_t ubpf_tracer_ret_addr;
-void run_bpf_program() {
-  // uint64_t ret_addr = (uint64_t)__builtin_return_address(0);
+void run_bpf_program() { // the hook strating BPF program once target function is called
 
   // find vm in the vm_map
   struct THmapValueResult *hmap_entry =
@@ -281,18 +296,34 @@ void run_bpf_program() {
   if (hmap_entry->m_Result == HMAP_SUCCESS) {
     struct ArrayListWithLabels *list = hmap_entry->m_Value;
     for (uint64_t i = 0; i < list->m_Length; ++i) {
-      size_t ctx_size = sizeof(struct UbpfTracerCtx);
-      struct UbpfTracerCtx ctx = {};
-      ctx.traced_function_address = ubpf_tracer_ret_addr;
-
+      size_t ctx_size = sizeof(bpf_tracer_ctx_descriptor_t);
+      bpf_tracer_ctx_descriptor_t ctx_descr = {};
+      ctx_descr.data = &ctx_descr.ctx;
+      ctx_descr.data_end = (void*)((size_t)ctx_descr.data + sizeof(struct UbpfTracerCtx));
+      ctx_descr.ctx.traced_function_address = ubpf_tracer_ret_addr;
+      
       struct LabeledEntry list_item = list->m_List[i];
-      struct ubpf_vm *vm = list_item.m_Value;
+      struct bpf_vm_setup_result *bpf_runtime = list_item.m_Value;
 
-      uint64_t ret;
-      if (ubpf_exec(vm, &ctx, ctx_size, &ret) < 0)
+      uint64_t ret = -1;
+#ifdef CONFIG_LIB_UNIBPF_JIT_COMPILE
+      ret = bpf_runtime->jitted(&ctx_descr, ctx_size);
+#else
+      if (ubpf_exec(bpf_runtime->vm, &ctx_descr, ctx_size, &ret) < 0) {
         ret = UINT64_MAX;
+      }
+#endif // endof if LIB_UNIBPF_JIT_COMPILE
+
+      /*
+      if(ret != 0) {
+        extern void ushell_puts(char*);
+        char buffer[60];
+        sprintf(buffer, "WARN BPF tracing program returned: %ld\n", ret);
+        ushell_puts(buffer);
+      }*/
     }
   }
+
   free(hmap_entry);
 }
 
@@ -304,8 +335,7 @@ void prog_list_print(const char *function_name,
   int len = 0;
   len += snprintf(buf, buf_size - len, "%s:\n", function_name);
   for (size_t j = 0; j < list->m_Length; ++j) {
-    len += snprintf(buf + len, buf_size - len, "  - %s\n",
-                    list->m_List[j].m_Label);
+    len += snprintf(buf + len, buf_size - len, "  - %s\n", list->m_List[j].m_Label);
   }
   print_fn(buf);
   free(buf);
@@ -332,7 +362,7 @@ int bpf_list_internal(struct UbpfTracer *tracer, const char *function_name,
       wrap_print_fn(100, ERR("No programs attached to %s\n"), function_name);
       return 1;
     }
-
+  
     prog_list_print(function_name, attached_programs->m_Value, print_fn);
   } else {
     // list all
@@ -356,8 +386,7 @@ int bpf_list_internal(struct UbpfTracer *tracer, const char *function_name,
   return 0;
 }
 
-int bpf_detach_internal(struct UbpfTracer *tracer, const char *function_name,
-                        const char *bpf_filename, void (*print_fn)(char *str)) {
+int bpf_detach_internal(struct UbpfTracer *tracer, const char *function_name, void (*print_fn)(char *str)) {
   uint64_t fun_addr = get_function_address(tracer, function_name);
   if (fun_addr == 0) {
     print_fn(ERR("Function not found\n"));
@@ -384,19 +413,45 @@ int bpf_detach_internal(struct UbpfTracer *tracer, const char *function_name,
   return 0;
 }
 
-int bpf_attach(const char *function_name, const char *bpf_filename,
+// tracer APIs
+int bpf_attach(const char *function_name, 
+               const char *bpf_filename, const char* bpf_tracer_function_name,
                void (*print_fn)(char *str)) {
-  return bpf_attach_internal(get_tracer(), function_name, bpf_filename,
-                             print_fn);
+  return bpf_attach_internal(get_tracer(), function_name, bpf_filename, bpf_tracer_function_name, print_fn);
 }
 
 int bpf_list(const char *function_name, void (*print_fn)(char *str)) {
   return bpf_list_internal(get_tracer(), function_name, print_fn);
 }
 
-int bpf_detach(const char *function_name, const char *bpf_filename,
-               void (*print_fn)(char *str)) {
-  return bpf_detach_internal(get_tracer(), function_name, bpf_filename,
-                             print_fn);
+int bpf_detach(const char *function_name, void (*print_fn)(char *str)) {
+  return bpf_detach_internal(get_tracer(), function_name, print_fn);
 }
 
+// BPF helper function implementations
+uint64_t bpf_notify(void *function_id) {
+  struct THmapValueResult *hmap_entry =
+      hmap_get(get_tracer()->function_names, (uint64_t)function_id);
+  if (hmap_entry->m_Result == HMAP_SUCCESS) {
+    printf(YAY("notify: %s\n"), (char *)hmap_entry->m_Value);
+    return 0;
+  } else {
+    printf(ERR("notify: Unknown function at %p\n"), function_id);
+    return 1;
+  }
+}
+
+uint64_t bpf_get_ret_addr(const char *function_name) {
+  if (function_name == NULL) {
+    return 0;
+  }
+  struct UbpfTracer *tracer = get_tracer();
+  uint64_t fun_addr = get_function_address(tracer, function_name);
+  if (fun_addr == 0)
+    return 0;
+  uint64_t nop_addr = get_nop_address(tracer, fun_addr);
+  if (nop_addr == 0)
+    return 0;
+  uint64_t result = nop_addr + CALL_INSTRUCTION_SIZE;
+  return result;
+}

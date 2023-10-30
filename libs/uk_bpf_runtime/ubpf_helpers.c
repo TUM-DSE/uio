@@ -4,15 +4,17 @@
 #include <uk_bpf_helper_utils.h>
 #include <uk_program_types.h>
 
-HelperFunctionList *g_bpf_helper_functions = NULL;
-BpfProgTypeList *g_bpf_prog_types = NULL;
+#include <ubpf_tracer.h>
+
+static HelperFunctionList *g_bpf_helper_functions = NULL;
+static BpfProgTypeList *g_bpf_prog_types = NULL;
 
 /**
  * This function initializes the builtin helper function list if it is not
  * ready.
  * @return The helper function list.
  */
-HelperFunctionList *init_builtin_bpf_helpers() {
+HelperFunctionList *init_bpf_helpers() {
     if (g_bpf_helper_functions) {
         return g_bpf_helper_functions;
     }
@@ -118,6 +120,8 @@ HelperFunctionList *init_builtin_bpf_helpers() {
                                       sizeof(args_bpf_puts)
                                       / sizeof(uk_ebpf_argument_type_t),
                                       args_bpf_puts);
+
+    register_tracer_bpf_helpers(g_bpf_helper_functions, g_bpf_prog_types);
 
     return g_bpf_helper_functions;
 }

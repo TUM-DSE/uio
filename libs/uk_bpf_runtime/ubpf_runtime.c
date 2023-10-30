@@ -2,7 +2,6 @@
 
 #include <uk/plat/time.h>
 
-#include <ubpf.h>
 #include <ubpf_int.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -68,17 +67,22 @@ void *readfile(const char *path, size_t maxlen, size_t *len) {
     return (void *) data;
 }
 
+#include <uk/assert.h>
+#include <uk/essentials.h>
+#define size_to_num_pages(size) \
+	(ALIGN_UP((unsigned long)(size), __PAGE_SIZE) / __PAGE_SIZE)
 
-struct ubpf_vm *init_vm(FILE *logfile) {
+static struct ubpf_vm *init_vm(FILE *logfile) {
     struct ubpf_vm *vm = ubpf_create();
     if (logfile != NULL) {
         fprintf(logfile, "attached BPF helpers:\n");
     }
 
-    HelperFunctionList *builtin_helpers = init_builtin_bpf_helpers();
+    HelperFunctionList *helper_function_list = get_bpf_helpers();
+
     HelperFunctionEntry *unwind_function = NULL;
 
-    for (HelperFunctionEntry *entry = builtin_helpers->m_head;
+    for (HelperFunctionEntry *entry = helper_function_list->m_head;
          entry != NULL; entry = entry->m_next) {
         register_helper(logfile, vm, entry->m_index,
                         entry->m_function_signature.m_function_name,
@@ -97,10 +101,103 @@ struct ubpf_vm *init_vm(FILE *logfile) {
     return vm;
 }
 
-#include <uk/assert.h>
-#include <uk/essentials.h>
-#define size_to_num_pages(size) \
-	(ALIGN_UP((unsigned long)(size), __PAGE_SIZE) / __PAGE_SIZE)
+struct bpf_vm_setup_result BPF_RUNTIME_INVALID = {
+    .vm = NULL,
+    .jitted = NULL,
+};
+
+struct bpf_vm_setup_result setup_bpf_vm(FILE *logfile, const char *bpf_prog_filename, const char* function_name,
+                                        void (*print_fn)(char *str)) {
+    struct ubpf_vm *vm = init_vm(logfile);
+    size_t code_len;
+    void *code = readfile(bpf_prog_filename, 1024 * 1024, &code_len);
+    if (code == NULL) {
+        wrap_print_fn(60 + strlen(bpf_prog_filename), ERR("Failed to read BPF program from: %s\n"), bpf_prog_filename);
+
+        return BPF_RUNTIME_INVALID;
+    }
+    
+    char *errmsg;
+    int rv;
+#if defined(UBPF_HAS_ELF_H)
+    rv = ubpf_load_elf_ex(vm, code, code_len, function_name, &errmsg);
+#else
+    rv = ubpf_load(vm, code, code_len, &errmsg);
+#endif
+    free(code);
+
+    if (rv < 0) {
+        size_t buf_size = 100 + strlen(errmsg);
+        wrap_print_fn(buf_size, ERR("Failed to load code: %s\n"), errmsg);
+        if (logfile != NULL) {
+            fprintf(logfile, "Failed to load code: %s\n", errmsg);
+        }
+
+        free(errmsg);
+        ubpf_destroy(vm);
+
+        return BPF_RUNTIME_INVALID;
+    }
+
+    // compile BPF program once needed
+#ifdef CONFIG_LIB_UNIBPF_JIT_COMPILE
+    uint64_t begin;
+    uint64_t end;
+    char* compileError;
+
+    begin = ukplat_monotonic_clock();
+    ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError);
+    end = ukplat_monotonic_clock();
+
+    if(!jitted_bpf) {
+        print_fn(ERR("BPF program compile failed: "));
+        print_fn(compileError);
+        print_fn("\n");
+        if (logfile != NULL) {
+            fprintf(logfile, "BPF program compile failed: %s\n", compileError);
+        }
+
+        free(compileError);
+        ubpf_destroy(vm);
+
+        return BPF_RUNTIME_INVALID;
+    }
+
+    wrap_print_fn(128, YAY("BPF program compile took: %lu ns\n"), end - begin)
+    if (logfile != NULL) {
+        fprintf(logfile, "BPF program compile took: %lu ns\n", end - begin);
+    }
+
+    UK_ASSERT(((size_t)jitted_bpf) % __PAGE_SIZE == 0);
+
+    // mark jitted BPF program as executable
+    struct uk_pagetable *page_table = ukplat_pt_get_active();
+    unsigned long pages = size_to_num_pages(vm->jitted_size);
+    int set_page_attr_result = ukplat_page_set_attr(page_table, (__vaddr_t)jitted_bpf, pages, PAGE_ATTR_PROT_READ | PAGE_ATTR_PROT_WRITE | PAGE_ATTR_PROT_EXEC, 0);
+    if(set_page_attr_result < 0) {
+        wrap_print_fn(128, ERR("BPF program page jitted code executable failed (%d)\n"), set_page_attr_result)
+
+        if (logfile != NULL) {
+            fprintf(logfile, "BPF program page jitted code executable failed (%d)\n", set_page_attr_result);
+        }
+
+        free(jitted_bpf);
+        ubpf_destroy(vm);
+
+        return BPF_RUNTIME_INVALID;
+    }
+
+    return (struct bpf_vm_setup_result) {
+        .vm = vm,
+        .jitted = jitted_bpf,
+    };
+#else
+    return (struct bpf_vm_setup_result) {
+        .vm = vm,
+        .jitted = NULL,
+    };
+#endif // endof if LIB_UNIBPF_JIT_COMPILE
+}
 
 int bpf_exec(const char *filename, const char *function_name, void *args, size_t args_size, int debug,
              void (*print_fn)(char *str)) {
@@ -117,43 +214,11 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
         fprintf(logfile, "\n");
     }
 
-    struct ubpf_vm *vm = init_vm(logfile);
-    size_t code_len;
-    void *code = readfile(filename, 1024 * 1024, &code_len);
-    if (code == NULL) {
-        fclose(logfile);
-        return 1;
-    }
-    char *errmsg;
-    int rv;
-#if defined(UBPF_HAS_ELF_H)
-    rv = ubpf_load_elf_ex(vm, code, code_len, function_name, &errmsg);
-#else
-    rv = ubpf_load(vm, code, code_len, &errmsg);
-#endif
-    free(code);
-
-    if (rv < 0) {
-        size_t buf_size = 100 + strlen(errmsg);
-        wrap_print_fn(buf_size, ERR("Failed to load code: %s\n"),
-                      errmsg);
-        if (logfile != NULL) {
-            fprintf(logfile, "Failed to load code: %s\n", errmsg);
-        }
-
-        free(errmsg);
-        ubpf_destroy(vm);
-        if (logfile != NULL) {
-            fclose(logfile);
-        }
-        return 1;
-    }
-
     // create context on local stack
     uk_bpf_type_executable_t context;
     context.data = context.storage;
     context.data_meta = 0;
-
+    
     const size_t max_data_size = sizeof(context.storage);
     const size_t data_size = args_size > max_data_size ? max_data_size - 1 : args_size;
 
@@ -163,62 +228,31 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
     if (data_size == max_data_size - 1) {
         context.storage[data_size] = '\0';
     }
-    // start bpf program
 
-    char buf[16];
+    
+    struct bpf_vm_setup_result bpf_runtime = setup_bpf_vm(logfile, filename, function_name, print_fn);
+    
+    if(bpf_runtime.vm == NULL) {
+        return -1; // failed to setup bpf vm
+    }
+
+    // start bpf program
     uint64_t begin;
     uint64_t end;
+    uint64_t bpf_program_ret;
 
-    uint64_t ret;
 #ifdef CONFIG_LIB_UNIBPF_JIT_COMPILE
-    char* compileError;
     begin = ukplat_monotonic_clock();
-    ubpf_jit_fn jitted_bpf = ubpf_compile(vm, &compileError);
-    end = ukplat_monotonic_clock();
-
-    wrap_print_fn(128, YAY("BPF program compile took: %lu ns\n"), end - begin)
-    if (logfile != NULL) {
-        fprintf(logfile, "BPF program compile took: %lu ns\n", end - begin);
-    }
-
-    UK_ASSERT(((size_t)jitted_bpf) % __PAGE_SIZE == 0);
-
-    struct uk_pagetable *page_table = ukplat_pt_get_active();
-    unsigned long pages = size_to_num_pages(vm->jitted_size);
-    int set_page_attr_result = ukplat_page_set_attr(page_table, (__vaddr_t)jitted_bpf, pages, PAGE_ATTR_PROT_READ | PAGE_ATTR_PROT_WRITE | PAGE_ATTR_PROT_EXEC, 0);
-    if(set_page_attr_result < 0) {
-        wrap_print_fn(128, ERR("BPF program page jitted code executable failed (%d)\n"), set_page_attr_result)
-
-        if (logfile != NULL) {
-            fprintf(logfile, "BPF program page jitted code executable failed (%d)\n", set_page_attr_result);
-        }
-
-        goto clean_up;
-    }
-
-    if(!jitted_bpf) {
-        print_fn(ERR("BPF program compile failed: "));
-        print_fn(compileError);
-        print_fn("\n");
-        if (logfile != NULL) {
-            fprintf(logfile, "BPF program compile failed: %s\n", compileError);
-        }
-
-        free(compileError);
-        goto clean_up;
-    }
-
-    begin = ukplat_monotonic_clock();
-    ret = jitted_bpf(&context, sizeof(context));
+    bpf_program_ret = bpf_runtime.jitted(&context, sizeof(context));
     end = ukplat_monotonic_clock();
 
 #else
     print_fn(ERR("Using BPF Interpreter\n"));
     begin = ukplat_monotonic_clock();
-    int interpret_result = ubpf_exec(vm, &context, sizeof(context), &ret);
+    int interpreter_result = ubpf_exec(bpf_runtime.vm, &context, sizeof(context), &bpf_program_ret);
     end = ukplat_monotonic_clock();
 
-    if (interpret_result < 0) {
+    if (interpreter_result < 0) {
         print_fn(ERR("BPF program interpretation failed.\n"));
         if (logfile != NULL) {
             fprintf(logfile, "BPF program interpretation failed.\n");
@@ -227,17 +261,23 @@ int bpf_exec(const char *filename, const char *function_name, void *args, size_t
         goto clean_up;
     }
 #endif // endof if LIB_UNIBPF_JIT_COMPILE
-    wrap_print_fn(128, YAY("BPF program returned: %lu. Took: %d ns\n"), ret, end - begin)
+
+    wrap_print_fn(128, YAY("BPF program returned: %lu. Took: %ld ns\n"), bpf_program_ret, end - begin)
     if (logfile != NULL) {
-        fprintf(logfile, "BPF program returned: %lu. Took: %d ns\n", ret, end - begin);
+        fprintf(logfile, "BPF program returned: %lu. Took: %ld ns\n", bpf_program_ret, end - begin);
     }
 
-    clean_up:
-    ubpf_destroy(vm);
+    // clean up
+clean_up:
+    ubpf_destroy(bpf_runtime.vm);
 
     if (logfile != NULL) {
         fclose(logfile);
     }
 
     return 0;
+}
+
+void destroy_bpf_runtime(struct bpf_vm_setup_result bpf_runtime) {
+    ubpf_destroy(bpf_runtime.vm);
 }

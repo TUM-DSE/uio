@@ -4,7 +4,11 @@
 #include "helper_function_list.h"
 #include "prog_type_list.h"
 
-HelperFunctionList *init_builtin_bpf_helpers();
+HelperFunctionList *init_bpf_helpers();
+inline HelperFunctionList *get_bpf_helpers() {
+        return init_bpf_helpers();
+}
+
 void print_helper_specs(void (*print_fn)(const char *));
 void print_prog_type_infos(void (*print_fn)(const char *));
 
