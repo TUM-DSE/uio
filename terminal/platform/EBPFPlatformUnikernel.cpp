@@ -31,7 +31,7 @@ EbpfHelperPrototype EBPFPlatformUnikernel::getHelperPrototype(int32_t n) {
 }
 
 bool EBPFPlatformUnikernel::isHelperUsable(int32_t n) {
-    if (n >= ukPrototypes.size() || n < 0) {
+    if (n < 0 || ukPrototypes.count(n) == 0) {
         return false;
     }
 
