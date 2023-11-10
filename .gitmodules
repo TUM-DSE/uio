@@ -42,6 +42,3 @@
 [submodule "terminal/uk_bpf_helper"]
 	path = terminal/uk_bpf_helper
 	url = https://github.com/hsiehken/uk_bpf_helper
-[submodule "libs/uk_bpf_helper"]
-	path = libs/uk_bpf_helper
-	url = https://github.com/hsiehken/uk_bpf_helper

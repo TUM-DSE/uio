@@ -1,0 +1,6 @@
+menuconfig LIBUKBPFHELPER
+	bool "libukbpfhelper - a library providing helper function framework for Unikraft"
+	default n
+
+if LIBUKBPFHELPER
+endif
