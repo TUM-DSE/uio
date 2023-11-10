@@ -38,14 +38,14 @@ This benchmarks the *time per instrucutre* of arithmetic and memory operation BP
 ## 2. Verification, JiT compliation Overheads
 1. cd into `apps/null`
 1. `make -C fs0/bpf-overhead`
-1. Use UniBPF Terminal to execute `adds.o`, `hash.o` and `nop.o`, collect the results manually (BPF verification time/memory-consumption, JiT complie time-consumption...etc.).
+1. Use **UniBPF Terminal** to execute `adds.o`, `hash.o` and `nop.o`, collect the results manually (BPF verification time/memory-consumption, JiT complie time-consumption...etc.).
 
 Note: It is recommended to restart the Unikraft application and UniBPF terminal each time before evaluting the above-mentioned BPF programs to get more fair and correct results. 
 
 ## 3. Security Evaluation
 1. cd into `apps/null`
 1. `make -C fs0/bpf-security`
-1. Use UniBPF Terminal to execute corresponding BPF programs to observe BPF verifier's behaviors.
+1. Use **UniBPF Terminal** to execute corresponding BPF programs to observe BPF verifier's behaviors.
 
 ## 4. Real World App Benchmark - Nginx
 1. cd int `apps/nginx/fs1/bpf`
