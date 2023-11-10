@@ -24,6 +24,94 @@ UShellCmdInterceptor::UShellCmdInterceptor(
           mVerifier(verifierOptions, helperFunctionList, progTypes) {
 }
 
+InterceptionResult UShellCmdInterceptor::bpf_verify(const std::string filename) {
+    std::filesystem::path bpfFile(filename);
+
+    std::cout << "PREVAIL> Security checking bpf file: "
+              << bpfFile.string() << std::endl;
+    if (bpfFile.is_absolute()) {
+        if (bpfFile.string().find(ushellRoot) != 0) {
+            std::cout << "ERROR: Cannot load an bpf file out of UShell context directory!"
+                      << std::endl;
+
+            return {403, true};
+        }
+
+        bpfFile = std::filesystem::relative(bpfFile, ushellRoot);
+    }
+
+    auto bpfFileHost = ushellHostMountPoint / bpfFile;
+    std::cout << "PREVAIL> Loading bpf file from host: "
+              << bpfFileHost << std::endl;
+
+    // check if the file exists
+    if (!std::filesystem::exists(bpfFileHost)) {
+        std::cout << "PREVAIL> ERROR: Cannot find bpf file on host!"
+                  << std::endl;
+
+        char cwd[PATH_MAX];
+        getcwd(cwd, sizeof(cwd));
+
+        std::cout << "DEBUG CWD: " << cwd << std::endl;
+
+        return {404, true};
+    }
+
+    // verify bpf file
+    bool allOK = true;
+    try {
+        auto bpfFileSections =
+                mVerifier.getSections(bpfFileHost);
+        std::cout << "PREVAIL> Verifying "
+                  << bpfFileSections.size()
+                  << " sections..." << std::endl;
+
+        int successCount = 0;
+        for (const auto &section: bpfFileSections) {
+
+            std::cout << "Verifying section: "
+                      << section;
+            auto verifyResult = mVerifier.verify(bpfFileHost, section);
+            std::cout
+                    << " (took: " << std::setprecision (15) <<  verifyResult.took << " ns)" << std::endl;
+
+            if (verifyResult.ok) {
+                successCount++;
+            } else {
+                allOK = false;
+                std::cout
+                        << "ERROR: Verification "
+                           "failed for section: "
+                        << section << std::endl;
+            }
+        }
+
+        std::cout
+                << "OK: " << successCount << "; Failed: "
+                << bpfFileSections.size() - successCount
+                << std::endl;
+
+        if (successCount != bpfFileSections.size()) {
+            return {406, true};
+        }
+
+    } catch (std::runtime_error &e) {
+        std::cout << "PREVAIL> ERROR! Security check "
+                     "failed with error: "
+                  << e.what() << std::endl;
+        return {500, true};
+    }
+
+    if (!allOK) {
+        std::cout
+                << "PREVAIL> ERROR! Security check failed!"
+                << std::endl;
+        return {-1, true};
+    }
+
+    return {0, false};
+}
+
 InterceptionResult UShellCmdInterceptor::intercept(const std::string &in) {
     std::vector<std::string> tokens;
     boost::split(tokens, in, boost::is_any_of("\t "));
@@ -45,93 +133,16 @@ InterceptionResult UShellCmdInterceptor::intercept(const std::string &in) {
                 return {400, true};
             }
 
-            std::filesystem::path bpfFile(tokens[1]);
-
-            std::cout << "PREVAIL> Security checking bpf file: "
-                      << bpfFile.string() << std::endl;
-            if (bpfFile.is_absolute()) {
-                if (bpfFile.string().find(ushellRoot) != 0) {
-                    std::cout << "ERROR: Cannot load an "
-                                 "bpf file out of UShell "
-                                 "context directory!"
-                              << std::endl;
-
-                    return {403, true};
-                }
-
-                bpfFile = std::filesystem::relative(bpfFile,
-                                                    ushellRoot);
-            }
-
-            auto bpfFileHost = ushellHostMountPoint / bpfFile;
-            std::cout << "PREVAIL> Loading bpf file from host: "
-                      << bpfFileHost << std::endl;
-
-            // check if the file exists
-            if (!std::filesystem::exists(bpfFileHost)) {
-                std::cout << "PREVAIL> ERROR: Cannot find bpf "
-                             "file on host!"
+            return bpf_verify(tokens[1]);
+        } else if (command == "bpf_attach") {
+            if (tokens.size() < 3 || tokens.size() > 4) {
+                std::cout << "PREVAIL> ERROR: Invalid usage, "
+                             "expected: bpf_attach <function_name> <bpf_filename> <bpf_tracer_function_name>=bpf_tracer"
                           << std::endl;
-
-                char cwd[PATH_MAX];
-                getcwd(cwd, sizeof(cwd));
-
-                std::cout << "DEBUG CWD: " << cwd << std::endl;
-
-                return {404, true};
+                return {400, true};
             }
 
-            // verify bpf file
-            bool allOK = true;
-            try {
-                auto bpfFileSections =
-                        mVerifier.getSections(bpfFileHost);
-                std::cout << "PREVAIL> Verifying "
-                          << bpfFileSections.size()
-                          << " sections..." << std::endl;
-
-                int successCount = 0;
-                for (const auto &section: bpfFileSections) {
-
-                    std::cout << "Verifying section: "
-                              << section;
-                    auto verifyResult = mVerifier.verify(bpfFileHost, section);
-                    std::cout
-                            << " (took: " << std::setprecision (15) <<  verifyResult.took << " ns)" << std::endl;
-
-                    if (verifyResult.ok) {
-                        successCount++;
-                    } else {
-                        allOK = false;
-                        std::cout
-                                << "ERROR: Verification "
-                                   "failed for section: "
-                                << section << std::endl;
-                    }
-                }
-
-                std::cout
-                        << "OK: " << successCount << "; Failed: "
-                        << bpfFileSections.size() - successCount
-                        << std::endl;
-
-                if (successCount != bpfFileSections.size()) {
-                    return {406, true};
-                }
-
-            } catch (std::runtime_error &e) {
-                std::cout << "PREVAIL> ERROR! Security check "
-                             "failed with error: "
-                          << e.what() << std::endl;
-                return {500, true};
-            }
-
-            if (!allOK) {
-                std::cout
-                        << "PREVAIL> ERROR! Security check failed!"
-                        << std::endl;
-                return {-1, true};
-            }
+            return bpf_verify(tokens[1]);
         }
     }
 

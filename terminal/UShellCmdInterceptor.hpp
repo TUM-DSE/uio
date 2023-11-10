@@ -32,6 +32,9 @@ public:
 private:
     const std::filesystem::path ushellRoot;
     const std::filesystem::path ushellHostMountPoint;
+    
+    InterceptionResult bpf_verify(std::string filename);
+
     EBPFVerifier mVerifier;
 };
 
