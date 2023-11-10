@@ -142,7 +142,7 @@ InterceptionResult UShellCmdInterceptor::intercept(const std::string &in) {
                 return {400, true};
             }
 
-            return bpf_verify(tokens[1]);
+            return bpf_verify(tokens[2]);
         }
     }
 
