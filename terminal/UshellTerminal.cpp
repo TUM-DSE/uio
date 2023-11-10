@@ -233,8 +233,10 @@ int main(int argc, char **argv) {
     readUntilPrompt(uShellConsoleDevice);
 
     auto verifierOptions = ebpf_verifier_default_options;
-    //verifierOptions.check_termination = true;
-    verifierOptions.print_invariants = true;
+# ifdef CHECK_TERMINATION
+    verifierOptions.check_termination = true;
+# endif
+    // verifierOptions.print_invariants = true;
     verifierOptions.print_failures = true;
     verifierOptions.print_line_info = true;
     verifierOptions.allow_division_by_zero = false;
