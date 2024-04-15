@@ -1,6 +1,6 @@
 [submodule "unikraft"]
 	path = unikraft
-	url = git@github.com:TUM-DSE/ushell-unikraft.git
+	url = git@github.com:mmisono/uio-unikraft.git
 [submodule "libs/newlib"]
 	path = libs/newlib
 	url = https://github.com/unikraft/lib-newlib

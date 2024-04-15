@@ -78,20 +78,20 @@
     "self-stable": {
       "flake": false,
       "locked": {
-        "lastModified": 1684884622,
-        "narHash": "sha256-okDHA5f0D7uv1nrETVfATZHECGWmfHdAdgfU+ACTkFI=",
-        "ref": "eurosys24",
-        "rev": "cc8a7069d4dd4139d26c61c3fc068af99e816076",
-        "revCount": 368,
+        "lastModified": 1695283536,
+        "narHash": "sha256-oZYlWsYoqZAuE2qo4EyQndzzOJ8pKMjJqd7dssrhONI=",
+        "ref": "uio",
+        "rev": "8033f9a29c6286dfb7ca8ed3c47e40af948e5ce4",
+        "revCount": 387,
         "submodules": true,
         "type": "git",
-        "url": "ssh://git@github.com/TUM-dse/ushell"
+        "url": "ssh://git@github.com/mmisono/uio"
       },
       "original": {
-        "ref": "eurosys24",
+        "ref": "uio",
         "submodules": true,
         "type": "git",
-        "url": "ssh://git@github.com/TUM-dse/ushell"
+        "url": "ssh://git@github.com/mmisono/uio"
       }
     }
   },
