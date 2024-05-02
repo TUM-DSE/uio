@@ -1,0 +1,3 @@
+$(eval $(call addlib,appmmtest))
+
+APPMMTEST_SRCS-y += $(APPMMTEST_BASE)/main.c
