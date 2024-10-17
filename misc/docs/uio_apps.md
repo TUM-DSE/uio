@@ -1,4 +1,4 @@
-## How to create ushell apps
+## How to create uio apps
 - [apps/count/fs0](../../apps/count/fs0) constains several example programs
 
 ## Debug
