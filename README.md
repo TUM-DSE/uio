@@ -5,7 +5,7 @@
 (Tested on [adelaide](https://github.com/TUM-DSE/doctor-cluster-config/blob/master/docs/hosts/adelaide.md))
 
 ```shell
-git clone --recurse-submodules https://github.com/TUM-DSE/ushell
+git clone --recurse-submodules https://github.com/TUM-DSE/uio
 cd unikraft-development
 direnv allow # (or nix develop)
 ```
