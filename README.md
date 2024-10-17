@@ -1,4 +1,4 @@
-# ushell
+# uio
 
 ## Quick start
 
