@@ -5,5 +5,5 @@
     - `just run` to run the app
     - `just attach` to attach to the ushell
 
-## How to create ushell apps
-- See [ushell_apps.md](ushell_apps.md) and [bpf.md](bpf.md) for more details
+## How to create uio apps
+- See [uio_apps.md](uio_apps.md) and [bpf.md](bpf.md) for more details
