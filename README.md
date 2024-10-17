@@ -34,6 +34,4 @@ see [./misc/tests/README.md](./misc/tests/README.md)
 ## Docs
 - [./misc/docs](./misc/docs)
 
-## Branch
-- [eurosys24](https://github.com/TUM-DSE/ushell/tree/eurosys24): Eurosys24 version
 
