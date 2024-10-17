@@ -13,13 +13,11 @@ This set of scripts runs the evaluation of this project (`measure_*.py`) and gen
 
 ## Reproducability
 
-- [./measuerments/eurosys24](./measurements/eurosys24) contains the submitted version of our measurements.
 - Operating Systems
     - Linux 6.2.12, NixOS, 22.11 (Raccoon)
 - Hardware
     - CPU: Intel(R) Xeon(R) Gold 5317 CPU @ 3.00GHz 12 cores
     - Memory: Samsung DDR4 64 3200 MT/s x 4 (256 GB)
-- Our results are based on ushell eurosys24 branch
 - For reproducability, check the warnings printed before the benchmark starts to align your setup with ours regarding CPU frequency, hyperthreading, and CPU isolation.
 
 ## Preparation
@@ -109,7 +107,7 @@ If you want to do quick experiments, set `QUICK=True` in the respective `measure
 ## Measurement List
 
 - Figure 3, console responsiveness: `measure_console.py`
-- Figure 4, load times: `measure_app.py` (`ushell_run()`)
+- Figure 4, load times: `measure_app.py` (`uio_run()`)
 - Figure 5, application performance: `measure_app.py` (`sqlite_shell`, `redis_shell`, `nginx_ushell`)
 - Figure 6, image sizes: `measure_image.py`
 
@@ -132,7 +130,7 @@ See [apps/mpktest](../../apps/mpktest).
     - Run benchmark
     - The result is in `./fs_linux`
 
-## ushell program size
+## uio program size
 ```
 % cd <path-to-repo>
 % nix build .#uk-nginx-ushellmpk-bpf-initrd
